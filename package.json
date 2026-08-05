@@ -1,0 +1,12 @@
+{
+  "name": "dataverse-symposium-fullstack",
+  "version": "1.0.0",
+  "description": "DATAVERSE Symposium Registration & Management System - AAMEC Kovilvenni",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "seed": "cd backend && npm run seed",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "start": "cd backend && npm start"
+  }
+}

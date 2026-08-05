@@ -1,0 +1,14 @@
+const mongoose = require('mongoose');
+
+const registrationSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+  event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
+  status: { type: String, enum: ['Registered', 'Attended', 'Cancelled'], default: 'Registered' },
+  paperPdfUrl: { type: String, default: null },
+  registrationDate: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Prevent duplicate student registration for the same event
+registrationSchema.index({ student: 1, event: 1 }, { unique: true });
+
+module.exports = mongoose.model('Registration', registrationSchema);
