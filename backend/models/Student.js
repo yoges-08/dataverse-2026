@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const studentSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   symposiumCode: { type: String, required: true, unique: true },
-  registerNumber: { type: String, required: true },
+  registerNumber: { type: String, default: '' },
   collegeName: { type: String, required: true },
   department: { type: String, required: true },
   year: { type: String, required: true },
