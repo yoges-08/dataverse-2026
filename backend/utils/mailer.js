@@ -5,36 +5,60 @@ const isSmtpConfigured = () =>
 
 let transporter = null;
 
+const makeTransporter = (port, secure) =>
+  nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port,
+    secure,
+    connectionTimeout: 20000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
 const getTransporter = () => {
   if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
+    const port = Number(process.env.SMTP_PORT || 587);
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+    transporter = makeTransporter(port, secure);
   }
   return transporter;
 };
 
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const buildMail = ({ to, subject, html }) => ({
+  from: `"DATAVERSE 2026 - AAMEC" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+  to,
+  subject,
+  html
+});
+
 const sendMail = async ({ to, subject, html }) => {
   if (isSmtpConfigured()) {
-    try {
-      const info = await getTransporter().sendMail({
-        from: `"DATAVERSE 2026 - AAMEC" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-        to,
-        subject,
-        html
-      });
-      console.log(`📧 Email DELIVERED to ${to}: ${info.messageId}`);
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      console.error('Email sending failed:', error.message);
-      return { success: false, message: error.message };
+    const configuredPort = Number(process.env.SMTP_PORT || 587);
+    const ports = configuredPort === 465 ? [465, 587] : [587, 465];
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const port = ports[attempt % 2];
+      const secure = port === 465;
+      try {
+        const info = await makeTransporter(port, secure).sendMail(buildMail({ to, subject, html }));
+        console.log(`📧 Email DELIVERED to ${to}: ${info.messageId} (port ${port})`);
+        return { success: true, messageId: info.messageId, port };
+      } catch (error) {
+        lastError = error;
+        console.error(`📧 Email attempt failed (port ${port}): ${error.message}`);
+        await delay(1500);
+      }
     }
+
+    console.error('Email sending failed after retries:', lastError.message);
+    return { success: false, message: lastError.message };
   }
 
   // No SMTP configured: send through Ethereal (nodemailer test inbox) so emails are
