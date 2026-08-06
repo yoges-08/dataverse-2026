@@ -73,12 +73,12 @@ npm run frontend
 
 | Role | Email | Password |
 |---|---|---|
-| Super Admin | `aidssymposium2026@gmail.com` | `aids@2026` |
+| Super Admin | `dataverse2k26ai@gmail.com` | `aids@2025` |
 | Coordinator | `coordinator@aamec.edu.in` | `coord123` |
 | Volunteer | `volunteer@aamec.edu.in` | `vol123` |
 | Student | `student1@aamec.edu.in` | `student123` |
 
-Seed data includes 6 events (QuizEE, Agentic AI Challenge, Paper Presentation, Layman Vibes, Luminas Fest, Fun & Games), 3 students with QR tickets, attendance logs, certificates, announcements and gallery items.
+Seed data includes 6 events (Quiz, Agentic AI Challenge, Paper Presentation, Layman Vibes, Luminas Fest, Fun & Games), 3 students with QR tickets, attendance logs, certificates, announcements and gallery items.
 
 > The in-memory data engine resets on every backend restart. Connect MongoDB and run `npm run seed` for persistent, database-backed data.
 

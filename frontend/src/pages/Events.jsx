@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import EventDetailModal from '../components/EventDetailModal';
-import { Search, Filter, Sparkles, Trophy, Calendar, Clock, MapPin, ChevronRight, Zap } from 'lucide-react';
+import { Search, Filter, Sparkles, Calendar, Clock, MapPin, ChevronRight, Zap } from 'lucide-react';
 import API from '../services/api';
 
 export default function Events() {
@@ -45,7 +45,7 @@ export default function Events() {
         </span>
         <h1 className="text-4xl sm:text-6xl font-black text-white">Symposium Events Catalog</h1>
         <p className="text-sm text-slate-400">
-          Compete in technical AI challenges, quizzes, paper presentations, and non-technical creative events for trophies and exciting cash prizes.
+          Compete in technical AI challenges, quizzes, paper presentations, and non-technical creative events at DATAVERSE 2026.
         </p>
       </div>
 

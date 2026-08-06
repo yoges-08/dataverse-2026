@@ -8,9 +8,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
 import Events from './pages/Events';
-import Schedule from './pages/Schedule';
 import Gallery from './pages/Gallery';
-import Sponsors from './pages/Sponsors';
 import FAQ from './pages/FAQ';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -72,9 +70,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/schedule" element={<Schedule />} />
         <Route path="/gallery" element={<Gallery />} />
-        <Route path="/sponsors" element={<Sponsors />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />

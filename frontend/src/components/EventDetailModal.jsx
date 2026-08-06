@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { X, Calendar, Clock, MapPin, Trophy, UserCheck, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
 import API from '../services/api';
 
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
@@ -132,28 +132,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </ul>
             </div>
           )}
-
-          {/* Prizes */}
-          <div className="bg-indigo-950/30 p-4 rounded-xl border border-indigo-500/20">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center space-x-1 mb-2">
-              <Trophy className="w-4 h-4" />
-              <span>Prize Pool Breakdown</span>
-            </h4>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-amber-500/30">
-                <span className="text-[10px] text-amber-400 font-bold block">1st Prize</span>
-                <span className="font-semibold text-white">{event.prizes?.first}</span>
-              </div>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold block">2nd Prize</span>
-                <span className="font-semibold text-white">{event.prizes?.second}</span>
-              </div>
-              <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold block">3rd Prize</span>
-                <span className="font-semibold text-white">{event.prizes?.third}</span>
-              </div>
-            </div>
-          </div>
 
           {/* Coordinators */}
           <div className="grid grid-cols-2 gap-3 text-xs border-t border-slate-800 pt-4">

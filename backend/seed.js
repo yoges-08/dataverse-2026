@@ -31,14 +31,14 @@ const seedData = async () => {
 
     // Create Password Hashes
     const salt = await bcrypt.genSalt(10);
-    const adminPass = await bcrypt.hash('aids@2026', salt);
+    const adminPass = await bcrypt.hash('aids@2025', salt);
     const coordPass = await bcrypt.hash('coord123', salt);
     const volPass = await bcrypt.hash('vol123', salt);
 
     // 1. Create Core Users
     const adminUser = await User.create({
       name: 'Dr. R. K. Varma (Convener)',
-      email: 'aidssymposium2026@gmail.com',
+      email: 'dataverse2k26ai@gmail.com',
       password: adminPass,
       role: 'super_admin'
     });
@@ -62,10 +62,10 @@ const seedData = async () => {
     // 2. Create Events
     const events = await Event.create([
       {
-        title: 'QuizEE',
+        title: 'Quiz',
         category: 'Technical',
         tagline: 'Test your computer science core skills & technical aptitude',
-        description: 'QuizEE is the flagship technical quiz competition covering Data Structures, Algorithms, AI, Web Technologies, and Logical Reasoning. Multiple rounds including Prelims, Buzzer Round, and Rapid Fire.',
+        description: 'Quiz is the flagship technical quiz competition covering Data Structures, Algorithms, AI, Web Technologies, and Logical Reasoning. Multiple rounds including Prelims, Buzzer Round, and Rapid Fire.',
         rules: [
           'Teams of 2 members allowed.',
           'Use of smartphones during quiz rounds is strictly prohibited.',

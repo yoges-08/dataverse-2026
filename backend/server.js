@@ -3,6 +3,8 @@ const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const mongoose = require('mongoose');
+const mockStore = require('./utils/mockStore');
 
 dotenv.config();
 
@@ -15,6 +17,17 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Static uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Auto-persist: when MongoDB is offline (in-memory mode), save the data store
+// to disk after every request so registered students survive server restarts.
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (mongoose.connection.readyState !== 1) {
+      mockStore.persist();
+    }
+  });
+  next();
+});
 
 // Connect to Database
 connectDB();

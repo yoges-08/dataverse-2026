@@ -8,7 +8,7 @@ export default function Schedule() {
     Day1: [
       { time: '08:30 AM - 09:30 AM', title: 'Student Registration & QR Check-In', venue: 'Main Block Admin Reception', category: 'General' },
       { time: '09:30 AM - 10:30 AM', title: 'DATAVERSE 2026 Grand Inauguration', venue: 'Main College Auditorium', category: 'Inauguration' },
-      { time: '10:30 AM - 12:30 PM', title: 'QuizEE Prelims & Buzzer Round', venue: 'Auditorium Block A', category: 'Technical' },
+      { time: '10:30 AM - 12:30 PM', title: 'Quiz Prelims & Buzzer Round', venue: 'Auditorium Block A', category: 'Technical' },
       { time: '11:00 AM - 03:00 PM', title: 'Agentic AI Hackathon & Agent Demo', venue: 'CS Lab 3 & High Performance Computing Lab', category: 'Technical' },
       { time: '01:30 PM - 04:30 PM', title: 'Paper Presentation Sessions', venue: 'Seminar Hall B', category: 'Technical' }
     ],

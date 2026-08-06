@@ -30,9 +30,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-xs">
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Technical Events</Link></li>
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Non-Technical Events</Link></li>
-              <li><Link to="/schedule" className="hover:text-indigo-400 transition-colors">Symposium Timeline</Link></li>
               <li><Link to="/gallery" className="hover:text-indigo-400 transition-colors">Event Gallery</Link></li>
-              <li><Link to="/sponsors" className="hover:text-indigo-400 transition-colors">Our Sponsors</Link></li>
               <li><Link to="/faq" className="hover:text-indigo-400 transition-colors">Frequently Asked Questions</Link></li>
             </ul>
           </div>
@@ -49,37 +47,32 @@ export default function Footer() {
                 <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
                 <span>dataverse2026@aamec.edu.in</span>
               </div>
-              <div className="flex items-center space-x-2.5">
-                <Phone className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span>+91 4374 232 555 / 98421 00123</span>
+              <div className="flex items-start space-x-2.5">
+                <Phone className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="block"><span className="text-slate-300 font-semibold">Symposium Coordinator:</span> 9994718221</span>
+                  <span className="block mt-1"><span className="text-slate-300 font-semibold">Organizer Members:</span> 9791656236 / 8122310171 / 9489038346 / 8838999607</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Col 4: Google Maps & Verification */}
+          {/* Col 4: Campus Location */}
           <div>
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-4">Campus Location</h4>
-            <div className="rounded-xl overflow-hidden border border-slate-800 relative group">
-              <iframe
-                title="AAMEC Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.4231888915467!2d79.231944!3d10.783056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a554a73752e5a59%3A0x6b3f7bf9c8e19c0a!2sAnjalai%20Ammal%20Mahalingam%20Engineering%20College!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-                width="100%"
-                height="130"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                className="filter opacity-80 group-hover:opacity-100 transition-opacity"
-              ></iframe>
+            <div className="rounded-xl p-4 bg-slate-900/70 border border-slate-800 text-xs text-slate-400 space-y-2">
+              <p>Anjalai Ammal Mahalingam Engineering College,<br/>Kovilvenni, Tiruvarur District, Tamil Nadu.</p>
+              <a
+                href="https://maps.app.goo.gl/Vjre7pWWT5fgBu6E9"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>View Campus Location on Google Maps</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
-            <a
-              href="https://maps.google.com/?q=Anjalai+Ammal+Mahalingam+Engineering+College+Kovilvenni"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium mt-2"
-            >
-              <span>Open in Google Maps</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
           </div>
 
         </div>

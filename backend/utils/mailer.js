@@ -64,9 +64,9 @@ const sendMail = async ({ to, subject, html }) => {
   }
 };
 
-const qrImgHtml = (qrCodeData, alt) =>
-  qrCodeData
-    ? `<img src="${qrCodeData}" alt="${alt}" width="170" height="170" style="display:block;margin:0 auto;border-radius:12px;padding:8px;background:#fff;"/>`
+const qrImgHtml = (qrValue) =>
+  qrValue
+    ? `<img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&bgcolor=ffffff&color=312e81&data=${encodeURIComponent(qrValue)}" alt="DATAVERSE QR Ticket" width="240" height="240" style="display:block;margin:0 auto;border-radius:12px;padding:8px;background:#fff;"/>`
     : '';
 
 const mailShell = (innerHtml) => `
@@ -105,7 +105,7 @@ const sendRegistrationMail = async ({ to, name, registerNumber, symposiumCode, q
 
       <div style="text-align:center;margin-bottom:18px;">
         <div style="color:#e0e7ff;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Your QR Ticket</div>
-        ${qrImgHtml(qrCodeData, 'DATAVERSE QR Ticket')}
+        ${qrImgHtml(symposiumCode)}
       </div>
 
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;">
@@ -134,7 +134,7 @@ const sendApprovalMail = async ({ to, name, registerNumber, symposiumCode, qrCod
 
       <div style="text-align:center;margin-bottom:18px;">
         <div style="color:#e0e7ff;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Your QR Ticket</div>
-        ${qrImgHtml(qrCodeData, 'DATAVERSE QR Ticket')}
+        ${qrImgHtml(symposiumCode)}
       </div>
 
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;">

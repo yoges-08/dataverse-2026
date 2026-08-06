@@ -54,11 +54,9 @@ export default function StudentDashboard() {
       {/* Header Banner */}
       <div className="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center space-x-4">
-          <img
-            src={student.profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-            alt={student.name}
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-500 shadow-xl"
-          />
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-indigo-500 shadow-xl">
+            <User className="w-10 h-10 text-white" />
+          </div>
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-2xl sm:text-3xl font-black text-white">{user?.name || student.email}</h1>
@@ -69,7 +67,6 @@ export default function StudentDashboard() {
             <p className="text-xs text-slate-300 mt-1">
               {student.department} • Year {student.year} • {student.collegeName}
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 font-mono">Reg No: {student.registerNumber}</p>
           </div>
         </div>
 

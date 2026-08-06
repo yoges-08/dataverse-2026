@@ -288,7 +288,11 @@ export default function AdminDashboard() {
                     return (
                       <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
                         <td className="p-4 flex items-center space-x-3">
-                          <img src={s.profilePhoto} alt={name} className="w-9 h-9 rounded-xl object-cover border border-slate-700" />
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center border border-slate-700">
+                            <span className="font-black text-white text-sm">
+                              {(name || '?').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
                           <div>
                             <span className="font-bold text-white block">{name}</span>
                             <span className="text-[10px] text-slate-400">{s.email}</span>

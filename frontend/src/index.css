@@ -26,6 +26,49 @@
   @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
 }
 
+/* ============ LIGHT / WHITE THEME ============
+   Active when the <html> element does NOT have the `dark` class.
+   Tailwind is set to darkMode:'class'; the default is dark. */
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+:root:not(.dark) body {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+:root:not(.dark) .text-white { color: #0f172a; }
+:root:not(.dark) .text-slate-200 { color: #1e293b; }
+:root:not(.dark) .text-slate-300 { color: #1e293b; }
+:root:not(.dark) .text-slate-400 { color: #475569; }
+:root:not(.dark) .text-slate-500 { color: #64748b; }
+:root:not(.dark) .border-slate-800 { border-color: rgba(148, 163, 184, 0.45); }
+:root:not(.dark) .border-slate-700 { border-color: rgba(148, 163, 184, 0.6); }
+
+:root:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+:root:not(.dark) .glass-card-light {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(226, 232, 240, 0.8);
+}
+
+:root:not(.dark) nav { background-color: rgba(255, 255, 255, 0.9); }
+:root:not(.dark) footer { background-color: #ffffff; }
+
+:root:not(.dark) .bg-slate-900 { background-color: #f1f5f9; }
+:root:not(.dark) .bg-slate-900\/80 { background-color: rgba(248, 250, 252, 0.9); }
+:root:not(.dark) .bg-slate-900\/90 { background-color: #f8fafc; }
+:root:not(.dark) .bg-slate-800 { background-color: #e2e8f0; }
+:root:not(.dark) .bg-slate-800\/60 { background-color: rgba(241, 245, 249, 0.9); }
+:root:not(.dark) .bg-slate-950 { background-color: #ffffff; }
+
+:root:not(.dark) .bg-slate-950\/80 { background-color: rgba(255, 255, 255, 0.85); }
+:root:not(.dark) ::-webkit-scrollbar-track { background: #e2e8f0; }
+:root:not(.dark) ::-webkit-scrollbar-thumb { background: #94a3b8; }
+
 .gradient-border {
   position: relative;
   border-radius: 0.75rem;

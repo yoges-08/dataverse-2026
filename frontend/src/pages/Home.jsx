@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import CountdownTimer from '../components/CountdownTimer';
 import EventCard from '../components/EventDetailModal';
+import { AuthContext } from '../context/AuthContext';
 import { 
   Sparkles, Trophy, Calendar, Users, Award, ShieldCheck, 
-  ArrowRight, Code, Laptop, Flame, MapPin, CheckCircle2, ChevronRight, Zap
+  ArrowRight, Code, Laptop, Flame, MapPin, CheckCircle2, ChevronRight, Zap, LayoutDashboard
 } from 'lucide-react';
 import API from '../services/api';
 
 export default function Home() {
+  const { user } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,24 +63,43 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Prize Pool Badge */}
-          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-amber-500/40 shadow-xl">
-            <Trophy className="w-6 h-6 text-amber-400 animate-bounce" />
-            <div className="text-left">
-              <span className="text-[10px] text-amber-300 uppercase font-bold tracking-wider block">Total Prize Pool</span>
-              <span className="text-xl sm:text-2xl font-black text-white">₹1,00,000+ & Trophies</span>
+          {/* Symposium Date & Deadline Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 shadow-xl">
+              <Calendar className="w-5 h-5 text-indigo-400" />
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Symposium</span>
+                <span className="text-base sm:text-lg font-black text-white">12 / 09 / 2026</span>
+              </div>
+            </div>
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-pink-500/20 border border-amber-500/40 shadow-xl">
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              <div className="text-left">
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider block">Registration Deadline</span>
+                <span className="text-base sm:text-lg font-black text-white">05 / 09 / 2026</span>
+              </div>
             </div>
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
-            >
-              <Zap className="w-5 h-5 fill-white" />
-              <span>Register Now</span>
-            </Link>
+            {user ? (
+              <Link
+                to={user.role === 'super_admin' ? '/dashboard/admin' : user.role === 'coordinator' ? '/dashboard/coordinator' : user.role === 'volunteer' ? '/dashboard/volunteer' : '/dashboard/student'}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                <span>Go to Your Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                to="/register"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+              >
+                <Zap className="w-5 h-5 fill-white" />
+                <span>Register Now</span>
+              </Link>
+            )}
 
             <Link
               to="/events"
@@ -91,7 +112,7 @@ export default function Home() {
 
           {/* Countdown Timer */}
           <div className="pt-6">
-            <CountdownTimer targetDate="2026-09-15T09:00:00" />
+            <CountdownTimer targetDate="2026-09-12T09:00:00" />
           </div>
 
         </div>
@@ -102,7 +123,7 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { icon: Code, title: "Technical Excellence", desc: "QuizEE, Agentic AI, and Research Paper Presentations." },
+            { icon: Code, title: "Technical Excellence", desc: "Quiz, Agentic AI, and Research Paper Presentations." },
             { icon: Flame, title: "Non-Technical Fest", desc: "Layman Vibes, Luminas Fest, and E-Sports Gaming Arena." },
             { icon: ShieldCheck, title: "Instant QR Check-In", desc: "Digital tickets, QR verification, and automated ID badges." },
             { icon: Award, title: "E-Certificates", desc: "Verified PDF certificates issued to all participants." }

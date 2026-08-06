@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Mail, Phone, Send, CheckCircle2, Building } from 'lucide-react';
+import { MapPin, Mail, Phone, Send, CheckCircle2, Building, ExternalLink } from 'lucide-react';
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -120,23 +120,28 @@ export default function Contact() {
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-indigo-400 shrink-0" />
                 <div>
-                  <span className="font-bold text-white block">Helpline Numbers</span>
-                  <span className="text-slate-400">+91 98421 00123 / +91 97890 12345</span>
+                  <span className="font-bold text-white block">Symposium Coordinator</span>
+                  <span className="text-slate-400">9994718221</span>
+                  <span className="font-bold text-white block mt-1">Organizer Members</span>
+                  <span className="text-slate-400">9791656236 / 8122310171 / 9489038346 / 8838999607</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="glass-card rounded-3xl overflow-hidden border border-slate-800 h-64">
-            <iframe
-              title="AAMEC Map Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.4231888915467!2d79.231944!3d10.783056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a554a73752e5a59%3A0x6b3f7bf9c8e19c0a!2sAnjalai%20Ammal%20Mahalingam%20Engineering%20College!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-            ></iframe>
+          <div className="glass-card rounded-3xl p-8 border border-slate-800 h-64 flex flex-col items-center justify-center text-center space-y-3">
+            <MapPin className="w-10 h-10 text-indigo-400" />
+            <p className="text-sm font-bold text-white">View Campus on Google Maps</p>
+            <p className="text-xs text-slate-400">Open the exact venue location for DATAVERSE 2026.</p>
+            <a
+              href="https://maps.app.goo.gl/Vjre7pWWT5fgBu6E9"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Open Location</span>
+            </a>
           </div>
         </div>
 

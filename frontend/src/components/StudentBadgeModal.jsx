@@ -1,6 +1,6 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, ShieldCheck, Sparkles, User, MapPin } from 'lucide-react';
+import { X, Printer, Sparkles, MapPin } from 'lucide-react';
 
 export default function StudentBadgeModal({ student, onClose }) {
   if (!student) return null;
@@ -55,19 +55,12 @@ export default function StudentBadgeModal({ student, onClose }) {
               <p className="text-[10px] text-slate-400 italic">Innovate • Inspire • Create</p>
             </div>
 
-            {/* Photo & QR side-by-side */}
+            {/* Snapshot & QR side-by-side */}
             <div className="flex items-center justify-center space-x-4 my-4">
-              <div className="relative">
-                <img
-                  src={student.profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-                  alt={student.name}
-                  className="w-24 h-24 rounded-xl object-cover border-2 border-indigo-400 shadow-md"
-                />
-                {student.isCheckedIn && (
-                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white rounded-full p-1 shadow-lg" title="Checked In">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                )}
+              <div className="w-24 h-24 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-indigo-400 shadow-md">
+                <span className="text-4xl font-black text-white">
+                  {(student.name || (student.user && student.user.name) || student.email || '?').charAt(0).toUpperCase()}
+                </span>
               </div>
 
               <div className="bg-white p-2 rounded-xl border border-slate-300 shadow-md">
@@ -87,9 +80,6 @@ export default function StudentBadgeModal({ student, onClose }) {
               <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-xs tracking-wider border border-indigo-400/40">
                 CODE: {student.symposiumCode}
               </div>
-              <p className="text-xs text-slate-300 font-medium">
-                Reg No: <span className="font-bold text-white">{student.registerNumber}</span>
-              </p>
               <p className="text-xs text-indigo-300 font-semibold mt-1">
                 {student.department} • Year {student.year}
               </p>
@@ -115,8 +105,7 @@ export default function StudentBadgeModal({ student, onClose }) {
 
             {/* Footer Pass Indicators */}
             <div className="mt-4 pt-3 border-t border-indigo-500/30 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-              <span>Food: <strong className="text-white">{student.foodPreference || 'Veg'}</strong></span>
-              <span>Accom: <strong className="text-white">{student.accommodationRequired || 'No'}</strong></span>
+              <span className="text-indigo-300 font-bold">{student.symposiumCode}</span>
               <span className="text-emerald-400 uppercase font-bold">Access Granted</span>
             </div>
 
