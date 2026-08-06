@@ -11,7 +11,13 @@ dotenv.config();
 const app = express();
 
 // Body Parser Middleware
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(cors(allowedOrigins.length
+  ? { origin: allowedOrigins }
+  : {}));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -63,7 +69,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`🚀 DATAVERSE Symposium Backend Server Running on Port ${PORT}`);
   console.log(`🏫 College: Anjalai Ammal Mahalingam Engineering College, Kovilvenni`);
