@@ -23,6 +23,7 @@ const generateSymposiumCode = () => {
 // @desc    Register a new Student
 // @route   POST /api/auth/register-student
 exports.registerStudent = async (req, res) => {
+  let createdUser = null;
   try {
     const {
       name, email, password, collegeName, department, year,
@@ -37,13 +38,20 @@ exports.registerStudent = async (req, res) => {
     if (isDbConnected()) {
       const existingUser = await User.findOne({ email: cleanEmail });
       if (existingUser) {
-        return res.status(400).json({ success: false, message: 'Email address already registered' });
+        // Check if student profile exists for this user
+        const existingStudent = await Student.findOne({ user: existingUser._id });
+        if (!existingStudent) {
+          // Orphaned user from previous crashed registration attempt - remove to allow fresh registration
+          await User.findByIdAndDelete(existingUser._id);
+        } else {
+          return res.status(400).json({ success: false, message: 'Email address already registered' });
+        }
       }
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const user = await User.create({
+      createdUser = await User.create({
         name,
         email: cleanEmail,
         password: hashedPassword,
@@ -62,7 +70,7 @@ exports.registerStudent = async (req, res) => {
       const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
       const student = await Student.create({
-        user: user._id,
+        user: createdUser._id,
         symposiumCode,
         registerNumber: 'N/A',
         collegeName,
@@ -71,18 +79,18 @@ exports.registerStudent = async (req, res) => {
         email: cleanEmail,
         phone: phone || 'N/A',
         gender: gender || 'Male',
-        dateOfBirth,
-        address,
+        dateOfBirth: dateOfBirth || '',
+        address: address || '',
         profilePhoto: 'N/A',
         collegeIdCard: 'N/A',
-        emergencyContact,
+        emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
         verificationStatus: 'Pending',
         qrCodeData: qrCodeDataUrl
       });
 
-      const token = generateToken(user._id);
+      const token = generateToken(createdUser._id);
 
       const emailResult = await sendEmail({
         to: cleanEmail,
@@ -93,7 +101,7 @@ exports.registerStudent = async (req, res) => {
       return res.status(201).json({
         success: true,
         token,
-        user: { id: user._id, name: user.name, email: user.email, role: user.role },
+        user: { id: createdUser._id, name: createdUser.name, email: createdUser.email, role: createdUser.role },
         student,
         emailStatus: emailResult
       });
@@ -101,7 +109,12 @@ exports.registerStudent = async (req, res) => {
       // In-Memory Fallback
       const existing = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (existing) {
-        return res.status(400).json({ success: false, message: 'Email address already registered' });
+        const existingStudent = mockStore.students.find(s => String(s.user) === String(existing._id));
+        if (!existingStudent) {
+          mockStore.users = mockStore.users.filter(u => String(u._id) !== String(existing._id));
+        } else {
+          return res.status(400).json({ success: false, message: 'Email address already registered' });
+        }
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -133,11 +146,11 @@ exports.registerStudent = async (req, res) => {
         email: cleanEmail,
         phone: phone || 'N/A',
         gender: gender || 'Male',
-        dateOfBirth,
-        address,
+        dateOfBirth: dateOfBirth || '',
+        address: address || '',
         profilePhoto: 'N/A',
         collegeIdCard: 'N/A',
-        emergencyContact,
+        emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
         verificationStatus: 'Pending',
@@ -164,6 +177,10 @@ exports.registerStudent = async (req, res) => {
     }
   } catch (error) {
     console.error('Register Student Error:', error);
+    // Cleanup created user if student creation failed
+    if (createdUser && isDbConnected()) {
+      await User.findByIdAndDelete(createdUser._id).catch(() => {});
+    }
     res.status(500).json({ success: false, message: error.message || 'Server error during registration' });
   }
 };
