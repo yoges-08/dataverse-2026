@@ -36,30 +36,37 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const res = await API.post('/auth/login', { email, password });
-    if (res.data.success) {
-      setToken(res.data.token);
-      localStorage.setItem('dataverse_token', res.data.token);
-      setUser(res.data.user);
-      setStudent(res.data.student);
-      return res.data;
-    } else {
-      throw new Error(res.data.message || 'Login failed');
+    try {
+      const res = await API.post('/auth/login', { email, password });
+      if (res.data.success) {
+        setToken(res.data.token);
+        localStorage.setItem('dataverse_token', res.data.token);
+        setUser(res.data.user);
+        setStudent(res.data.student);
+        return res.data;
+      } else {
+        throw new Error(res.data.message || 'Login failed');
+      }
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'Login failed');
     }
   };
 
   const registerStudent = async (formData) => {
-    const res = await API.post('/auth/register-student', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    if (res.data.success) {
-      setToken(res.data.token);
-      localStorage.setItem('dataverse_token', res.data.token);
-      setUser(res.data.user);
-      setStudent(res.data.student);
-      return res.data;
-    } else {
-      throw new Error(res.data.message || 'Registration failed');
+    try {
+      // Omit explicit Content-Type header so Axios automatically sets boundary for FormData
+      const res = await API.post('/auth/register-student', formData);
+      if (res.data.success) {
+        setToken(res.data.token);
+        localStorage.setItem('dataverse_token', res.data.token);
+        setUser(res.data.user);
+        setStudent(res.data.student);
+        return res.data;
+      } else {
+        throw new Error(res.data.message || 'Registration failed');
+      }
+    } catch (err) {
+      throw new Error(err.response?.data?.message || err.message || 'Registration failed');
     }
   };
 
