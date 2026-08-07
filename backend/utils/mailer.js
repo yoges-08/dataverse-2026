@@ -30,8 +30,14 @@ const getTransporter = () => {
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const getFromEmail = () => {
+  const raw = String(process.env.SMTP_FROM || '').replace(/^["']|["']$/g, '').trim();
+  if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
+  return process.env.SMTP_USER || 'no-reply@dataverse.aamec.in';
+};
+
 const buildMail = ({ to, subject, html }) => ({
-  from: `"DATAVERSE 2026 - AAMEC" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+  from: `"DATAVERSE 2026 - AAMEC" <${getFromEmail()}>`,
   to,
   subject,
   html
