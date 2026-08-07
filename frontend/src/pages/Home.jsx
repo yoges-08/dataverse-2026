@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CountdownTimer from '../components/CountdownTimer';
 import { 
-  Sparkles, Trophy, Calendar, Users, Award, ShieldCheck, 
+  Sparkles, Calendar, Users, Award, ShieldCheck, 
   ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2
 } from 'lucide-react';
 import API from '../services/api';
@@ -74,12 +74,21 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Prize Pool Badge */}
-          <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-purple-500/20 border border-amber-500/40 shadow-xl">
-            <Trophy className="w-6 h-6 text-amber-400 animate-bounce" />
-            <div className="text-left">
-              <span className="text-[10px] text-amber-300 uppercase font-bold tracking-wider block">Total Prize Pool</span>
-              <span className="text-xl sm:text-2xl font-black text-white">₹1,00,000+ & Trophies</span>
+          {/* Symposium Date & Deadline Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 shadow-xl">
+              <Calendar className="w-5 h-5 text-indigo-400" />
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Symposium</span>
+                <span className="text-base sm:text-lg font-black text-white">12 / 09 / 2026</span>
+              </div>
+            </div>
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-pink-500/20 border border-amber-500/40 shadow-xl">
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              <div className="text-left">
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider block">Registration Deadline</span>
+                <span className="text-base sm:text-lg font-black text-white">05 / 09 / 2026</span>
+              </div>
             </div>
           </div>
 
@@ -104,7 +113,7 @@ export default function Home() {
 
           {/* Countdown Timer */}
           <div className="pt-6">
-            <CountdownTimer targetDate="2026-09-15T09:00:00" />
+            <CountdownTimer targetDate="2026-09-12T09:00:00" />
           </div>
 
         </div>
