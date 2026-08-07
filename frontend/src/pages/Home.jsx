@@ -32,69 +32,59 @@ export default function Home() {
     <div className="space-y-24 pb-16 overflow-hidden">
       
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center pt-10 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8">
         
         {/* Glowing Background Mesh */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-600/30 via-purple-600/20 to-pink-600/30 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-indigo-600/30 via-purple-600/20 to-pink-600/30 rounded-full blur-[140px] pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-8">
           
-          {/* Logos Display Container */}
-          <div className="flex items-center justify-center space-x-6 sm:space-x-10 mb-2">
+          {/* Main Prominent Logos Container */}
+          <div className="flex items-center justify-center space-x-6 sm:space-x-12 mb-4">
             
-            {/* College Logo Container */}
-            <div className="group relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-500"></div>
-              <div className="relative w-20 h-20 sm:w-28 sm:h-28 glass-card rounded-2xl p-2 border border-indigo-500/30 flex items-center justify-center overflow-hidden shadow-xl bg-slate-900/90">
-                <img
-                  src="/college_logo.png"
-                  alt="AAMEC College Logo"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                  className="w-full h-full object-contain"
-                />
-                <div className="hidden flex-col items-center justify-center text-indigo-400">
-                  <Building2 className="w-10 h-10" />
-                  <span className="text-[9px] font-bold mt-1 text-slate-300">AAMEC</span>
+            {/* 1. Official AAMEC College Logo */}
+            <div className="flex flex-col items-center">
+              <div className="relative group">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
+                <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-amber-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
+                  <img
+                    src="/college_logo.png"
+                    alt="AAMEC Official College Emblem"
+                    className="w-full h-full object-contain filter drop-shadow-md"
+                  />
                 </div>
               </div>
-              <span className="text-[10px] font-semibold text-slate-400 block mt-1">College Logo</span>
+              <span className="text-[11px] font-extrabold text-amber-300 mt-2.5 uppercase tracking-wider">
+                Official College Emblem
+              </span>
             </div>
 
-            {/* Divider */}
-            <div className="h-16 w-px bg-gradient-to-b from-transparent via-indigo-500/40 to-transparent"></div>
+            {/* Glowing Center Divider */}
+            <div className="h-24 w-0.5 bg-gradient-to-b from-transparent via-indigo-500/60 to-transparent"></div>
 
-            {/* Symposium Logo Container */}
-            <div className="group relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
-              <div className="relative w-20 h-20 sm:w-28 sm:h-28 glass-card rounded-2xl p-2 border border-indigo-500/30 flex items-center justify-center overflow-hidden shadow-xl bg-slate-900/90">
-                <img
-                  src="/logo.png"
-                  alt="DATAVERSE Symposium Logo"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                  className="w-full h-full object-contain"
-                />
-                <div className="hidden flex-col items-center justify-center text-indigo-400">
-                  <Sparkles className="w-10 h-10 animate-bounce" />
-                  <span className="text-[9px] font-bold mt-1 text-slate-300">DATAVERSE</span>
+            {/* 2. DATAVERSE AI & DS Symposium Logo */}
+            <div className="flex flex-col items-center">
+              <div className="relative group">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
+                <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-indigo-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
+                  <img
+                    src="/logo.png"
+                    alt="DATAVERSE AI & DS Symposium Logo"
+                    className="w-full h-full object-contain filter drop-shadow-md"
+                  />
                 </div>
               </div>
-              <span className="text-[10px] font-semibold text-indigo-400 block mt-1">DATAVERSE Logo</span>
+              <span className="text-[11px] font-extrabold text-indigo-400 mt-2.5 uppercase tracking-wider">
+                DATAVERSE AI & DS Logo
+              </span>
             </div>
 
           </div>
 
           {/* College Badge */}
-          <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-slate-900/80 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-xs sm:text-sm font-medium text-slate-300">
+          <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-slate-900/90 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span className="text-xs sm:text-sm font-semibold text-slate-200">
               Anjalai Ammal Mahalingam Engineering College, Kovilvenni
             </span>
           </div>
@@ -108,7 +98,7 @@ export default function Home() {
               Innovate • Inspire • Create
             </p>
             <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-400 leading-relaxed">
-              National Level Technical & Non-Technical Symposium bringing together brilliant engineering minds across India for innovative challenges, AI hackathons, technical quizzes, and stage events.
+              National Level Technical & Non-Technical Symposium conducted by Department of Artificial Intelligence and Data Science (AI & DS).
             </p>
           </div>
 
