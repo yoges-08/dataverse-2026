@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
-  Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck 
+  Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User 
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
     try {
       const res = await API.post('/events', {
         ...newEvent,
-        rules: newEvent.rules.split('\n'),
+        rules: (newEvent.rules || '').split('\n'),
         facultyCoordinator: { name: newEvent.facultyName, phone: newEvent.facultyPhone },
         studentCoordinator: { name: newEvent.studentName, phone: newEvent.studentPhone },
         prizes: { first: newEvent.firstPrize, second: newEvent.secondPrize, third: newEvent.thirdPrize }
@@ -141,10 +141,10 @@ export default function AdminDashboard() {
   };
 
   const exportCSV = () => {
-    const headers = ['Symposium Code,Register No,Name,Email,College,Department,Year,Status,Checked In\n'];
+    const headers = ['Symposium Code,Name,Email,College,Department,Year,Status,Checked In\n'];
     const rows = students.map(s => {
       const uName = s.user?.name || s.name || s.email;
-      return `"${s.symposiumCode}","${s.registerNumber}","${uName}","${s.email}","${s.collegeName}","${s.department}","${s.year}","${s.verificationStatus}","${s.isCheckedIn ? 'Yes' : 'No'}"\n`;
+      return `"${s.symposiumCode}","${uName}","${s.email}","${s.collegeName}","${s.department}","${s.year}","${s.verificationStatus}","${s.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
 
     const blob = new Blob([headers.concat(rows).join('')], { type: 'text/csv' });
@@ -156,9 +156,9 @@ export default function AdminDashboard() {
   };
 
   const filteredStudents = students.filter(s => {
-    const matchesSearch = s.symposiumCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.registerNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (s.symposiumCode && s.symposiumCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (s.collegeName && s.collegeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (s.user && s.user.name && s.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
     return matchesSearch && matchesStatus;
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
                 type="text"
-                placeholder="Search Reg No, Code (DV2026-REG-1001), Email..."
+                placeholder="Search Code (DV2026-REG-1001), College, Email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 font-mono"
@@ -275,7 +275,6 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="p-4">Student</th>
                     <th className="p-4">Symposium Code</th>
-                    <th className="p-4">Reg Number</th>
                     <th className="p-4">College & Dept</th>
                     <th className="p-4">Status</th>
                     <th className="p-4">Checked In</th>
@@ -288,10 +287,8 @@ export default function AdminDashboard() {
                     return (
                       <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
                         <td className="p-4 flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center border border-slate-700">
-                            <span className="font-black text-white text-sm">
-                              {(name || '?').charAt(0).toUpperCase()}
-                            </span>
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
+                            <User className="w-4 h-4 text-indigo-400" />
                           </div>
                           <div>
                             <span className="font-bold text-white block">{name}</span>
@@ -300,9 +297,8 @@ export default function AdminDashboard() {
                         </td>
 
                         <td className="p-4 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>
-                        <td className="p-4 font-mono text-slate-300">{s.registerNumber}</td>
                         <td className="p-4">
-                          <span className="text-slate-200 block font-medium max-w-[200px] truncate">{s.collegeName}</span>
+                          <span className="text-slate-200 block font-medium max-w-[220px] truncate">{s.collegeName}</span>
                           <span className="text-[10px] text-indigo-300">{s.department} ({s.year})</span>
                         </td>
 
@@ -331,7 +327,7 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => setSelectedStudentForBadge(s)}
                             className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
-                            title="Preview Badge & QR"
+                            title="Preview Badge & QR Pass"
                           >
                             <QrCode className="w-4 h-4" />
                           </button>

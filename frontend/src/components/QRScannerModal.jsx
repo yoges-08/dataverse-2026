@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { QrCode, Search, X, Camera, ShieldCheck, AlertCircle, Sparkles, UserCheck } from 'lucide-react';
+import { QrCode, Search, X, Camera, ShieldCheck, AlertCircle, Sparkles, UserCheck, User } from 'lucide-react';
 import API from '../services/api';
 
 export default function QRScannerModal({ onClose, onVerifySuccess }) {
@@ -26,9 +26,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
           setScanning(false);
           handleVerify(decodedText);
         },
-        (error) => {
-          // Scanning errors can be silently ignored during camera search
-        }
+        (error) => {}
       );
     }
 
@@ -42,7 +40,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
   const handleVerify = async (codeToVerify) => {
     const queryCode = codeToVerify || manualCode;
     if (!queryCode.trim()) {
-      setErrorMsg('Please enter or scan a valid student code');
+      setErrorMsg('Please enter or scan a valid student ticket code');
       return;
     }
 
@@ -103,7 +101,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
         <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <QrCode className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-white font-bold text-base">QR Scanner & Check-In Verification</h3>
+            <h3 className="text-white font-bold text-base">QR Ticket Verification Terminal</h3>
           </div>
           <button
             onClick={onClose}
@@ -140,7 +138,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
               <input
                 type="text"
-                placeholder="Enter Reg Code (DV2026-REG-1001) or Register No..."
+                placeholder="Enter Ticket Code (DV2026-REG-1001) or Email..."
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500 font-mono"
@@ -159,7 +157,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
           {scanning && !verifiedStudent && (
             <div className="text-center">
               <div id="reader" className="rounded-xl overflow-hidden border border-indigo-500/30 bg-slate-900"></div>
-              <p className="text-xs text-slate-400 mt-2">Point webcam at student QR code ticket</p>
+              <p className="text-xs text-slate-400 mt-2">Point webcam at student QR code pass</p>
             </div>
           )}
 
@@ -187,15 +185,13 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
               
               <div className="flex items-start justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={verifiedStudent.profilePhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'}
-                    alt={verifiedStudent.name}
-                    className="w-16 h-16 rounded-xl object-cover border border-indigo-500"
-                  />
+                  <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
+                    <User className="w-6 h-6 text-indigo-400" />
+                  </div>
                   <div>
                     <h4 className="text-lg font-bold text-white">{verifiedStudent.name}</h4>
-                    <span className="text-xs text-indigo-400 font-mono font-semibold">{verifiedStudent.symposiumCode}</span>
-                    <p className="text-xs text-slate-400">Reg No: {verifiedStudent.registerNumber}</p>
+                    <span className="text-xs text-indigo-400 font-mono font-bold">{verifiedStudent.symposiumCode}</span>
+                    <p className="text-xs text-slate-400">{verifiedStudent.email}</p>
                   </div>
                 </div>
 
@@ -210,21 +206,17 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
 
               {/* Institution & Details */}
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">College:</span>
-                  <span className="text-white font-medium">{verifiedStudent.collegeName}</span>
+                <div className="col-span-2">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">College Name:</span>
+                  <span className="text-white font-semibold">{verifiedStudent.collegeName}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Department:</span>
-                  <span className="text-white font-medium">{verifiedStudent.department} (Year {verifiedStudent.year})</span>
+                  <span className="text-white font-medium">{verifiedStudent.department}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Food Preference:</span>
-                  <span className="text-indigo-300 font-semibold">{verifiedStudent.foodPreference || 'Veg'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Accommodation:</span>
-                  <span className="text-indigo-300 font-semibold">{verifiedStudent.accommodationRequired || 'No'}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Year of Study:</span>
+                  <span className="text-indigo-300 font-semibold">Year {verifiedStudent.year}</span>
                 </div>
               </div>
 

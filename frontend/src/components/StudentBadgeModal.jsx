@@ -1,6 +1,6 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, Sparkles, MapPin } from 'lucide-react';
+import { X, Printer, ShieldCheck, Sparkles, User, MapPin } from 'lucide-react';
 
 export default function StudentBadgeModal({ student, onClose }) {
   if (!student) return null;
@@ -17,7 +17,7 @@ export default function StudentBadgeModal({ student, onClose }) {
         <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-white font-bold text-base">Official Symposium Badge</h3>
+            <h3 className="text-white font-bold text-base">Official Symposium Ticket Badge</h3>
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -38,16 +38,12 @@ export default function StudentBadgeModal({ student, onClose }) {
 
         {/* Printable Badge Area */}
         <div className="p-6 printable-content">
-          <div className="bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 rounded-2xl p-5 border-2 border-indigo-500/40 text-center relative overflow-hidden shadow-xl">
+          <div className="bg-gradient-to-b from-slate-900 via-indigo-950/40 to-slate-900 rounded-2xl p-6 border-2 border-indigo-500/40 text-center relative overflow-hidden shadow-xl space-y-4">
             
-            {/* Background design accents */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
-
             {/* Symposium Top Banner */}
-            <div className="border-b border-indigo-500/30 pb-3 mb-4">
+            <div className="border-b border-indigo-500/30 pb-3">
               <span className="text-[10px] font-extrabold tracking-widest text-indigo-400 uppercase">
-                ANJALAI AMMAL MAHALINGAM ENGG COLLEGE
+                NATIONAL LEVEL SYMPOSIUM
               </span>
               <h2 className="text-2xl font-black tracking-wider text-white mt-0.5">
                 DATAVERSE <span className="text-indigo-400">2026</span>
@@ -55,47 +51,44 @@ export default function StudentBadgeModal({ student, onClose }) {
               <p className="text-[10px] text-slate-400 italic">Innovate • Inspire • Create</p>
             </div>
 
-            {/* Snapshot & QR side-by-side */}
-            <div className="flex items-center justify-center space-x-4 my-4">
-              <div className="w-24 h-24 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-indigo-400 shadow-md">
-                <span className="text-4xl font-black text-white">
-                  {(student.name || (student.user && student.user.name) || student.email || '?').charAt(0).toUpperCase()}
-                </span>
-              </div>
-
-              <div className="bg-white p-2 rounded-xl border border-slate-300 shadow-md">
+            {/* QR Code Centerpiece */}
+            <div className="flex justify-center my-2">
+              <div className="bg-white p-3 rounded-2xl border-2 border-indigo-400 shadow-xl">
                 <QRCodeSVG
-                  value={student.symposiumCode || student.registerNumber}
-                  size={84}
+                  value={student.symposiumCode || student.email}
+                  size={120}
                   level="H"
                 />
               </div>
             </div>
 
             {/* Student Details */}
-            <div className="space-y-1 my-3">
-              <h3 className="text-xl font-bold text-white tracking-wide">
-                {student.name || (student.user && student.user.name) || student.email}
-              </h3>
-              <div className="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-extrabold text-xs tracking-wider border border-indigo-400/40">
+            <div className="space-y-1.5">
+              <div className="inline-block px-3.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-black text-sm tracking-wider border border-indigo-400/40 font-mono">
                 CODE: {student.symposiumCode}
               </div>
-              <p className="text-xs text-indigo-300 font-semibold mt-1">
+
+              <h3 className="text-xl font-extrabold text-white tracking-wide pt-1">
+                {student.name || (student.user && student.user.name) || student.email}
+              </h3>
+
+              <p className="text-xs text-indigo-300 font-bold">
                 {student.department} • Year {student.year}
               </p>
-              <p className="text-[11px] text-slate-400 flex items-center justify-center space-x-1 mt-1">
-                <MapPin className="w-3 h-3 text-indigo-400 inline" />
-                <span className="truncate max-w-[260px]">{student.collegeName}</span>
+
+              <p className="text-xs text-slate-300 flex items-center justify-center space-x-1 pt-0.5">
+                <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 inline" />
+                <span className="font-semibold truncate max-w-[280px]">{student.collegeName}</span>
               </p>
             </div>
 
             {/* Registered Events List */}
             {student.registeredEvents && student.registeredEvents.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-indigo-500/20 text-left">
+              <div className="pt-3 border-t border-indigo-500/20 text-left">
                 <p className="text-[10px] uppercase font-bold text-slate-400 mb-1.5">Registered Events:</p>
                 <div className="flex flex-wrap gap-1">
                   {student.registeredEvents.map((ev, idx) => (
-                    <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700">
+                    <span key={idx} className="text-[10px] px-2.5 py-0.5 rounded-md bg-slate-800 text-indigo-300 border border-slate-700 font-medium">
                       {ev.title || ev}
                     </span>
                   ))}
@@ -103,10 +96,13 @@ export default function StudentBadgeModal({ student, onClose }) {
               </div>
             )}
 
-            {/* Footer Pass Indicators */}
-            <div className="mt-4 pt-3 border-t border-indigo-500/30 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-              <span className="text-indigo-300 font-bold">{student.symposiumCode}</span>
-              <span className="text-emerald-400 uppercase font-bold">Access Granted</span>
+            {/* Footer Pass Indicator */}
+            <div className="pt-3 border-t border-indigo-500/30 flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-400">STATUS: <strong className="text-emerald-400">{student.verificationStatus || 'APPROVED'}</strong></span>
+              <span className="text-emerald-400 uppercase tracking-wider flex items-center space-x-1">
+                <ShieldCheck className="w-4 h-4 inline" />
+                <span>ENTRY GRANTED</span>
+              </span>
             </div>
 
           </div>

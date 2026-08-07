@@ -25,12 +25,12 @@ const generateSymposiumCode = () => {
 exports.registerStudent = async (req, res) => {
   try {
     const {
-      name, email, password, registerNumber, collegeName, department, year,
-      phone, gender, dateOfBirth, address, emergencyContact, foodPreference, accommodationRequired
+      name, email, password, collegeName, department, year,
+      phone, gender, dateOfBirth, address, emergencyContact
     } = req.body;
 
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail || !password || !name || !registerNumber) {
+    if (!cleanEmail || !password || !name || !collegeName) {
       return res.status(400).json({ success: false, message: 'Please fill all required registration fields' });
     }
 
@@ -58,40 +58,36 @@ exports.registerStudent = async (req, res) => {
         codeExists = await Student.findOne({ symposiumCode });
       }
 
-      const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail });
+      const qrPayload = JSON.stringify({ symposiumCode, name, collegeName, department, email: cleanEmail });
       const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
-
-      const profilePhoto = req.files && req.files.profilePhoto ? `/uploads/${req.files.profilePhoto[0].filename}` : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-      const collegeIdCard = req.files && req.files.collegeIdCard ? `/uploads/${req.files.collegeIdCard[0].filename}` : 'https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=600&q=80';
 
       const student = await Student.create({
         user: user._id,
         symposiumCode,
-        registerNumber,
-        collegeName: collegeName || 'Anjalai Ammal Mahalingam Engineering College',
-        department,
-        year,
+        registerNumber: 'N/A',
+        collegeName,
+        department: department || 'Computer Science & Engineering',
+        year: year || 'III',
         email: cleanEmail,
-        phone,
-        gender,
+        phone: phone || 'N/A',
+        gender: gender || 'Male',
         dateOfBirth,
         address,
-        profilePhoto,
-        collegeIdCard,
+        profilePhoto: 'N/A',
+        collegeIdCard: 'N/A',
         emergencyContact,
-        foodPreference: foodPreference || 'Veg',
-        accommodationRequired: accommodationRequired || 'No',
+        foodPreference: 'N/A',
+        accommodationRequired: 'N/A',
         verificationStatus: 'Pending',
         qrCodeData: qrCodeDataUrl
       });
 
       const token = generateToken(user._id);
 
-      // Attempt sending welcome confirmation email
       const emailResult = await sendEmail({
         to: cleanEmail,
         subject: 'Welcome to DATAVERSE 2026 - Symposium Registration Confirmed',
-        html: `<h3>Dear ${name},</h3><p>Thank you for registering for DATAVERSE 2026 at Anjalai Ammal Mahalingam Engineering College.</p><p>Your unique Symposium Ticket Code is: <strong>${symposiumCode}</strong></p><p>Please log in to your Student Dashboard to view your digital ticket and QR code.</p>`
+        html: `<h3>Dear ${name},</h3><p>Thank you for registering for DATAVERSE 2026.</p><p>Your unique Symposium Ticket Code is: <strong>${symposiumCode}</strong></p><p>Please log in to your Student Dashboard to view your digital ticket and QR code.</p>`
       });
 
       return res.status(201).json({
@@ -102,7 +98,7 @@ exports.registerStudent = async (req, res) => {
         emailStatus: emailResult
       });
     } else {
-      // In-Memory Fallback with strict uniqueness & email lowercasing
+      // In-Memory Fallback
       const existing = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (existing) {
         return res.status(400).json({ success: false, message: 'Email address already registered' });
@@ -122,7 +118,7 @@ exports.registerStudent = async (req, res) => {
         codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
       }
 
-      const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail });
+      const qrPayload = JSON.stringify({ symposiumCode, name, collegeName, department, email: cleanEmail });
       const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
       const studentId = 's' + (mockStore.students.length + 1);
@@ -130,20 +126,20 @@ exports.registerStudent = async (req, res) => {
         _id: studentId,
         user: userId,
         symposiumCode,
-        registerNumber,
-        collegeName: collegeName || 'Anjalai Ammal Mahalingam Engineering College',
+        registerNumber: 'N/A',
+        collegeName,
         department: department || 'Computer Science & Engineering',
         year: year || 'III',
         email: cleanEmail,
-        phone,
+        phone: phone || 'N/A',
         gender: gender || 'Male',
         dateOfBirth,
         address,
-        profilePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-        collegeIdCard: 'https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=600&q=80',
+        profilePhoto: 'N/A',
+        collegeIdCard: 'N/A',
         emergencyContact,
-        foodPreference: foodPreference || 'Veg',
-        accommodationRequired: accommodationRequired || 'No',
+        foodPreference: 'N/A',
+        accommodationRequired: 'N/A',
         verificationStatus: 'Pending',
         isCheckedIn: false,
         qrCodeData: qrCodeDataUrl
@@ -244,7 +240,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Forgot Password Request - Generate 6-Digit OTP & Dispatch
+// @desc    Forgot Password Request
 // @route   POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
   try {
@@ -255,8 +251,8 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter your registered email address' });
     }
 
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
-    const resetExpire = Date.now() + 15 * 60 * 1000; // 15 mins
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetExpire = Date.now() + 15 * 60 * 1000;
 
     if (isDbConnected()) {
       const user = await User.findOne({ email: cleanEmail });
@@ -276,7 +272,6 @@ exports.forgotPassword = async (req, res) => {
       user.resetPasswordExpire = resetExpire;
     }
 
-    // Dispatch OTP Email
     const emailResult = await sendEmail({
       to: cleanEmail,
       subject: 'DATAVERSE 2026 - Password Reset Verification Code',
@@ -287,7 +282,6 @@ exports.forgotPassword = async (req, res) => {
       success: true,
       message: 'Password reset OTP has been generated.',
       emailStatus: emailResult,
-      // Pass devOtp for seamless UI testing if SMTP is unconfigured in local dev environment
       devOtp: process.env.NODE_ENV !== 'production' ? resetToken : undefined
     });
   } catch (error) {

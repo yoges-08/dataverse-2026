@@ -54,8 +54,8 @@ export default function StudentDashboard() {
       {/* Header Banner */}
       <div className="glass-card rounded-3xl p-6 sm:p-8 border border-indigo-500/30 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center border-2 border-indigo-500 shadow-xl">
-            <User className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border-2 border-indigo-500 flex items-center justify-center">
+            <User className="w-8 h-8 text-indigo-400" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -77,7 +77,7 @@ export default function StudentDashboard() {
             className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2"
           >
             <QrCode className="w-4 h-4" />
-            <span>View Digital Badge & QR Ticket</span>
+            <span>View Digital Badge & QR Pass</span>
           </button>
         </div>
       </div>
