@@ -7,7 +7,6 @@ const Attendance = require('../models/Attendance');
 const Certificate = require('../models/Certificate');
 const bcrypt = require('bcryptjs');
 const mockStore = require('../utils/mockStore');
-const { sendApprovalMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -49,8 +48,8 @@ exports.getAnalytics = async (req, res) => {
       const collegeMap = {};
       const deptMap = {};
       mockStore.students.forEach(s => {
-        collegeMap[s.collegeName] = (collegeMap[s.collegeName] || 0) + 1;
-        deptMap[s.department] = (deptMap[s.department] || 0) + 1;
+        if (s.collegeName) collegeMap[s.collegeName] = (collegeMap[s.collegeName] || 0) + 1;
+        if (s.department) deptMap[s.department] = (deptMap[s.department] || 0) + 1;
       });
 
       return res.status(200).json({
@@ -84,10 +83,10 @@ exports.getAllStudents = async (req, res) => {
         const term = search.toLowerCase();
         students = students.filter(s => 
           (s.user && s.user.name && s.user.name.toLowerCase().includes(term)) ||
-          s.symposiumCode.toLowerCase().includes(term) ||
-          s.registerNumber.toLowerCase().includes(term) ||
-          s.email.toLowerCase().includes(term) ||
-          s.collegeName.toLowerCase().includes(term)
+          (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
+          (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
+          (s.email && s.email.toLowerCase().includes(term)) ||
+          (s.collegeName && s.collegeName.toLowerCase().includes(term))
         );
       }
       return res.status(200).json({ success: true, count: students.length, students });
@@ -99,16 +98,16 @@ exports.getAllStudents = async (req, res) => {
 
       if (status) list = list.filter(s => s.verificationStatus === status);
       if (department) list = list.filter(s => s.department === department);
-      if (college) list = list.filter(s => s.collegeName.toLowerCase().includes(college.toLowerCase()));
+      if (college) list = list.filter(s => s.collegeName && s.collegeName.toLowerCase().includes(college.toLowerCase()));
 
       if (search) {
         const term = search.toLowerCase();
         list = list.filter(s => 
           (s.user && s.user.name && s.user.name.toLowerCase().includes(term)) ||
-          s.symposiumCode.toLowerCase().includes(term) ||
-          s.registerNumber.toLowerCase().includes(term) ||
-          s.email.toLowerCase().includes(term) ||
-          s.collegeName.toLowerCase().includes(term)
+          (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
+          (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
+          (s.email && s.email.toLowerCase().includes(term)) ||
+          (s.collegeName && s.collegeName.toLowerCase().includes(term))
         );
       }
 
@@ -123,18 +122,12 @@ exports.updateStudentStatus = async (req, res) => {
   try {
     const { status, rejectionReason } = req.body;
     if (isDbConnected()) {
-      const student = await Student.findById(req.params.id).populate('user', 'name');
+      const student = await Student.findById(req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
       student.verificationStatus = status;
       student.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Rejected by Admin') : '';
       await student.save();
-
-      if (status === 'Approved') {
-        const studentName = student.user ? student.user.name : student.email;
-        sendApprovalMail({ to: student.email, name: studentName, registerNumber: student.registerNumber, symposiumCode: student.symposiumCode, qrCodeData: student.qrCodeData });
-      }
-
       return res.status(200).json({ success: true, message: `Student registration ${status.toLowerCase()} successfully`, student });
     } else {
       const student = mockStore.students.find(s => s._id === req.params.id);
@@ -142,12 +135,6 @@ exports.updateStudentStatus = async (req, res) => {
 
       student.verificationStatus = status;
       student.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Rejected by Admin') : '';
-
-      if (status === 'Approved') {
-        const u = mockStore.users.find(usr => usr._id === student.user);
-        sendApprovalMail({ to: student.email, name: u ? u.name : student.email, registerNumber: student.registerNumber, symposiumCode: student.symposiumCode, qrCodeData: student.qrCodeData });
-      }
-
       return res.status(200).json({ success: true, message: `Student registration ${status.toLowerCase()} successfully`, student });
     }
   } catch (error) {
