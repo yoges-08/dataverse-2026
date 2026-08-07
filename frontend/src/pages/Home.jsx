@@ -39,46 +39,18 @@ export default function Home() {
 
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-8">
           
-          {/* Main Prominent Logos Container */}
-          <div className="flex items-center justify-center space-x-6 sm:space-x-12 mb-4">
-            
-            {/* 1. Official AAMEC College Logo */}
-            <div className="flex flex-col items-center">
-              <div className="relative group">
-                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
-                <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-amber-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
-                  <img
-                    src="/college_logo.png"
-                    alt="AAMEC Official College Emblem"
-                    className="w-full h-full object-contain filter drop-shadow-md"
-                  />
-                </div>
+          {/* College Logo */}
+          <div className="flex justify-center mb-4">
+            <div className="relative group">
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
+              <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-amber-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
+                <img
+                  src="/college_logo.png"
+                  alt="AAMEC Official College Emblem"
+                  className="w-full h-full object-contain filter drop-shadow-md"
+                />
               </div>
-              <span className="text-[11px] font-extrabold text-amber-300 mt-2.5 uppercase tracking-wider">
-                Official College Emblem
-              </span>
             </div>
-
-            {/* Glowing Center Divider */}
-            <div className="h-24 w-0.5 bg-gradient-to-b from-transparent via-indigo-500/60 to-transparent"></div>
-
-            {/* 2. DATAVERSE AI & DS Symposium Logo */}
-            <div className="flex flex-col items-center">
-              <div className="relative group">
-                <div className="absolute -inset-1.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
-                <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-indigo-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
-                  <img
-                    src="/logo.png"
-                    alt="DATAVERSE AI & DS Symposium Logo"
-                    className="w-full h-full object-contain filter drop-shadow-md"
-                  />
-                </div>
-              </div>
-              <span className="text-[11px] font-extrabold text-indigo-400 mt-2.5 uppercase tracking-wider">
-                DATAVERSE AI & DS Logo
-              </span>
-            </div>
-
           </div>
 
           {/* College Badge */}
