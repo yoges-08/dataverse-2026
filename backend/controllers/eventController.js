@@ -3,7 +3,6 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
-const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -37,12 +36,12 @@ exports.getEventById = async (req, res) => {
       });
       return res.status(200).json({ success: true, event, registrations });
     } else {
-      const event = mockStore.events.find(e => e._id === req.params.id);
+      const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
-      const regs = mockStore.registrations.filter(r => r.event === event._id);
+      const regs = mockStore.registrations.filter(r => r.event === event._id || String(r.event) === String(event._id));
       const populated = regs.map(r => {
-        const s = mockStore.students.find(st => st._id === r.student);
-        const u = s ? mockStore.users.find(usr => usr._id === s.user) : null;
+        const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
+        const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
         return {
           ...r,
           student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null
@@ -88,7 +87,7 @@ exports.updateEvent = async (req, res) => {
       event = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true });
       return res.status(200).json({ success: true, message: 'Event updated successfully', event });
     } else {
-      let event = mockStore.events.find(e => e._id === req.params.id);
+      let event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
       Object.assign(event, req.body);
       return res.status(200).json({ success: true, message: 'Event updated successfully', event });
@@ -107,7 +106,7 @@ exports.deleteEvent = async (req, res) => {
       await Event.findByIdAndDelete(event._id);
       return res.status(200).json({ success: true, message: 'Event deleted successfully' });
     } else {
-      mockStore.events = mockStore.events.filter(e => e._id !== req.params.id);
+      mockStore.events = mockStore.events.filter(e => e._id !== req.params.id && String(e._id) !== String(req.params.id));
       return res.status(200).json({ success: true, message: 'Event deleted successfully' });
     }
   } catch (error) {
@@ -118,11 +117,13 @@ exports.deleteEvent = async (req, res) => {
 exports.registerForEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
+    const userId = req.user.id || req.user._id;
+
     if (isDbConnected()) {
       const event = await Event.findById(eventId);
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
-      const student = await Student.findOne({ user: req.user.id });
+      const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
       const existing = await Registration.findOne({ student: student._id, event: eventId });
@@ -132,24 +133,20 @@ exports.registerForEvent = async (req, res) => {
       event.currentRegistrations += 1;
       await event.save();
 
-      sendEventRegistrationMail({ to: student.email, name: req.user.name, eventTitle: event.title, eventVenue: event.venue, eventDate: event.date, eventTime: event.time });
-
       return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
     } else {
-      const event = mockStore.events.find(e => e._id === eventId);
+      const event = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
-      const student = mockStore.students.find(s => s.user === req.user.id);
+      const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
-      const existing = mockStore.registrations.find(r => r.student === student._id && r.event === eventId);
+      const existing = mockStore.registrations.find(r => (r.student === student._id || String(r.student) === String(student._id)) && (r.event === eventId || String(r.event) === String(eventId)));
       if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
 
       const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered' };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
-
-      sendEventRegistrationMail({ to: student.email, name: req.user.name, eventTitle: event.title, eventVenue: event.venue, eventDate: event.date, eventTime: event.time });
 
       return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
     }
@@ -169,7 +166,7 @@ exports.uploadWinners = async (req, res) => {
       await event.save();
       return res.status(200).json({ success: true, message: 'Winners updated successfully', event });
     } else {
-      const event = mockStore.events.find(e => e._id === req.params.id);
+      const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
       event.winners = winners;
       event.winnersUploaded = true;

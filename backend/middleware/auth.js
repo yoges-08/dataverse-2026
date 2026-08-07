@@ -18,14 +18,18 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dataverse_secret_key_2026');
+    
     if (isDbConnected()) {
       req.user = await User.findById(decoded.id).select('-password');
     } else {
-      const user = mockStore.users.find(u => u._id === decoded.id);
-      if (user) req.user = { ...user, id: user._id };
+      const u = mockStore.users.find(usr => usr._id === decoded.id || String(usr._id) === String(decoded.id));
+      if (u) {
+        req.user = { id: u._id, _id: u._id, name: u.name, email: u.email, role: u.role };
+      }
     }
+
     if (!req.user) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return res.status(401).json({ success: false, message: 'User profile not found' });
     }
     next();
   } catch (err) {

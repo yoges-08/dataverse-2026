@@ -16,11 +16,12 @@ const generateSpotCode = () => {
 
 exports.getProfile = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     if (isDbConnected()) {
-      const student = await Student.findOne({ user: req.user.id });
+      const student = await Student.findOne({ user: userId });
       return res.status(200).json({ success: true, student });
     } else {
-      const student = mockStore.students.find(s => s.user === req.user.id);
+      const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       return res.status(200).json({ success: true, student });
     }
   } catch (error) {
@@ -30,9 +31,10 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const { phone, address, emergencyContact, foodPreference, accommodationRequired } = req.body;
     if (isDbConnected()) {
-      let student = await Student.findOne({ user: req.user.id });
+      let student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
       student.phone = phone || student.phone;
@@ -45,7 +47,7 @@ exports.updateProfile = async (req, res) => {
       await student.save();
       return res.status(200).json({ success: true, student, message: 'Profile updated successfully' });
     } else {
-      let student = mockStore.students.find(s => s.user === req.user.id);
+      let student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
       student.phone = phone || student.phone;
@@ -63,18 +65,19 @@ exports.updateProfile = async (req, res) => {
 
 exports.getRegisteredEvents = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     if (isDbConnected()) {
-      const student = await Student.findOne({ user: req.user.id });
+      const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
       const registrations = await Registration.find({ student: student._id }).populate('event');
       return res.status(200).json({ success: true, count: registrations.length, registrations });
     } else {
-      const student = mockStore.students.find(s => s.user === req.user.id);
+      const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
-      const regs = mockStore.registrations.filter(r => r.student === student._id);
+      const regs = mockStore.registrations.filter(r => r.student === student._id || String(r.student) === String(student._id));
       const populated = regs.map(r => {
-        const ev = mockStore.events.find(e => e._id === r.event);
+        const ev = mockStore.events.find(e => e._id === r.event || String(e._id) === String(r.event));
         return { ...r, event: ev };
       });
       return res.status(200).json({ success: true, count: populated.length, registrations: populated });
@@ -137,16 +140,6 @@ exports.spotRegistration = async (req, res) => {
         await student.save();
       }
 
-      if (Array.isArray(eventIds) && eventIds.length) {
-        for (const eid of eventIds) {
-          const exists = await Registration.findOne({ student: student._id, event: eid });
-          if (!exists) {
-            await Registration.create({ student: student._id, event: eid, status: 'Attended' });
-            await Event.findByIdAndUpdate(eid, { $inc: { currentRegistrations: 1 } });
-          }
-        }
-      }
-
       return res.status(201).json({
         success: true,
         message: 'Spot Registration & Check-In completed successfully!',
@@ -161,7 +154,7 @@ exports.spotRegistration = async (req, res) => {
         mockStore.users.push(user);
       }
 
-      let student = mockStore.students.find(s => s.user === user._id);
+      let student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));
       if (!student) {
         const symposiumCode = generateSpotCode();
         const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email, type: 'Spot Registration' });
@@ -195,17 +188,6 @@ exports.spotRegistration = async (req, res) => {
         student.isCheckedIn = true;
         student.checkInTime = new Date().toISOString();
         student.checkedInBy = req.user ? req.user.name : 'Spot Counter Volunteer';
-      }
-
-      if (Array.isArray(eventIds) && eventIds.length) {
-        for (const eid of eventIds) {
-          const exists = mockStore.registrations.some(r => r.student === student._id && r.event === eid);
-          if (!exists) {
-            mockStore.registrations.push({ _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eid, status: 'Attended' });
-            const ev = mockStore.events.find(e => e._id === eid);
-            if (ev) ev.currentRegistrations += 1;
-          }
-        }
       }
 
       return res.status(201).json({

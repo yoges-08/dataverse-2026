@@ -9,17 +9,18 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 
 exports.getMyCertificates = async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     if (isDbConnected()) {
-      const student = await Student.findOne({ user: req.user.id });
+      const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
       const certificates = await Certificate.find({ student: student._id }).populate('event', 'title category date');
       return res.status(200).json({ success: true, certificates });
     } else {
-      const student = mockStore.students.find(s => s.user === req.user.id);
+      const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
-      const certs = mockStore.certificates.filter(c => c.student === student._id).map(c => {
-        const ev = mockStore.events.find(e => e._id === c.event);
+      const certs = mockStore.certificates.filter(c => c.student === student._id || String(c.student) === String(student._id)).map(c => {
+        const ev = mockStore.events.find(e => e._id === c.event || String(e._id) === String(c.event));
         return { ...c, event: ev };
       });
       return res.status(200).json({ success: true, certificates: certs });
@@ -45,20 +46,20 @@ exports.generateCertificate = async (req, res) => {
       if (cert) return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
 
       const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
-      const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.user.name, event: event.title }));
+      const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.user ? student.user.name : student.email, event: event.title }));
 
       cert = await Certificate.create({ certificateNo: certNo, student: student._id, event: event._id, type: type || 'Participation', verificationQrCode: qrData });
       return res.status(201).json({ success: true, message: 'Certificate generated successfully', certificate: cert });
     } else {
-      const student = mockStore.students.find(s => s._id === studentId);
+      const student = mockStore.students.find(s => s._id === studentId || String(s._id) === String(studentId));
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
       if (!student.isCheckedIn || student.verificationStatus !== 'Approved') {
         return res.status(400).json({ success: false, message: 'Certificates can only be generated for verified and checked-in participants.' });
       }
-      const event = mockStore.events.find(e => e._id === eventId);
+      const event = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
-      let cert = mockStore.certificates.find(c => c.student === student._id && c.event === event._id);
+      let cert = mockStore.certificates.find(c => (c.student === student._id || String(c.student) === String(student._id)) && (c.event === event._id || String(c.event) === String(event._id)));
       if (cert) return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
 
       const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -83,9 +84,9 @@ exports.verifyCertificate = async (req, res) => {
     } else {
       const cert = mockStore.certificates.find(c => c.certificateNo === req.params.certNo);
       if (!cert) return res.status(404).json({ success: false, message: 'Invalid certificate number.' });
-      const s = mockStore.students.find(st => st._id === cert.student);
-      const u = s ? mockStore.users.find(usr => usr._id === s.user) : null;
-      const ev = mockStore.events.find(e => e._id === cert.event);
+      const s = mockStore.students.find(st => st._id === cert.student || String(st._id) === String(cert.student));
+      const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
+      const ev = mockStore.events.find(e => e._id === cert.event || String(e._id) === String(cert.event));
 
       return res.status(200).json({
         success: true,
