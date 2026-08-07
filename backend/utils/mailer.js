@@ -52,7 +52,7 @@ const sendMail = async ({ to, subject, html }) => {
         return { success: true, messageId: info.messageId, port };
       } catch (error) {
         lastError = error;
-        console.error(`📧 Email attempt failed (port ${port}): ${error.message}`);
+        console.error(`📧 Email attempt failed (${process.env.SMTP_HOST || 'smtp.gmail.com'}:${port}): ${error.message}`);
         await delay(1500);
       }
     }
