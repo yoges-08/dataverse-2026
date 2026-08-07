@@ -36,6 +36,34 @@ const getFromEmail = () => {
   return process.env.SMTP_USER || 'no-reply@dataverse.aamec.in';
 };
 
+const sendViaBrevoApi = async ({ to, subject, html }) => {
+  const key = process.env.BREVO_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': key,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: 'DATAVERSE 2026 - AAMEC', email: getFromEmail() },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html
+      })
+    });
+    if (!res.ok) throw new Error(`Brevo API ${res.status}`);
+    const data = await res.json();
+    console.log(`📧 Email DELIVERED to ${to} via Brevo API: ${data.messageId}`);
+    return { success: true, messageId: data.messageId };
+  } catch (e) {
+    console.error(`📧 Brevo API attempt failed: ${e.message}`);
+    return null;
+  }
+};
+
 const buildMail = ({ to, subject, html }) => ({
   from: `"DATAVERSE 2026 - AAMEC" <${getFromEmail()}>`,
   to,
@@ -44,6 +72,12 @@ const buildMail = ({ to, subject, html }) => ({
 });
 
 const sendMail = async ({ to, subject, html }) => {
+  // Preferred: Brevo HTTPS API (port 443) - reliable from cloud servers.
+  if (process.env.BREVO_API_KEY) {
+    const viaApi = await sendViaBrevoApi({ to, subject, html });
+    if (viaApi) return viaApi;
+  }
+
   if (isSmtpConfigured()) {
     const configuredPort = Number(process.env.SMTP_PORT || 587);
     const ports = configuredPort === 465 ? [465, 587] : [587, 465];
