@@ -15,6 +15,7 @@ import Contact from './pages/Contact';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import CertificateVerify from './pages/CertificateVerify';
 
 // Dashboards
@@ -41,6 +42,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify/:certNo?" element={<CertificateVerify />} />
 
             {/* Role Dashboards */}

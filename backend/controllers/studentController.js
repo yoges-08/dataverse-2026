@@ -94,23 +94,31 @@ exports.spotRegistration = async (req, res) => {
       gender, eventIds, foodPreference, accommodationRequired
     } = req.body;
 
-    if (!name || !email || !registerNumber || !collegeName || !department) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    if (!name || !cleanEmail || !registerNumber || !collegeName || !department) {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
     }
 
     if (isDbConnected()) {
-      let user = await User.findOne({ email });
+      let user = await User.findOne({ email: cleanEmail });
       let student;
       if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('SpotPass2026!', salt);
-        user = await User.create({ name, email, password: hashedPassword, role: 'student' });
+        user = await User.create({ name, email: cleanEmail, password: hashedPassword, role: 'student' });
       }
 
       student = await Student.findOne({ user: user._id });
       if (!student) {
-        const symposiumCode = generateSpotCode();
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email, type: 'Spot Registration' });
+        let symposiumCode = generateSpotCode();
+        let codeExists = await Student.findOne({ symposiumCode });
+        while (codeExists) {
+          symposiumCode = generateSpotCode();
+          codeExists = await Student.findOne({ symposiumCode });
+        }
+
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = await Student.create({
@@ -120,7 +128,7 @@ exports.spotRegistration = async (req, res) => {
           collegeName,
           department,
           year: year || 'III',
-          email,
+          email: cleanEmail,
           phone: phone || '9999999999',
           gender: gender || 'Other',
           verificationStatus: 'Approved',
@@ -146,18 +154,24 @@ exports.spotRegistration = async (req, res) => {
         student
       });
     } else {
-      let user = mockStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      let user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash('SpotPass2026!', salt);
-        user = { _id: 'u' + (mockStore.users.length + 1), name, email, password: hashedPassword, role: 'student' };
+        user = { _id: 'u' + (mockStore.users.length + 1), name, email: cleanEmail, password: hashedPassword, role: 'student' };
         mockStore.users.push(user);
       }
 
       let student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));
       if (!student) {
-        const symposiumCode = generateSpotCode();
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email, type: 'Spot Registration' });
+        let symposiumCode = generateSpotCode();
+        let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+        while (codeExists) {
+          symposiumCode = generateSpotCode();
+          codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+        }
+
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = {
@@ -168,7 +182,7 @@ exports.spotRegistration = async (req, res) => {
           collegeName,
           department,
           year: year || 'III',
-          email,
+          email: cleanEmail,
           phone: phone || '9999999999',
           gender: gender || 'Male',
           profilePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
