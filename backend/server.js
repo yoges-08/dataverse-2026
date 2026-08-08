@@ -10,6 +10,10 @@ dotenv.config();
 
 const app = express();
 
+// Render (and most cloud hosts) run behind a reverse proxy. Required so
+// express-rate-limit correctly identifies visitors by their real IP.
+app.set('trust proxy', 1);
+
 // Body Parser Middleware
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
