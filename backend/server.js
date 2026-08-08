@@ -19,12 +19,16 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
-if (!allowedOrigins.length) {
-  console.warn('⚠️  CORS_ORIGINS is not set. Allowing all origins (dev mode). Set CORS_ORIGINS in production.');
+if (allowedOrigins.length) {
+  console.log(`✅ CORS restricted to origins: ${allowedOrigins.join(', ')}`);
+} else {
+  console.warn('⚠️  CORS_ORIGINS is not set - allowing all origins (token-based auth used, no cookies).');
 }
+// Auth uses a Bearer token in the Authorization header, not cookies, so we
+// can safely allow any origin to reach the API without credential-sharing risk.
 app.use(cors(allowedOrigins.length
-  ? { origin: allowedOrigins, credentials: true }
-  : { origin: true, credentials: true }));
+  ? { origin: allowedOrigins }
+  : { origin: true }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
