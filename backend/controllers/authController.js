@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Student = require('../models/Student');
@@ -10,9 +11,17 @@ const sendEmail = require('../utils/sendEmail');
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'dataverse_secret_key_2026', {
+  return jwt.sign({ id }, getJwtSecret(), {
     expiresIn: '30d'
   });
+};
+
+// Hard-fail on missing JWT_SECRET instead of silently falling back to a
+// hardcoded key that attackers can use to forge tokens.
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is required');
+  return secret;
 };
 
 const generateSymposiumCode = () => {
@@ -268,7 +277,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter your registered email address' });
     }
 
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetToken = crypto.randomInt(100000, 1000000).toString();
     const resetExpire = Date.now() + 15 * 60 * 1000;
 
     if (isDbConnected()) {
@@ -297,9 +306,11 @@ exports.forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Password reset OTP has been generated.',
+      message: emailResult && emailResult.delivered
+        ? 'Password reset OTP has been sent to your email.'
+        : 'Password reset OTP generated but the email could not be delivered right now. Contact the symposium desk.',
       emailStatus: emailResult,
-      devOtp: process.env.NODE_ENV !== 'production' ? resetToken : undefined
+      devOtp: process.env.SHOW_DEV_OTP === 'true' ? resetToken : undefined
     });
   } catch (error) {
     console.error('Forgot Password Error:', error);

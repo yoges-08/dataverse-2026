@@ -64,9 +64,9 @@ class MockStore {
 
     console.log('⚡ Initializing DATAVERSE In-Memory Data Engine (fresh seed)...');
     const salt = await bcrypt.genSalt(10);
-    const adminPass = await bcrypt.hash('aids@2025', salt);
-    const coordPass = await bcrypt.hash('coord123', salt);
-    const volPass = await bcrypt.hash('vol123', salt);
+    const adminPass = await bcrypt.hash(process.env.ADMIN_SEED_PASSWORD || 'aids@2025', salt);
+    const coordPass = await bcrypt.hash(process.env.COORDINATOR_SEED_PASSWORD || 'coord123', salt);
+    const volPass = await bcrypt.hash(process.env.VOLUNTEER_SEED_PASSWORD || 'vol123', salt);
 
     // Users
     const uAdmin = { _id: 'u1', name: 'Dr. R. K. Varma (Convener)', email: 'dataverse2k26ai@gmail.com', password: adminPass, role: 'super_admin', isEmailVerified: true };

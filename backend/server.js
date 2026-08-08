@@ -15,9 +15,12 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
+if (!allowedOrigins.length) {
+  console.warn('⚠️  CORS_ORIGINS is not set. Allowing all origins (dev mode). Set CORS_ORIGINS in production.');
+}
 app.use(cors(allowedOrigins.length
-  ? { origin: allowedOrigins }
-  : {}));
+  ? { origin: allowedOrigins, credentials: true }
+  : { origin: true, credentials: true }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -61,9 +64,11 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('API Error:', err.stack);
-  res.status(500).json({
+  res.status(err.statusCode || 500).json({
     success: false,
-    message: err.message || 'Internal Server Error'
+    message: process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error'
+      : (err.message || 'Internal Server Error')
   });
 });
 

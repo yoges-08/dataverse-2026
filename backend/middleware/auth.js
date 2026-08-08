@@ -8,6 +8,11 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 const protect = async (req, res, next) => {
   let token;
 
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }
@@ -17,7 +22,7 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dataverse_secret_key_2026');
+    const decoded = jwt.verify(token, secret);
     
     if (isDbConnected()) {
       req.user = await User.findById(decoded.id).select('-password');

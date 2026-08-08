@@ -10,6 +10,14 @@ const Announcement = require('./models/Announcement');
 const Gallery = require('./models/Gallery');
 require('dotenv').config();
 
+const getRequiredPassword = (envKey, label) => {
+  const pw = process.env[envKey];
+  if (!pw) {
+    throw new Error(`${envKey} environment variable is required to seed the ${label} account`);
+  }
+  return pw;
+};
+
 const seedData = async () => {
   try {
     const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dataverse_symposium';
@@ -31,9 +39,9 @@ const seedData = async () => {
 
     // Create Password Hashes
     const salt = await bcrypt.genSalt(10);
-    const adminPass = await bcrypt.hash('aids@2025', salt);
-    const coordPass = await bcrypt.hash('coord123', salt);
-    const volPass = await bcrypt.hash('vol123', salt);
+    const adminPass = await bcrypt.hash(getRequiredPassword('ADMIN_SEED_PASSWORD', 'Super Admin'), salt);
+    const coordPass = await bcrypt.hash(getRequiredPassword('COORDINATOR_SEED_PASSWORD', 'Coordinator'), salt);
+    const volPass = await bcrypt.hash(getRequiredPassword('VOLUNTEER_SEED_PASSWORD', 'Volunteer'), salt);
 
     // 1. Create Core Users
     const adminUser = await User.create({
