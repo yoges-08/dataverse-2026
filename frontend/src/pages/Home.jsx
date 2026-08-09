@@ -76,9 +76,9 @@ export default function Home() {
           {/* Main Title & Tagline */}
           <div className="space-y-4">
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white leading-none">
-              DATA<span className="gradient-text">VERSE</span> <span className="text-indigo-400">2026</span>
+              DATA<span className="gradient-text">VERSE</span> <span className="text-amber-400">2026</span>
             </h1>
-            <p className="text-lg sm:text-2xl font-bold tracking-widest uppercase text-indigo-300">
+            <p className="text-lg sm:text-2xl font-bold tracking-widest uppercase text-amber-300">
               Innovate • Inspire • Create
             </p>
             <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-400 leading-relaxed">
@@ -88,15 +88,15 @@ export default function Home() {
 
           {/* Symposium Date & Deadline Badges */}
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 shadow-xl">
-              <Calendar className="w-5 h-5 text-indigo-400" />
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-800/30 to-blue-900/30 border border-blue-400/40 shadow-xl">
+              <Calendar className="w-5 h-5 text-blue-300" />
               <div className="text-left">
                 <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Symposium</span>
                 <span className="text-base sm:text-lg font-black text-white">12 / 09 / 2026</span>
               </div>
             </div>
-            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-pink-500/20 border border-amber-500/40 shadow-xl">
-              <Sparkles className="w-5 h-5 text-amber-400" />
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-700/20 to-amber-600/20 border border-amber-400/40 shadow-xl">
+              <Sparkles className="w-5 h-5 text-amber-300" />
               <div className="text-left">
                 <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider block">Registration Deadline</span>
                 <span className="text-base sm:text-lg font-black text-white">05 / 09 / 2026</span>
@@ -129,7 +129,7 @@ export default function Home() {
               className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-base transition-all hover:scale-105 flex items-center justify-center space-x-2"
             >
               <span>Explore Events</span>
-              <ArrowRight className="w-5 h-5 text-indigo-400" />
+              <ArrowRight className="w-5 h-5 text-amber-400" />
             </Link>
           </div>
 
@@ -205,7 +205,7 @@ export default function Home() {
 
       {/* About Institution Spotlight */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div className="glass-card rounded-3xl p-8 sm:p-12 border border-indigo-500/30">
+<div className="glass-card rounded-3xl p-8 sm:p-12 border border-amber-500/25">
           <div className="space-y-6">
             <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Host Institution</span>
             <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
