@@ -172,6 +172,13 @@
 :root:not(.dark) .text-slate-300 { color: #1e293b; }
 :root:not(.dark) .text-slate-400 { color: #475569; }
 :root:not(.dark) .text-slate-500 { color: #64748b; }
+:root:not(.dark) .text-violet-300 { color: #7c3aed; }
+:root:not(.dark) .text-violet-400 { color: #7c3aed; }
+:root:not(.dark) .text-cyan-300 { color: #0891b2; }
+:root:not(.dark) .text-cyan-400 { color: #0891b2; }
+:root:not(.dark) .text-fuchsia-300 { color: #c026d3; }
+:root:not(.dark) .text-indigo-300 { color: #4f46e5; }
+:root:not(.dark) .text-indigo-400 { color: #4f46e5; }
 :root:not(.dark) .border-slate-800 { border-color: rgba(148, 163, 184, 0.45); }
 :root:not(.dark) .border-slate-700 { border-color: rgba(148, 163, 184, 0.6); }
 

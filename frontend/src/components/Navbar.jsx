@@ -1,13 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { 
   Sparkles, Menu, X, User, LogOut, LayoutDashboard, 
-  Calendar, Info, Phone, Trophy, Award, ShieldCheck, Zap
+  Calendar, Info, Phone, Trophy, Award, ShieldCheck, Zap, Sun, Moon
 } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -69,6 +71,15 @@ export default function Navbar() {
 
           {/* Auth Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-amber-300 border border-slate-700 transition-all hover:scale-105"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+            </button>
+
             {user ? (
               <div className="flex items-center space-x-3">
                 <Link
@@ -121,6 +132,13 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-slate-900 text-amber-300 border border-slate-700 font-bold"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+          </button>
           <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Home</Link>
           <Link to="/events" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Events</Link>
           <Link to="/gallery" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Gallery</Link>
