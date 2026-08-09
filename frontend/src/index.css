@@ -11,16 +11,16 @@
   body {
     @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300;
     min-height: 100vh;
-    background-color: #070a18;
+    background-color: #0b0618;
     background-image:
-      radial-gradient(60% 45% at 15% 10%, rgba(99, 102, 241, 0.28) 0%, transparent 70%),
-      radial-gradient(50% 40% at 85% 15%, rgba(236, 72, 153, 0.18) 0%, transparent 70%),
-      radial-gradient(55% 45% at 50% 95%, rgba(139, 92, 246, 0.22) 0%, transparent 70%),
-      radial-gradient(40% 30% at 90% 80%, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+      radial-gradient(70% 55% at 12% 8%, rgba(99, 102, 241, 0.65) 0%, transparent 65%),
+      radial-gradient(60% 50% at 88% 12%, rgba(236, 72, 153, 0.50) 0%, transparent 65%),
+      radial-gradient(70% 55% at 50% 96%, rgba(139, 92, 246, 0.55) 0%, transparent 65%),
+      radial-gradient(55% 45% at 90% 82%, rgba(34, 211, 238, 0.35) 0%, transparent 65%);
     background-attachment: fixed;
   }
 
-  /* Subtle animated aurora blobs floating over the page */
+  /* Visible animated aurora blobs floating over the page */
   body::before {
     content: '';
     position: fixed;
@@ -28,9 +28,9 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(38% 30% at 22% 20%, rgba(99, 102, 241, 0.20) 0%, transparent 70%),
-      radial-gradient(32% 28% at 78% 30%, rgba(236, 72, 153, 0.14) 0%, transparent 70%),
-      radial-gradient(44% 36% at 55% 92%, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+      radial-gradient(45% 40% at 20% 18%, rgba(129, 140, 248, 0.45) 0%, transparent 70%),
+      radial-gradient(40% 36% at 80% 28%, rgba(236, 72, 153, 0.35) 0%, transparent 70%),
+      radial-gradient(50% 42% at 55% 90%, rgba(168, 85, 247, 0.42) 0%, transparent 70%);
     animation: auroraShift 18s ease-in-out infinite alternate;
   }
 
@@ -59,21 +59,42 @@
 @layer components {
   /* ---------- Frosted Glass Card ---------- */
   .glass-card {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    position: relative;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 55%, rgba(129, 140, 248, 0.06) 100%);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 20px 50px -20px rgba(0, 0, 0, 0.6);
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+  }
+
+  /* Colored glow seam along the top of every glass card */
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(129, 140, 248, 0.9), rgba(236, 72, 153, 0.9), transparent);
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
   }
 
   .glass-card:hover {
-    border-color: rgba(129, 140, 248, 0.45);
+    border-color: rgba(129, 140, 248, 0.6);
+    transform: translateY(-3px);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 24px 60px -22px rgba(99, 102, 241, 0.55);
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      0 28px 70px -24px rgba(99, 102, 241, 0.6),
+      0 0 40px -12px rgba(168, 85, 247, 0.35);
+  }
+
+  .glass-card:hover::before {
+    opacity: 1;
   }
 
   .glass-card-light {
@@ -158,6 +179,9 @@
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
   border-color: rgba(148, 163, 184, 0.5);
   box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.22);
+}
+:root:not(.dark) .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.8), rgba(236, 72, 153, 0.8), transparent);
 }
 :root:not(.dark) .glass-card-light {
   background: rgba(255, 255, 255, 0.97);
