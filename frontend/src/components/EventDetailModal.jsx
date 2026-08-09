@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { X, Calendar, Clock, MapPin, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
+import { X, Calendar, MapPin, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
 import API from '../services/api';
 
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
@@ -104,14 +104,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </div>
             </div>
 
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center space-x-2.5">
-              <Clock className="w-4 h-4 text-indigo-400 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-400 block">Time</span>
-                <span className="text-xs font-semibold text-white">{event.time || 'TBA'}</span>
-              </div>
-            </div>
-
             <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center space-x-2.5 col-span-2 sm:col-span-1">
               <MapPin className="w-4 h-4 text-indigo-400 shrink-0" />
               <div>
@@ -133,16 +125,10 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             </div>
           )}
 
-          {/* Coordinators */}
-          <div className="grid grid-cols-2 gap-3 text-xs border-t border-slate-800 pt-4">
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Student Coordinator</span>
-              <span className="font-semibold text-white">{event.studentCoordinator?.name || 'TBA'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Faculty Coordinator</span>
-              <span className="font-semibold text-white">{event.facultyCoordinator?.name || 'TBA'}</span>
-            </div>
+          {/* Coordinator */}
+          <div className="text-xs border-t border-slate-800 pt-4">
+            <span className="text-slate-400 block text-[10px] uppercase font-bold">Student Coordinator</span>
+            <span className="font-semibold text-white">{event.studentCoordinator?.name || 'TBA'}</span>
           </div>
 
           {/* PDF Upload for Paper Presentation */}
