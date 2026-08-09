@@ -117,7 +117,7 @@ class MockStore {
         facultyCoordinator: { name: 'Prof. K. Anand', phone: '9842100456' },
         studentCoordinator: { name: 'Preethi Sundar', phone: '9876543210' },
         prizes: { first: '₹7,500 + Trophy & Certificate', second: '₹4,500 + Trophy & Certificate', third: '₹2,500 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+        bannerImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80'
       },
       {
         _id: 'e3',

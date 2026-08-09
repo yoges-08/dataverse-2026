@@ -1,11 +1,18 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LogIn, Sparkles, AlertCircle, KeyRound, ShieldAlert, User, CheckCircle2 } from 'lucide-react';
 
 export default function Login() {
-  const { login } = useContext(AuthContext);
+  const { user, login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      redirectByRole(user.role);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,10 +21,10 @@ export default function Login() {
 
   const redirectByRole = (role) => {
     switch (role) {
-      case 'super_admin': navigate('/dashboard/admin'); break;
-      case 'coordinator': navigate('/dashboard/coordinator'); break;
-      case 'volunteer': navigate('/dashboard/volunteer'); break;
-      default: navigate('/dashboard/student'); break;
+      case 'super_admin': navigate('/dashboard/admin', { replace: true }); break;
+      case 'coordinator': navigate('/dashboard/coordinator', { replace: true }); break;
+      case 'volunteer': navigate('/dashboard/volunteer', { replace: true }); break;
+      default: navigate('/dashboard/student', { replace: true }); break;
     }
   };
 

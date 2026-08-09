@@ -1,11 +1,17 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function Register() {
-  const { registerStudent } = useContext(AuthContext);
+  const { user, registerStudent } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard/student', { replace: true });
+    }
+  }, [user, navigate]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -41,7 +47,7 @@ export default function Register() {
 
       const res = await registerStudent(formData);
       if (res.success) {
-        navigate('/dashboard/student');
+        navigate('/dashboard/student', { replace: true });
       }
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed');

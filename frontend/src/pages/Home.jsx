@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import { 
   Sparkles, Calendar, Users, Award, ShieldCheck, 
@@ -8,8 +9,19 @@ import {
 import API from '../services/api';
 
 export default function Home() {
+  const { user } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const getDashboardPath = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'super_admin': return '/dashboard/admin';
+      case 'coordinator': return '/dashboard/coordinator';
+      case 'volunteer': return '/dashboard/volunteer';
+      default: return '/dashboard/student';
+    }
+  };
 
   useEffect(() => {
     fetchEvents();
@@ -94,13 +106,23 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
-            >
-              <Zap className="w-5 h-5 fill-white" />
-              <span>Register Now</span>
-            </Link>
+            {user ? (
+              <Link
+                to={getDashboardPath()}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+              >
+                <Zap className="w-5 h-5 fill-white" />
+                <span>Go to Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                to="/register"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+              >
+                <Zap className="w-5 h-5 fill-white" />
+                <span>Register Now</span>
+              </Link>
+            )}
 
             <Link
               to="/events"
@@ -149,23 +171,16 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {events.slice(0, 6).map((ev) => (
-            <div key={ev._id} className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src={ev.bannerImage}
-                  alt={ev.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
-                  }`}>
-                    {ev.category}
-                  </span>
-                </div>
+            <div key={ev._id} className="glass-card rounded-2xl p-6 border border-slate-800 hover:border-indigo-500/40 transition-all group">
+              <div className="flex items-center justify-between mb-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
+                }`}>
+                  {ev.category}
+                </span>
               </div>
 
-              <div className="p-6 space-y-3">
+              <div className="space-y-3">
                 <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{ev.title}</h3>
                 <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
@@ -183,7 +198,7 @@ export default function Home() {
 
       {/* About Institution Spotlight */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="glass-card rounded-3xl p-8 sm:p-12 border border-indigo-500/30 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+<div className="glass-card rounded-3xl p-8 sm:p-12 border border-indigo-500/30">
           <div className="space-y-6">
             <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Host Institution</span>
             <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
@@ -210,14 +225,6 @@ export default function Home() {
                 <span>Modern 1200-Seat Auditorium</span>
               </div>
             </div>
-          </div>
-
-          <div className="relative rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl">
-            <img
-              src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80"
-              alt="AAMEC Campus"
-              className="w-full h-80 object-cover"
-            />
           </div>
         </div>
       </section>

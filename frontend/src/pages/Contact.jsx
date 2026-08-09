@@ -121,7 +121,8 @@ export default function Contact() {
                 <Phone className="w-5 h-5 text-indigo-400 shrink-0" />
                 <div>
                   <span className="font-bold text-white block">Symposium Coordinator</span>
-                  <span className="text-slate-400">9994718221</span>
+                  <span className="text-slate-400">Dr. K. Jayanthi</span>
+                  <span className="text-slate-400 block">9994718221</span>
                   <span className="font-bold text-white block mt-1">Organizer Members</span>
                   <span className="text-slate-400">9791656236 / 8122310171 / 9489038346 / 8838999607</span>
                 </div>
