@@ -249,11 +249,17 @@ const seedData = async () => {
     ]);
 
     console.log('Database seeding completed successfully!');
-    process.exit(0);
+    return true;
   } catch (error) {
     console.error('Seeding Error:', error);
-    process.exit(1);
+    throw error;
   }
 };
 
-seedData();
+if (require.main === module) {
+  seedData()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}
+
+module.exports = seedData;

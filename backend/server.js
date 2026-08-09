@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const seedIfEmpty = require('./config/seedIfEmpty');
 const mongoose = require('mongoose');
 const mockStore = require('./utils/mockStore');
 
@@ -36,7 +37,15 @@ app.use((req, res, next) => {
 });
 
 // Connect to Database
-connectDB();
+connectDB().then(async (connected) => {
+  if (connected) {
+    try {
+      await seedIfEmpty();
+    } catch (err) {
+      console.error('Auto-seed failed (continuing startup):', err.message);
+    }
+  }
+});
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
