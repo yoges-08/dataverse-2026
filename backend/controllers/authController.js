@@ -196,17 +196,20 @@ exports.registerStudent = async (req, res) => {
 
 // @desc    Universal Login (Student, Admin, Coordinator, Volunteer)
 // @route   POST /api/auth/login
+// Accepts email OR username as the identifier (staff members can use either).
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
 
     if (!cleanEmail || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password' });
+      return res.status(400).json({ success: false, message: 'Please provide email/username and password' });
     }
 
     if (isDbConnected()) {
-      const user = await User.findOne({ email: cleanEmail });
+      const user = await User.findOne({
+        $or: [{ email: cleanEmail }, { username: cleanEmail }]
+      });
       if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
       const isMatch = await bcrypt.compare(password, user.password);
@@ -219,11 +222,14 @@ exports.login = async (req, res) => {
       return res.status(200).json({
         success: true,
         token,
-        user: { id: user._id, name: user.name, email: user.email, role: user.role },
+        user: { id: user._id, name: user.name, username: user.username, email: user.email, role: user.role },
         student
       });
     } else {
-      const user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
+      const user = mockStore.users.find(u =>
+        u.email.toLowerCase().trim() === cleanEmail ||
+        (u.username && u.username.toLowerCase().trim() === cleanEmail)
+      );
       if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
       const isMatch = await bcrypt.compare(password, user.password);
@@ -236,7 +242,7 @@ exports.login = async (req, res) => {
       return res.status(200).json({
         success: true,
         token,
-        user: { id: user._id, name: user.name, email: user.email, role: user.role },
+        user: { id: user._id, name: user.name, username: user.username, email: user.email, role: user.role },
         student
       });
     }

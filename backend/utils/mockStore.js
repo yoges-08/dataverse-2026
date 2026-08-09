@@ -69,9 +69,9 @@ class MockStore {
     const volPass = await bcrypt.hash(process.env.VOLUNTEER_SEED_PASSWORD || 'vol123', salt);
 
     // Users
-    const uAdmin = { _id: 'u1', name: 'Dr. R. K. Varma (Convener)', email: 'dataverse2k26ai@gmail.com', password: adminPass, role: 'super_admin', isEmailVerified: true };
-    const uCoord = { _id: 'u2', name: 'Prof. S. Meenakshi (CSE Coord)', email: 'coordinator@aamec.edu.in', password: coordPass, role: 'coordinator', isEmailVerified: true };
-    const uVol = { _id: 'u3', name: 'Karthik Subramanian (Student Vol)', email: 'volunteer@aamec.edu.in', password: volPass, role: 'volunteer', isEmailVerified: true };
+    const uAdmin = { _id: 'u1', name: 'Dr. R. K. Varma (Convener)', username: 'admin', email: 'dataverse2k26ai@gmail.com', password: adminPass, role: 'super_admin', isEmailVerified: true };
+    const uCoord = { _id: 'u2', name: 'Prof. S. Meenakshi (CSE Coord)', username: 'coordinator', email: 'coordinator@aamec.edu.in', password: coordPass, role: 'coordinator', isEmailVerified: true };
+    const uVol = { _id: 'u3', name: 'Karthik Subramanian (Student Vol)', username: 'volunteer', email: 'volunteer@aamec.edu.in', password: volPass, role: 'volunteer', isEmailVerified: true };
 
     // Staff accounts only. NO demo student accounts / registrations - Admin starts empty.
     this.users = [uAdmin, uCoord, uVol];

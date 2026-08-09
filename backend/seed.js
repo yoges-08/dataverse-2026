@@ -20,21 +20,22 @@ const getRequiredPassword = (envKey, label) => {
 
 // Sync Admin / Coordinator / Volunteer accounts from env vars on every startup.
 // Lets the organizer change names/emails/passwords without touching code:
-//   ADMIN_NAME / ADMIN_EMAIL / ADMIN_PASSWORD
-//   COORDINATOR_NAME / COORDINATOR_EMAIL / COORDINATOR_PASSWORD
-//   VOLUNTEER_NAME / VOLUNTEER_EMAIL / VOLUNTEER_PASSWORD
+//   ADMIN_NAME / ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD
+//   COORDINATOR_NAME / COORDINATOR_USERNAME / COORDINATOR_EMAIL / COORDINATOR_PASSWORD
+//   VOLUNTEER_NAME / VOLUNTEER_USERNAME / VOLUNTEER_EMAIL / VOLUNTEER_PASSWORD
 // Password is only changed when the _PASSWORD var is present.
 const syncStaffAccounts = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
 
   const accounts = [
-    { role: 'super_admin', key: 'ADMIN', defaultName: 'Dr. R. K. Varma (Convener)', defaultEmail: 'dataverse2k26ai@gmail.com' },
-    { role: 'coordinator', key: 'COORDINATOR', defaultName: 'Prof. S. Meenakshi (CSE Coord)', defaultEmail: 'coordinator@aamec.edu.in' },
-    { role: 'volunteer', key: 'VOLUNTEER', defaultName: 'Karthik Subramanian (Student Vol)', defaultEmail: 'volunteer@aamec.edu.in' }
+    { role: 'super_admin', key: 'ADMIN', defaultName: 'Dr. R. K. Varma (Convener)', defaultUsername: 'admin', defaultEmail: 'dataverse2k26ai@gmail.com' },
+    { role: 'coordinator', key: 'COORDINATOR', defaultName: 'Prof. S. Meenakshi (CSE Coord)', defaultUsername: 'coordinator', defaultEmail: 'coordinator@aamec.edu.in' },
+    { role: 'volunteer', key: 'VOLUNTEER', defaultName: 'Karthik Subramanian (Student Vol)', defaultUsername: 'volunteer', defaultEmail: 'volunteer@aamec.edu.in' }
   ];
 
   for (const acc of accounts) {
     const name = process.env[`${acc.key}_NAME`] || acc.defaultName;
+    const username = (process.env[`${acc.key}_USERNAME`] || acc.defaultUsername).toLowerCase().trim();
     const email = process.env[`${acc.key}_EMAIL`] || acc.defaultEmail;
     const password = process.env[`${acc.key}_PASSWORD`];
 
@@ -49,13 +50,14 @@ const syncStaffAccounts = async () => {
     }
 
     user.name = name;
+    user.username = username;
     user.email = email;
     if (password && password.trim()) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
     }
     await user.save();
-    console.log(`Synced ${acc.role} account -> ${user.email}`);
+    console.log(`Synced ${acc.role} account -> ${user.email} (username: ${user.username})`);
   }
   return accounts.length;
 };
@@ -88,6 +90,7 @@ const seedData = async () => {
     // 1. Create Core Users
     const adminUser = await User.create({
       name: 'Dr. R. K. Varma (Convener)',
+      username: 'admin',
       email: 'dataverse2k26ai@gmail.com',
       password: adminPass,
       role: 'super_admin'
@@ -95,6 +98,7 @@ const seedData = async () => {
 
     const coordUser = await User.create({
       name: 'Prof. S. Meenakshi (CSE Coord)',
+      username: 'coordinator',
       email: 'coordinator@aamec.edu.in',
       password: coordPass,
       role: 'coordinator'
@@ -102,6 +106,7 @@ const seedData = async () => {
 
     const volUser = await User.create({
       name: 'Karthik Subramanian (Student Vol)',
+      username: 'volunteer',
       email: 'volunteer@aamec.edu.in',
       password: volPass,
       role: 'volunteer'
