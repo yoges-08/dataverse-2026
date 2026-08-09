@@ -20,10 +20,10 @@ const getRequiredPassword = (envKey, label) => {
 
 // Sync Admin / Coordinator / Volunteer accounts from env vars on every startup.
 // Lets the organizer change names/emails/passwords without touching code:
-//   ADMIN_NAME / ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD
-//   COORDINATOR_NAME / COORDINATOR_USERNAME / COORDINATOR_EMAIL / COORDINATOR_PASSWORD
-//   VOLUNTEER_NAME / VOLUNTEER_USERNAME / VOLUNTEER_EMAIL / VOLUNTEER_PASSWORD
-// Password is only changed when the _PASSWORD var is present.
+//   ADMIN_NAME / ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_SEED_PASSWORD
+//   COORDINATOR_NAME / COORDINATOR_USERNAME / COORDINATOR_EMAIL / COORDINATOR_SEED_PASSWORD
+//   VOLUNTEER_NAME / VOLUNTEER_USERNAME / VOLUNTEER_EMAIL / VOLUNTEER_SEED_PASSWORD
+// Password is only changed when the _SEED_PASSWORD var is present.
 const syncStaffAccounts = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
 
@@ -37,14 +37,14 @@ const syncStaffAccounts = async () => {
     const name = process.env[`${acc.key}_NAME`] || acc.defaultName;
     const username = (process.env[`${acc.key}_USERNAME`] || acc.defaultUsername).toLowerCase().trim();
     const email = process.env[`${acc.key}_EMAIL`] || acc.defaultEmail;
-    const password = process.env[`${acc.key}_PASSWORD`];
+    const password = process.env[`${acc.key}_SEED_PASSWORD`];
 
     let user = await User.findOne({ role: acc.role });
     if (!user) user = await User.findOne({ email });
 
     if (!user) {
       if (!password) {
-        throw new Error(`${acc.key}_PASSWORD environment variable is required to create the ${acc.role} account`);
+        throw new Error(`${acc.key}_SEED_PASSWORD environment variable is required to create the ${acc.role} account`);
       }
       user = new User({ role: acc.role });
     }
