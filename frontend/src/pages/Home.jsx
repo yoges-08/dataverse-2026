@@ -171,16 +171,23 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {events.slice(0, 6).map((ev) => (
-            <div key={ev._id} className="glass-card rounded-2xl p-6 border border-slate-800 hover:border-indigo-500/40 transition-all group">
-              <div className="flex items-center justify-between mb-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
-                }`}>
-                  {ev.category}
-                </span>
+            <div key={ev._id} className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={ev.bannerImage}
+                  alt={ev.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-3 left-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
+                  }`}>
+                    {ev.category}
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="p-6 space-y-3">
                 <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{ev.title}</h3>
                 <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">

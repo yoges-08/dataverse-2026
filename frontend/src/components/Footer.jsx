@@ -50,7 +50,7 @@ export default function Footer() {
               <div className="flex items-start space-x-2.5">
                 <Phone className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
-                  <span className="block"><span className="text-slate-300 font-semibold">Symposium Coordinator:</span> 9994718221</span>
+                  <span className="block"><span className="text-slate-300 font-semibold">Symposium Coordinator:</span> Dr. K. Jayanthi - 9994718221</span>
                   <span className="block mt-1"><span className="text-slate-300 font-semibold">Organizer Members:</span> 9791656236 / 8122310171 / 9489038346 / 8838999607</span>
                 </div>
               </div>
