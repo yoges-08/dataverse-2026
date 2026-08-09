@@ -34,30 +34,47 @@ const syncStaffAccounts = async () => {
   ];
 
   for (const acc of accounts) {
-    const name = process.env[`${acc.key}_NAME`] || acc.defaultName;
-    const username = (process.env[`${acc.key}_USERNAME`] || acc.defaultUsername).toLowerCase().trim();
-    const email = process.env[`${acc.key}_EMAIL`] || acc.defaultEmail;
-    const password = process.env[`${acc.key}_SEED_PASSWORD`];
+    try {
+      const name = process.env[`${acc.key}_NAME`] || acc.defaultName;
+      const username = (process.env[`${acc.key}_USERNAME`] || acc.defaultUsername).toLowerCase().trim();
+      const email = process.env[`${acc.key}_EMAIL`] || acc.defaultEmail;
+      const password = process.env[`${acc.key}_SEED_PASSWORD`];
 
-    let user = await User.findOne({ role: acc.role });
-    if (!user) user = await User.findOne({ email });
+      // Find the existing staff account. Only adopt a user whose role matches the
+      // target role - never a student who happens to share the email/username.
+      let user = await User.findOne({ role: acc.role });
+      if (!user) user = await User.findOne({ role: acc.role, email });
+      if (!user) user = await User.findOne({ role: acc.role, username });
 
-    if (!user) {
-      if (!password) {
-        throw new Error(`${acc.key}_SEED_PASSWORD environment variable is required to create the ${acc.role} account`);
+      if (!user) {
+        // No matching-role account exists. Create one, but ONLY if the email and
+        // username are not already taken by a different account (e.g. a student).
+        const emailTaken = await User.findOne({ email });
+        const usernameTaken = await User.findOne({ username });
+        if (emailTaken || usernameTaken) {
+          throw new Error(
+            `${acc.key}_EMAIL "${email}" or username "${username}" is already used by a ${emailTaken ? emailTaken.role : 'different'} account. ` +
+            `Set a unique ${acc.key}_EMAIL and ${acc.key}_USERNAME in env (or the email currently belongs to a student).`
+          );
+        }
+        if (!password) {
+          throw new Error(`${acc.key}_SEED_PASSWORD environment variable is required to create the ${acc.role} account`);
+        }
+        user = new User({ role: acc.role });
       }
-      user = new User({ role: acc.role });
-    }
 
-    user.name = name;
-    user.username = username;
-    user.email = email;
-    if (password && password.trim()) {
-      const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(password, salt);
+      user.name = name;
+      user.username = username;
+      user.email = email;
+      if (password && password.trim()) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+      }
+      await user.save();
+      console.log(`Synced ${acc.role} account -> ${user.email} (username: ${user.username})`);
+    } catch (err) {
+      console.error(`Skipped syncing ${acc.role} account: ${err.message}`);
     }
-    await user.save();
-    console.log(`Synced ${acc.role} account -> ${user.email} (username: ${user.username})`);
   }
   return accounts.length;
 };

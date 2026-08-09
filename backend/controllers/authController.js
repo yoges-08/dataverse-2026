@@ -48,11 +48,16 @@ exports.registerStudent = async (req, res) => {
     if (isDbConnected()) {
       const existingUser = await User.findOne({ email: cleanEmail });
       if (existingUser) {
-        // Check if student profile exists for this user
-        const existingStudent = await Student.findOne({ user: existingUser._id });
-        if (!existingStudent) {
-          // Orphaned user from previous crashed registration attempt - remove to allow fresh registration
-          await User.findByIdAndDelete(existingUser._id);
+        // Only treat as an orphan (crashed registration) if it is a STUDENT-role
+        // user with no student profile. Staff accounts (admin/coordinator/volunteer)
+        // must NEVER be deleted or reused by a student registration.
+        if (existingUser.role === 'student') {
+          const existingStudent = await Student.findOne({ user: existingUser._id });
+          if (!existingStudent) {
+            await User.findByIdAndDelete(existingUser._id);
+          } else {
+            return res.status(400).json({ success: false, message: 'Email address already registered' });
+          }
         } else {
           return res.status(400).json({ success: false, message: 'Email address already registered' });
         }
@@ -121,9 +126,14 @@ exports.registerStudent = async (req, res) => {
       // In-Memory Fallback
       const existing = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (existing) {
-        const existingStudent = mockStore.students.find(s => String(s.user) === String(existing._id));
-        if (!existingStudent) {
-          mockStore.users = mockStore.users.filter(u => String(u._id) !== String(existing._id));
+        // Same safety rule as DB branch: only orphaned STUDENT users may be removed.
+        if (existing.role === 'student') {
+          const existingStudent = mockStore.students.find(s => String(s.user) === String(existing._id));
+          if (!existingStudent) {
+            mockStore.users = mockStore.users.filter(u => String(u._id) !== String(existing._id));
+          } else {
+            return res.status(400).json({ success: false, message: 'Email address already registered' });
+          }
         } else {
           return res.status(400).json({ success: false, message: 'Email address already registered' });
         }
