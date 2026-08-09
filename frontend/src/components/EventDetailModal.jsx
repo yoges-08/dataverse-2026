@@ -3,6 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import { X, Calendar, MapPin, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
 import API from '../services/api';
 
+const formatDate = (d) => {
+  if (!d) return '';
+  const parts = d.split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return d;
+};
+
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
   const { user, student } = useContext(AuthContext);
   const [paperFile, setPaperFile] = useState(null);
@@ -100,7 +107,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block">Date</span>
-                <span className="text-xs font-semibold text-white">{event.date}</span>
+                <span className="text-xs font-semibold text-white">{formatDate(event.date)}</span>
               </div>
             </div>
 
