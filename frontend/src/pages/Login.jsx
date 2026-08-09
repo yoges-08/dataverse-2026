@@ -18,7 +18,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [loginType, setLoginType] = useState('staff');
 
   const redirectByRole = (role) => {
     switch (role) {
@@ -58,32 +57,6 @@ export default function Login() {
           <p className="text-xs text-slate-400">Sign in to access your portal & tickets</p>
         </div>
 
-        {/* Login Type Toggle: Staff (Admin/Coordinator/Volunteer) or Student */}
-        <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-900 border border-slate-700 text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => setLoginType('staff')}
-            className={`py-2.5 rounded-xl transition-colors ${
-              loginType === 'staff'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Admin / Coordinator / Volunteer
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoginType('student')}
-            className={`py-2.5 rounded-xl transition-colors ${
-              loginType === 'student'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Student
-          </button>
-        </div>
-
         {errorMsg && (
           <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -94,14 +67,14 @@ export default function Login() {
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
             <label className="text-slate-300 font-semibold block mb-1">
-              {loginType === 'staff' ? 'Username or Email Address' : 'Email Address'}
+              Username or Email Address
             </label>
             <input
               type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={loginType === 'staff' ? 'e.g. admin / your@college.edu.in' : 'user@aamec.edu.in'}
+              placeholder="username or email@aamec.edu.in"
               className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
