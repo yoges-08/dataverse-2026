@@ -97,7 +97,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-extrabold shadow-lg shadow-indigo-600/30 transition-all"
+                  className="btn-glow px-5 py-2.5 rounded-xl text-white font-extrabold shadow-lg shadow-indigo-600/30"
                 >
                   Register
                 </Link>

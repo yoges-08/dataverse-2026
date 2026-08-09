@@ -109,7 +109,7 @@ export default function Home() {
             {user ? (
               <Link
                 to={getDashboardPath()}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+                className="btn-glow w-full sm:w-auto px-8 py-4 rounded-2xl text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 hover:scale-105 transition-transform flex items-center justify-center space-x-2"
               >
                 <Zap className="w-5 h-5 fill-white" />
                 <span>Go to Dashboard</span>
@@ -117,7 +117,7 @@ export default function Home() {
             ) : (
               <Link
                 to="/register"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+                className="btn-glow w-full sm:w-auto px-8 py-4 rounded-2xl text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 hover:scale-105 transition-transform flex items-center justify-center space-x-2"
               >
                 <Zap className="w-5 h-5 fill-white" />
                 <span>Register Now</span>

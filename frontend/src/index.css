@@ -2,40 +2,148 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* ============================================================
+   DATAVERSE 2026 — MODERN GLASSMORPHISM THEME
+   Aurora background · frosted glass · gradient glow accents
+   ============================================================ */
+
 @layer base {
   body {
     @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300;
+    min-height: 100vh;
+    background-color: #070a18;
+    background-image:
+      radial-gradient(60% 45% at 15% 10%, rgba(99, 102, 241, 0.28) 0%, transparent 70%),
+      radial-gradient(50% 40% at 85% 15%, rgba(236, 72, 153, 0.18) 0%, transparent 70%),
+      radial-gradient(55% 45% at 50% 95%, rgba(139, 92, 246, 0.22) 0%, transparent 70%),
+      radial-gradient(40% 30% at 90% 80%, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+    background-attachment: fixed;
+  }
+
+  /* Subtle animated aurora blobs floating over the page */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(38% 30% at 22% 20%, rgba(99, 102, 241, 0.20) 0%, transparent 70%),
+      radial-gradient(32% 28% at 78% 30%, rgba(236, 72, 153, 0.14) 0%, transparent 70%),
+      radial-gradient(44% 36% at 55% 92%, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+    animation: auroraShift 18s ease-in-out infinite alternate;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
   }
 }
 
-.glass-card {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@keyframes auroraShift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-2%, 1.5%, 0) scale(1.06); }
+  100% { transform: translate3d(2%, -1.5%, 0) scale(1.02); }
 }
 
-.glass-card-light {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+@keyframes shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
 }
 
-/* ============ LIGHT / WHITE THEME ============
-   Active when the <html> element does NOT have the `dark` class.
-   Tailwind is set to darkMode:'class'; the default is dark. */
-:root:not(.dark) {
-  color-scheme: light;
+@layer components {
+  /* ---------- Frosted Glass Card ---------- */
+  .glass-card {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      0 20px 50px -20px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .glass-card:hover {
+    border-color: rgba(129, 140, 248, 0.45);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 24px 60px -22px rgba(99, 102, 241, 0.55);
+  }
+
+  .glass-card-light {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.25);
+  }
+
+  /* ---------- Animated Gradient Text ---------- */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(90deg, #818cf8, #a78bfa, #f472b6, #818cf8);
+    background-size: 250% 100%;
+    animation: shimmer 6s ease-in-out infinite;
+  }
+
+  /* ---------- Gradient Border Wrapper ---------- */
+  .gradient-border {
+    position: relative;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(236, 72, 153, 0.6));
+    padding: 1px;
+    box-shadow: 0 0 24px -6px rgba(129, 140, 248, 0.45);
+  }
+
+  /* ---------- Primary Glow Button ---------- */
+  .btn-glow {
+    background-image: linear-gradient(90deg, #4f46e5, #9333ea, #db2777);
+    background-size: 200% 100%;
+    transition: background-position 0.4s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.6);
+  }
+  .btn-glow:hover {
+    background-position: 100% 0;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 36px -10px rgba(124, 58, 237, 0.75);
+  }
 }
+
+/* Elegant scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(7, 10, 24, 0.9); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6366f1, #a855f7);
+  border-radius: 8px;
+  border: 2px solid rgba(7, 10, 24, 0.9);
+}
+::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+
+/* ============================================================
+   LIGHT / WHITE THEME  (html WITHOUT the `dark` class)
+   ============================================================ */
+:root:not(.dark) { color-scheme: light; }
 
 :root:not(.dark) body {
-  background: #eef2f7;
+  background-color: #f4f6fb;
+  background-image:
+    radial-gradient(60% 45% at 15% 8%, rgba(99, 102, 241, 0.14) 0%, transparent 70%),
+    radial-gradient(50% 40% at 85% 12%, rgba(236, 72, 153, 0.10) 0%, transparent 70%),
+    radial-gradient(55% 45% at 50% 95%, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
   color: #0f172a;
+}
+
+:root:not(.dark) body::before {
+  background:
+    radial-gradient(38% 30% at 22% 18%, rgba(99, 102, 241, 0.10) 0%, transparent 70%),
+    radial-gradient(32% 28% at 78% 28%, rgba(236, 72, 153, 0.08) 0%, transparent 70%),
+    radial-gradient(44% 36% at 55% 92%, rgba(139, 92, 246, 0.10) 0%, transparent 70%);
 }
 
 :root:not(.dark) .text-white { color: #0f172a; }
@@ -47,15 +155,20 @@
 :root:not(.dark) .border-slate-700 { border-color: rgba(148, 163, 184, 0.6); }
 
 :root:not(.dark) .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
   border-color: rgba(148, 163, 184, 0.5);
+  box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.22);
 }
 :root:not(.dark) .glass-card-light {
   background: rgba(255, 255, 255, 0.97);
-  border-color: rgba(226, 232, 240, 0.8);
+  border-color: rgba(226, 232, 240, 0.9);
+}
+:root:not(.dark) .glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: 0 24px 60px -22px rgba(99, 102, 241, 0.3);
 }
 
-:root:not(.dark) nav { background-color: rgba(255, 255, 255, 0.9); }
+:root:not(.dark) nav { background-color: rgba(255, 255, 255, 0.85) !important; }
 :root:not(.dark) footer { background-color: #ffffff; }
 
 :root:not(.dark) .bg-slate-900 { background-color: #f1f5f9; }
@@ -67,29 +180,10 @@
 
 :root:not(.dark) .bg-slate-950\/80 { background-color: rgba(255, 255, 255, 0.85); }
 :root:not(.dark) ::-webkit-scrollbar-track { background: #e2e8f0; }
-:root:not(.dark) ::-webkit-scrollbar-thumb { background: #94a3b8; }
+:root:not(.dark) ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #818cf8, #a855f7); }
 
-.gradient-border {
-  position: relative;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.5));
-  padding: 1px;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #090d16;
-}
-::-webkit-scrollbar-thumb {
-  background: #3730a3;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #6366f1;
-}
+/* Float animation helper (used for hero elements) */
+.animate-floaty { animation: floaty 6s ease-in-out infinite; }
 
 /* Printable Badge & Certificate Media Queries */
 @media print {

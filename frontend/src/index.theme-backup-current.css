@@ -1,0 +1,108 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300;
+  }
+}
+
+.glass-card {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
+}
+
+/* ============ LIGHT / WHITE THEME ============
+   Active when the <html> element does NOT have the `dark` class.
+   Tailwind is set to darkMode:'class'; the default is dark. */
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+:root:not(.dark) body {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+:root:not(.dark) .text-white { color: #0f172a; }
+:root:not(.dark) .text-slate-200 { color: #1e293b; }
+:root:not(.dark) .text-slate-300 { color: #1e293b; }
+:root:not(.dark) .text-slate-400 { color: #475569; }
+:root:not(.dark) .text-slate-500 { color: #64748b; }
+:root:not(.dark) .border-slate-800 { border-color: rgba(148, 163, 184, 0.45); }
+:root:not(.dark) .border-slate-700 { border-color: rgba(148, 163, 184, 0.6); }
+
+:root:not(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+:root:not(.dark) .glass-card-light {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(226, 232, 240, 0.8);
+}
+
+:root:not(.dark) nav { background-color: rgba(255, 255, 255, 0.9); }
+:root:not(.dark) footer { background-color: #ffffff; }
+
+:root:not(.dark) .bg-slate-900 { background-color: #f1f5f9; }
+:root:not(.dark) .bg-slate-900\/80 { background-color: rgba(248, 250, 252, 0.9); }
+:root:not(.dark) .bg-slate-900\/90 { background-color: #f8fafc; }
+:root:not(.dark) .bg-slate-800 { background-color: #e2e8f0; }
+:root:not(.dark) .bg-slate-800\/60 { background-color: rgba(241, 245, 249, 0.9); }
+:root:not(.dark) .bg-slate-950 { background-color: #ffffff; }
+
+:root:not(.dark) .bg-slate-950\/80 { background-color: rgba(255, 255, 255, 0.85); }
+:root:not(.dark) ::-webkit-scrollbar-track { background: #e2e8f0; }
+:root:not(.dark) ::-webkit-scrollbar-thumb { background: #94a3b8; }
+
+.gradient-border {
+  position: relative;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.5));
+  padding: 1px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #3730a3;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}
+
+/* Printable Badge & Certificate Media Queries */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-content, .printable-content * {
+    visibility: visible;
+  }
+  .printable-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
