@@ -4,6 +4,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const seedIfEmpty = require('./config/seedIfEmpty');
+const seedData = require('./seed');
 const mongoose = require('mongoose');
 const mockStore = require('./utils/mockStore');
 
@@ -39,6 +40,15 @@ app.use((req, res, next) => {
 // Connect to Database
 connectDB().then(async (connected) => {
   if (connected) {
+    try {
+      // Apply Admin/Coordinator/Volunteer name+password from env vars every boot,
+      // so the organizer can change credentials without editing code.
+      if (seedData.syncStaffAccounts) {
+        await seedData.syncStaffAccounts();
+      }
+    } catch (err) {
+      console.error('Staff-sync failed (continuing startup):', err.message);
+    }
     try {
       await seedIfEmpty();
     } catch (err) {

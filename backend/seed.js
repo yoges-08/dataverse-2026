@@ -18,6 +18,48 @@ const getRequiredPassword = (envKey, label) => {
   return pw;
 };
 
+// Sync Admin / Coordinator / Volunteer accounts from env vars on every startup.
+// Lets the organizer change names/emails/passwords without touching code:
+//   ADMIN_NAME / ADMIN_EMAIL / ADMIN_PASSWORD
+//   COORDINATOR_NAME / COORDINATOR_EMAIL / COORDINATOR_PASSWORD
+//   VOLUNTEER_NAME / VOLUNTEER_EMAIL / VOLUNTEER_PASSWORD
+// Password is only changed when the _PASSWORD var is present.
+const syncStaffAccounts = async () => {
+  if (mongoose.connection.readyState !== 1) return 0;
+
+  const accounts = [
+    { role: 'super_admin', key: 'ADMIN', defaultName: 'Dr. R. K. Varma (Convener)', defaultEmail: 'dataverse2k26ai@gmail.com' },
+    { role: 'coordinator', key: 'COORDINATOR', defaultName: 'Prof. S. Meenakshi (CSE Coord)', defaultEmail: 'coordinator@aamec.edu.in' },
+    { role: 'volunteer', key: 'VOLUNTEER', defaultName: 'Karthik Subramanian (Student Vol)', defaultEmail: 'volunteer@aamec.edu.in' }
+  ];
+
+  for (const acc of accounts) {
+    const name = process.env[`${acc.key}_NAME`] || acc.defaultName;
+    const email = process.env[`${acc.key}_EMAIL`] || acc.defaultEmail;
+    const password = process.env[`${acc.key}_PASSWORD`];
+
+    let user = await User.findOne({ role: acc.role });
+    if (!user) user = await User.findOne({ email });
+
+    if (!user) {
+      if (!password) {
+        throw new Error(`${acc.key}_PASSWORD environment variable is required to create the ${acc.role} account`);
+      }
+      user = new User({ role: acc.role });
+    }
+
+    user.name = name;
+    user.email = email;
+    if (password && password.trim()) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+    await user.save();
+    console.log(`Synced ${acc.role} account -> ${user.email}`);
+  }
+  return accounts.length;
+};
+
 const seedData = async () => {
   try {
     const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dataverse_symposium';
@@ -263,3 +305,4 @@ if (require.main === module) {
 }
 
 module.exports = seedData;
+module.exports.syncStaffAccounts = syncStaffAccounts;
