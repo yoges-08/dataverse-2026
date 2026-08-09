@@ -47,7 +47,7 @@ export default function Home() {
       <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8">
         
         {/* Glowing Background Mesh */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-indigo-600/30 via-purple-600/20 to-pink-600/30 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-amber-600/15 via-amber-400/10 to-yellow-600/15 rounded-full blur-[140px] pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-8">
           
@@ -88,8 +88,8 @@ export default function Home() {
 
           {/* Symposium Date & Deadline Badges */}
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-800/30 to-blue-900/30 border border-blue-400/40 shadow-xl">
-              <Calendar className="w-5 h-5 text-blue-300" />
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-700/15 to-amber-600/10 border border-amber-400/35 shadow-xl">
+              <Calendar className="w-5 h-5 text-amber-300" />
               <div className="text-left">
                 <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Symposium</span>
                 <span className="text-base sm:text-lg font-black text-white">12 / 09 / 2026</span>
