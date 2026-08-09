@@ -117,133 +117,169 @@ const seedData = async () => {
     // 2. Create Events
     const events = await Event.create([
       {
-        title: 'Quiz',
+        title: 'Agentic AI',
         category: 'Technical',
-        tagline: 'Test your computer science core skills & technical aptitude',
-        description: 'Quiz is the flagship technical quiz competition covering Data Structures, Algorithms, AI, Web Technologies, and Logical Reasoning. Multiple rounds including Prelims, Buzzer Round, and Rapid Fire.',
+        tagline: 'Test your AI knowledge, logic, and creativity',
+        description: 'Agentic AI is a fun and challenging event that tests your AI knowledge, logical thinking, creativity, and problem-solving skills through different rounds.',
         rules: [
-          'Teams of 2 members allowed.',
-          'Use of smartphones during quiz rounds is strictly prohibited.',
-          'Judges decision will be final and binding.'
+          'The event consists of 4 rounds.',
+          'Each round lasts between 15 - 20 minutes.',
+          'Four participants compete in each round.',
+          'You must complete the given task within the specified time.',
+          'Cheating is strictly prohibited.'
         ],
-        venue: 'Auditorium Block A',
-        date: '2026-09-15',
-        time: '10:00 AM - 12:30 PM',
-        registrationDeadline: '2026-09-12',
-        maxParticipants: 100,
-        currentRegistrations: 0,
-        facultyCoordinator: { name: 'Dr. P. Ramesh', phone: '9842100123' },
-        studentCoordinator: { name: 'Sanjay Kumar', phone: '9789012345' },
-        prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80'
-      },
-      {
-        title: 'Agentic AI Challenge',
-        category: 'Technical',
-        tagline: 'Build & demonstrate autonomous intelligent AI agents',
-        description: 'Design and deploy autonomous AI agents capable of reasoning, tool use, memory recall, and task execution using modern frameworks (LLM APIs, LangChain, AutoGen).',
-        rules: [
-          'Individual or teams up to 3 members.',
-          'Live prototype demonstration mandatory.',
-          'Code must be submitted on GitHub before 2:00 PM.'
-        ],
-        venue: 'CS Lab 3 & High Performance Computing Center',
-        date: '2026-09-15',
-        time: '11:00 AM - 03:00 PM',
-        registrationDeadline: '2026-09-12',
+        venue: 'CC1 Lab',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
         maxParticipants: 60,
         currentRegistrations: 0,
-        facultyCoordinator: { name: 'Prof. K. Anand', phone: '9842100456' },
-        studentCoordinator: { name: 'Preethi Sundar', phone: '9876543210' },
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Pavithran', phone: '' },
         prizes: { first: '₹7,500 + Trophy & Certificate', second: '₹4,500 + Trophy & Certificate', third: '₹2,500 + Certificate' },
         bannerImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80'
       },
       {
-        title: 'Paper Presentation',
+        title: 'NovaSpeak',
         category: 'Technical',
-        tagline: 'Showcase research & innovative engineering papers',
-        description: 'Present original research papers on Cloud Computing, Cybersecurity, Machine Learning, IoT, Green Tech, or Blockchain. IEEE template preferred.',
+        tagline: 'Present your ideas with clarity and confidence',
+        description: 'It is the event where you can present and explain your ideas.',
         rules: [
-          'PDF abstract upload required during registration.',
-          '10 mins presentation + 3 mins Q&A.',
-          'Bring 2 printed hard copies of paper.'
+          'Presentation duration is 15 minutes.',
+          'The presentation must be delivered in English.',
+          'Malpractice is strictly prohibited.'
         ],
-        venue: 'Seminar Hall B',
-        date: '2026-09-15',
-        time: '01:30 PM - 04:30 PM',
-        registrationDeadline: '2026-09-10',
+        venue: 'MB-110 (Smart Class)',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
         maxParticipants: 50,
         currentRegistrations: 0,
-        facultyCoordinator: { name: 'Dr. M. Sangeetha', phone: '9842100789' },
-        studentCoordinator: { name: 'Vigneshwaran R', phone: '9790123456' },
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Yazhnithi', phone: '' },
         prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
         bannerImage: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
-        pdfRequired: true
+        pdfRequired: false
+      },
+      {
+        title: 'Knowledge Knockout',
+        category: 'Technical',
+        tagline: 'Assess your knowledge through targeted questions and tests',
+        description: 'Knowledge Knockout is a process of assessing a person\'s knowledge through targeted questions or tests.',
+        rules: [
+          'Each level is ten minutes.',
+          'Team participation is not allowed; only individual participation is permitted.',
+          'Each level consists of 15 questions.',
+          'Mobile phones are strictly prohibited during the quiz.',
+          'LEVEL 01 - GENERAL KNOWLEDGE',
+          'LEVEL 02 - TECHNICAL TOPICS',
+          'LEVEL 03 - RAPID FIRE',
+          'LEVEL 04 - BUZZER CHALLENGE'
+        ],
+        venue: 'A/C Conference Hall',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
+        maxParticipants: 100,
+        currentRegistrations: 0,
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Kavipriya', phone: '' },
+        prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },
+        bannerImage: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80'
       },
       {
         title: 'Layman Vibes',
         category: 'Non-Technical',
-        tagline: 'Explain complex tech concepts in humorous layman terms!',
-        description: 'A fun communication and creativity event where participants explain complex technological jargon (e.g. Backpropagation, Quantum Encryption, Kubernetes) to non-tech laymen with humor and relatable analogies.',
+        tagline: 'Explain complex tech concepts the fun way',
+        description: 'A fun non-technical event featuring exciting games that test creativity, observation, logical thinking, communication, and teamwork.',
         rules: [
-          'Single participant or pair.',
-          'Time limit: 3 minutes per topic.',
-          'No vulgarity allowed.'
+          'Team size: 3 members.',
+          'Follow the coordinators instructions.',
+          'Malpractice is strictly prohibited.',
+          'Judges decision will be final.'
         ],
-        venue: 'Open Air Theatre (OAT)',
-        date: '2026-09-16',
-        time: '10:00 AM - 12:30 PM',
-        registrationDeadline: '2026-09-14',
+        venue: 'A/C Conference Hall',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
         maxParticipants: 80,
         currentRegistrations: 0,
-        facultyCoordinator: { name: 'Prof. T. Vijay', phone: '9842100999' },
-        studentCoordinator: { name: 'Abinaya S', phone: '9840123456' },
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Sarumathi', phone: '' },
         prizes: { first: '₹4,000 + Trophy & Certificate', second: '₹2,500 + Trophy & Certificate', third: '₹1,000 + Certificate' },
         bannerImage: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=800&q=80'
       },
       {
         title: 'Luminas Fest',
         category: 'Non-Technical',
-        tagline: 'Cultural talent showcase & music/art performance',
-        description: 'Unleash your inner star! Luminas Fest features music, beatboxing, short skits, digital art live creation, and stage performances.',
+        tagline: 'Step beyond the technical world into fun and creativity',
+        description: 'A celebration of fun, creativity, and skill-based challenges that test quick thinking, communication, observation, memory, and presence of mind.',
         rules: [
-          'Max 5 minutes stage allocation per entry.',
-          'Track audio must be submitted in MP3 format 1 hour before event start.'
+          'Registration and punctuality are required - participants must register on time and reach the venue at the scheduled time.',
+          'Time and instructions must be followed as given by the coordinators.',
+          'Fair play is expected from all participants.',
+          'Participants must maintain discipline throughout the event.',
+          'The coordinators judgement will be final.'
         ],
-        venue: 'Main College Auditorium',
-        date: '2026-09-16',
-        time: '01:30 PM - 04:30 PM',
-        registrationDeadline: '2026-09-14',
+        venue: 'A/C Conference Hall',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
         maxParticipants: 120,
         currentRegistrations: 0,
-        facultyCoordinator: { name: 'Dr. G. Revathi', phone: '9842100888' },
-        studentCoordinator: { name: 'Dinesh Karthik', phone: '9789123456' },
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Sarumathi', phone: '' },
         prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },
         bannerImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80'
       },
       {
-        title: 'Fun & Games Arena',
+        title: 'Funfinity',
         category: 'Non-Technical',
-        tagline: 'E-Sports, Treasure Hunt, and Mystery Puzzles',
-        description: 'Interactive gaming tournament featuring FIFA, BGMI E-Sports, and an campus-wide Augmented Reality Treasure Hunt.',
+        tagline: 'Endless fun, laughter, and games',
+        description: 'Funfinity playfully blends fun and infinity, promising an endless, non-stop stream of laughter, games, and good times.',
         rules: [
-          'Standard E-Sports rules apply.',
-          'Fair play agreement mandatory.'
+          'Balance Battle',
+          'Cups and Chaos',
+          'Pictomime',
+          'No Look Just Eat'
         ],
-        venue: 'Student Activity Center',
-        date: '2026-09-16',
-        time: '10:30 AM - 03:30 PM',
-        registrationDeadline: '2026-09-14',
+        venue: 'A/C Conference Hall',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-11',
         maxParticipants: 150,
         currentRegistrations: 0,
-        facultyCoordinator: { name: 'Prof. N. Balaji', phone: '9842100777' },
-        studentCoordinator: { name: 'Hariharan B', phone: '9841123456' },
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Sojamani', phone: '' },
         prizes: { first: '₹4,500 + Trophy & Certificate', second: '₹2,500 + Trophy & Certificate', third: '₹1,200 + Certificate' },
         bannerImage: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        title: 'Viral Vision',
+        category: 'Non-Technical',
+        tagline: 'Create a reel that tells your story',
+        description: 'Create a reel by turning your ideas into a creative and engaging video, and share your message with the world.',
+        rules: [
+          'Last date for submission: 09/09/2026.',
+          'Create your reel based on the given topics.',
+          'Use only your original ideas and creativity.',
+          'Avoid unnecessary music and inappropriate content.',
+          'Keep the reel short, engaging, and meaningful.'
+        ],
+        venue: 'A/C Conference Hall',
+        date: '2026-09-12',
+        time: '',
+        registrationDeadline: '2026-09-09',
+        maxParticipants: 80,
+        currentRegistrations: 0,
+        facultyCoordinator: { name: '', phone: '' },
+        studentCoordinator: { name: 'Sriram', phone: '' },
+        prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },
+        bannerImage: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=800&q=80'
       }
     ]);
 
-    console.log('Created 6 Symposium Events (Technical & Non-Technical).');
+    console.log('Created 7 Symposium Events (Technical & Non-Technical).');
 
     // No sample/demo students are seeded. Admin starts empty - students register via the website.
     console.log('No demo students seeded (admin panel starts empty).');
@@ -257,8 +293,8 @@ const seedData = async () => {
         priority: 'High'
       },
       {
-        title: 'Paper Presentation PDF Submission Deadline Extended',
-        content: 'Participants registering for the Paper Presentation event can submit their abstract PDF up to September 12, 2026, 11:59 PM.',
+        title: 'Event Registrations Closing Soon!',
+        content: 'Hurry! Registrations for all technical and non-technical events close on September 11, 2026, 11:59 PM. Viral Vision reel submission closes on September 9, 2026.',
         category: 'Event Update',
         priority: 'Normal'
       },

@@ -12,17 +12,17 @@ const eventSchema = new mongoose.Schema({
   rules: [{ type: String }],
   venue: { type: String, required: true },
   date: { type: String, required: true },
-  time: { type: String, required: true },
+  time: { type: String, default: '' },
   registrationDeadline: { type: String, required: true },
   maxParticipants: { type: Number, default: 100 },
   currentRegistrations: { type: Number, default: 0 },
   facultyCoordinator: { 
-    name: { type: String, required: true },
-    phone: { type: String, required: true }
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' }
   },
   studentCoordinator: { 
-    name: { type: String, required: true },
-    phone: { type: String, required: true }
+    name: { type: String, default: '' },
+    phone: { type: String, default: '' }
   },
   prizes: {
     first: { type: String, default: '₹5,000 + Trophy & Certificate' },
