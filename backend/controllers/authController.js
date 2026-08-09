@@ -7,6 +7,7 @@ const Student = require('../models/Student');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
 const sendEmail = require('../utils/sendEmail');
+const { sendRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -101,10 +102,12 @@ exports.registerStudent = async (req, res) => {
 
       const token = generateToken(createdUser._id);
 
-      const emailResult = await sendEmail({
+      const emailResult = await sendRegistrationMail({
         to: cleanEmail,
-        subject: 'Welcome to DATAVERSE 2026 - Symposium Registration Confirmed',
-        html: `<h3>Dear ${name},</h3><p>Thank you for registering for DATAVERSE 2026.</p><p>Your unique Symposium Ticket Code is: <strong>${symposiumCode}</strong></p><p>Please log in to your Student Dashboard to view your digital ticket and QR code.</p>`
+        name,
+        registerNumber: student.registerNumber,
+        symposiumCode,
+        qrCodeData: symposiumCode
       });
 
       return res.status(201).json({
