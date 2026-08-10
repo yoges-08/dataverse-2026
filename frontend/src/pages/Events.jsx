@@ -28,12 +28,18 @@ export default function Events() {
     }
   };
 
-  const filteredEvents = events.filter(e => {
-    const matchesCategory = filterCategory === 'All' || e.category === filterCategory;
-    const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          e.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const categoryOrder = { 'Technical': 0, 'Non-Technical': 1 };
+  const filteredEvents = events
+    .filter(e => {
+      const matchesCategory = filterCategory === 'All' || e.category === filterCategory;
+      const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            e.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      const catDiff = (categoryOrder[a.category] ?? 2) - (categoryOrder[b.category] ?? 2);
+      return catDiff !== 0 ? catDiff : a.title.localeCompare(b.title);
+    });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -49,9 +55,14 @@ export default function Events() {
         </p>
       </div>
 
+      {/* Registration limit notice */}
+      <div className="max-w-3xl mx-auto -mt-6 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+        <Trophy className="w-4 h-4 shrink-0" />
+        <span>Each student can register for a maximum of <span className="font-black">2 events</span> only. Choose wisely!</span>
+      </div>
+
       {/* Filter & Search Bar */}
       <div className="glass-card p-4 rounded-2xl border border-indigo-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
-        
         {/* Category Tabs */}
         <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
           {['All', 'Technical', 'Non-Technical'].map(cat => (
