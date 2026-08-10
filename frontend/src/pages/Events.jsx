@@ -124,9 +124,9 @@ export default function Events() {
                 <div className="space-y-3 pt-3 border-t border-slate-800">
                   <button
                     onClick={() => setSelectedEvent(ev)}
-                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-indigo-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center space-x-1.5 border border-indigo-500/30"
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-purple-600/40 hover:shadow-purple-500/60 hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2"
                   >
-                    <Zap className="w-3.5 h-3.5" />
+                    <Zap className="w-4 h-4" />
                     <span>View Rules & Register</span>
                   </button>
                 </div>

@@ -127,13 +127,25 @@ export default function Navbar() {
           
           <div className="pt-4 border-t border-slate-800 space-y-2">
             {user ? (
-              <Link
-                to={getDashboardPath()}
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full py-3 text-center rounded-xl bg-indigo-600 text-white font-bold"
-              >
-                Go to Dashboard
-              </Link>
+              <>
+                <Link
+                  to={getDashboardPath()}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-3 text-center rounded-xl bg-indigo-600 text-white font-bold"
+                >
+                  Go to Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="block w-full py-3 text-center rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold flex items-center justify-center space-x-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </button>
+              </>
             ) : (
               <>
                 <Link
