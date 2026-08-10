@@ -152,7 +152,17 @@ export default function StudentDashboard() {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-white">My Registered Events</h3>
-            <span className="text-xs text-slate-400">{registeredEvents.length} events confirmed</span>
+            <span className="text-xs text-slate-400">{registeredEvents.length} of 3 events confirmed</span>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              You can register for a maximum of <span className="font-black">3 events</span> only. 
+              {registeredEvents.length >= 3
+                ? 'You have reached your registration limit.'
+                : `You can register for ${3 - registeredEvents.length} more event${3 - registeredEvents.length > 1 ? 's' : ''}.`}
+            </span>
           </div>
 
           {registeredEvents.length === 0 ? (

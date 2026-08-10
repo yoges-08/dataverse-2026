@@ -101,7 +101,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
-              <span className="font-bold">Registration Limit:</span> Each student can register for a maximum of 2 events only.
+              <span className="font-bold">Registration Limit:</span> Each student can register for a maximum of 3 events only.
             </span>
           </div>
 

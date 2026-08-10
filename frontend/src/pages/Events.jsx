@@ -58,7 +58,7 @@ export default function Events() {
       {/* Registration limit notice */}
       <div className="max-w-3xl mx-auto -mt-6 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
         <Trophy className="w-4 h-4 shrink-0" />
-        <span>Each student can register for a maximum of <span className="font-black">2 events</span> only. Choose wisely!</span>
+        <span>Each student can register for a maximum of <span className="font-black">3 events</span> only. Choose wisely!</span>
       </div>
 
       {/* Filter & Search Bar */}

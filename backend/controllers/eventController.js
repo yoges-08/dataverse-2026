@@ -114,7 +114,7 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
-const MAX_EVENT_REGISTRATIONS = 2;
+const MAX_EVENT_REGISTRATIONS = 3;
 
 exports.registerForEvent = async (req, res) => {
   try {
