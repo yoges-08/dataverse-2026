@@ -1,7 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BackToTop from './components/BackToTop';
+import { AuthContext } from './context/AuthContext';
 
 // Pages
 import Home from './pages/Home';
@@ -16,12 +18,72 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import CertificateVerify from './pages/CertificateVerify';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Dashboards
 import StudentDashboard from './pages/dashboards/StudentDashboard';
 import AdminDashboard from './pages/dashboards/AdminDashboard';
 import CoordinatorDashboard from './pages/dashboards/CoordinatorDashboard';
 import VolunteerDashboard from './pages/dashboards/VolunteerDashboard';
+
+const getRoleDashboard = (role) => {
+  switch (role) {
+    case 'super_admin': return '/dashboard/admin';
+    case 'coordinator': return '/dashboard/coordinator';
+    case 'volunteer': return '/dashboard/volunteer';
+    case 'student': return '/dashboard/student';
+    default: return '/login';
+  }
+};
+
+// Route guard: redirects unauthenticated users away from protected routes
+function ProtectedRoute({ children }) {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center text-slate-400">
+        <p className="text-sm">Loading your session...</p>
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+// Role guard: ensures only matching role can view a dashboard
+function RoleRoute({ role, children }) {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center text-slate-400">
+        <p className="text-sm">Loading your session...</p>
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user.role !== role && user.role !== 'super_admin') {
+    return <Navigate to={getRoleDashboard(user.role)} replace />;
+  }
+  return children;
+}
+
+// Redirect /dashboard to the role-specific dashboard
+function DashboardRedirect() {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center text-slate-400">
+        <p className="text-sm">Loading your session...</p>
+      </div>
+    );
+  }
+  return <Navigate to={getRoleDashboard(user?.role)} replace />;
+}
 
 export default function App() {
   return (
@@ -37,21 +99,49 @@ export default function App() {
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signin" element={<Navigate to="/login" replace />} />
+            <Route path="/sign-in" element={<Navigate to="/login" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify/:certNo?" element={<CertificateVerify />} />
 
-            {/* Role Dashboards */}
-            <Route path="/dashboard/student" element={<StudentDashboard />} />
-            <Route path="/dashboard/admin" element={<AdminDashboard />} />
-            <Route path="/dashboard/coordinator" element={<CoordinatorDashboard />} />
-            <Route path="/dashboard/volunteer" element={<VolunteerDashboard />} />
+            {/* Role Dashboards (protected) */}
+            <Route path="/dashboard" element={<DashboardRedirect />} />
+            <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
+            <Route path="/dashboard/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/admin" element={<RoleRoute role="super_admin"><AdminDashboard /></RoleRoute>} />
+            <Route path="/dashboard/coordinator" element={<RoleRoute role="coordinator"><CoordinatorDashboard /></RoleRoute>} />
+            <Route path="/dashboard/volunteer" element={<RoleRoute role="volunteer"><VolunteerDashboard /></RoleRoute>} />
+
+            {/* Catch-all 404 */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
+        <BackToTop />
       </div>
     </Router>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-4">
+      <span className="text-6xl font-black text-indigo-500">404</span>
+      <h1 className="text-3xl font-black text-white">Page Not Found</h1>
+      <p className="text-sm text-slate-400">
+        The page you are looking for doesn't exist. You may be looking for the
+        <a href="/login" className="text-indigo-400 font-bold mx-1">Sign In</a>page,
+        your <a href="/dashboard" className="text-indigo-400 font-bold mx-1">Dashboard</a>,
+        or the <a href="/events" className="text-indigo-400 font-bold mx-1">Events</a> catalog.
+      </p>
+      <a href="/" className="inline-block mt-4 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/30">
+        Back to Home
+      </a>
+    </div>
   );
 }

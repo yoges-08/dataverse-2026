@@ -22,11 +22,11 @@ export default function CountdownTimer({ targetDate = '2026-09-15T09:00:00' }) {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
-    return () => clearTimeout(timer);
-  });
+    return () => clearInterval(timer);
+  }, [targetDate]);
 
   const timeBlocks = [
     { label: 'Days', value: timeLeft.days || 0 },

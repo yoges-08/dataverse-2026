@@ -12,7 +12,7 @@ export default function About() {
         </span>
         <h1 className="text-4xl sm:text-6xl font-black text-white">Innovate • Inspire • Create</h1>
         <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-          DATAVERSE is the premier annual national-level symposium hosted by the Department of Computer Science & Engineering at Anjalai Ammal Mahalingam Engineering College, Kovilvenni.
+          DATAVERSE is the premier annual national-level symposium hosted by the Department of Artificial Intelligence and Data Science (AI & DS) at Anjalai Ammal Mahalingam Engineering College, Kovilvenni.
         </p>
       </div>
 
@@ -40,8 +40,9 @@ export default function About() {
 
         <div className="glass-card p-6 rounded-3xl border border-indigo-500/30">
           <img
-            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
-            alt="Students in symposium"
+            src="/campus1.jpg"
+            alt="AAMEC campus"
+            loading="lazy"
             className="w-full h-72 object-cover rounded-2xl"
           />
         </div>

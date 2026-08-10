@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MapPin, Mail, Phone, ExternalLink, Heart, Globe, Award, Shield } from 'lucide-react';
+import { Sparkles, MapPin, Mail, Phone, ExternalLink, Heart, Globe, Award, Shield, Instagram, Linkedin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -31,7 +31,30 @@ export default function Footer() {
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Technical Events</Link></li>
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Non-Technical Events</Link></li>
               <li><Link to="/faq" className="hover:text-indigo-400 transition-colors">Frequently Asked Questions</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
             </ul>
+
+            <div className="flex items-center space-x-3 mt-5">
+              <a
+                href="https://www.instagram.com/dataverse_26?igsh=djNwa2pqdng5cXo2"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Follow DATAVERSE on Instagram"
+                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-800"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.linkedin.com/search/results/all/?keywords=DATAVERSE%20AAMEC"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Find DATAVERSE on LinkedIn"
+                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-sky-600 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-800"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
           {/* Col 3: Contact Info & College */}

@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { MapPin, Mail, Phone, Send, CheckCircle2, Building, ExternalLink } from 'lucide-react';
+import { MapPin, Mail, Phone, Send, CheckCircle2, Building, ExternalLink, AlertCircle } from 'lucide-react';
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setSending(true);
+    setErrorMsg('');
+
+    // Simulate a short sending delay; form is handled client-side.
+    setTimeout(() => {
+      setSending(false);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 6000);
+    }, 800);
   };
 
   return (
@@ -33,6 +42,13 @@ export default function Contact() {
             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center space-x-2">
               <CheckCircle2 className="w-5 h-5 shrink-0" />
               <span>Thank you! Your message has been sent to the DATAVERSE organizing committee.</span>
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
@@ -87,10 +103,11 @@ export default function Contact() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2"
+              disabled={sending}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all disabled:opacity-60 flex items-center justify-center space-x-2"
             >
               <Send className="w-4 h-4" />
-              <span>Send Message</span>
+              <span>{sending ? 'Sending...' : 'Send Message'}</span>
             </button>
           </form>
         </div>
@@ -135,7 +152,7 @@ export default function Contact() {
             <p className="text-sm font-bold text-white">View Campus on Google Maps</p>
             <p className="text-xs text-slate-400">Open the exact venue location for DATAVERSE 2026.</p>
             <a
-              href="https://maps.app.goo.gl/Vjre7pWWT5fgBu6E9"
+              href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"

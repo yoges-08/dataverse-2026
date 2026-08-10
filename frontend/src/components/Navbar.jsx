@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { 
   Sparkles, Menu, X, User, LogOut, LayoutDashboard, 
@@ -10,6 +10,7 @@ export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -24,6 +25,18 @@ export default function Navbar() {
       case 'volunteer': return '/dashboard/volunteer';
       default: return '/dashboard/student';
     }
+  };
+
+  const navItems = [
+    { to: '/', label: 'Home', end: true },
+    { to: '/events', label: 'Events', end: false },
+    { to: '/about', label: 'About AAMEC', end: false },
+    { to: '/contact', label: 'Contact', end: false },
+  ];
+
+  const isActive = (item) => {
+    if (item.end) return location.pathname === item.to;
+    return location.pathname.startsWith(item.to);
   };
 
   return (
@@ -60,10 +73,15 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center space-x-8 text-xs font-bold text-slate-300">
-            <Link to="/" className="hover:text-indigo-400 transition-colors">Home</Link>
-            <Link to="/events" className="hover:text-indigo-400 transition-colors">Events</Link>
-            <Link to="/about" className="hover:text-indigo-400 transition-colors">About AAMEC</Link>
-            <Link to="/contact" className="hover:text-indigo-400 transition-colors">Contact</Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`transition-colors ${isActive(item) ? 'text-indigo-400 border-b-2 border-indigo-500 pb-0.5' : 'hover:text-indigo-400'}`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
           {/* Auth Action Buttons */}
@@ -120,10 +138,16 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
-          <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Home</Link>
-          <Link to="/events" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Events</Link>
-          <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">About AAMEC</Link>
-          <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Contact</Link>
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block py-2 ${isActive(item) ? 'text-indigo-400 border-l-4 border-indigo-500 pl-3' : 'text-slate-200'}`}
+            >
+              {item.label}
+            </Link>
+          ))}
           
           <div className="pt-4 border-t border-slate-800 space-y-2">
             {user ? (

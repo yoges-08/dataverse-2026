@@ -29,25 +29,72 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [customDepartment, setCustomDepartment] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFieldErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.name.trim()) {
+      errors.name = 'Please enter your full name';
+    } else if (formData.name.trim().length < 3) {
+      errors.name = 'Name must be at least 3 characters';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = 'Please enter your email address';
+    } else if (!emailRegex.test(formData.email.trim())) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errors.password = 'Please create a password';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Za-z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
+      errors.password = 'Password must contain letters and numbers';
+    }
+
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.phone.trim()) {
+      errors.phone = 'Please enter your mobile number';
+    } else if (!phoneRegex.test(formData.phone.trim())) {
+      errors.phone = 'Enter a valid 10-digit mobile number';
+    }
+
+    if (!formData.collegeName.trim()) {
+      errors.collegeName = 'Please enter your College Name';
+    }
+
+    if (formData.department === 'Other' && !customDepartment.trim()) {
+      errors.department = 'Please enter your Department';
+    }
+
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = 'Please enter your Date of Birth';
+    } else if (new Date(formData.dateOfBirth) >= new Date()) {
+      errors.dateOfBirth = 'Date of Birth must be in the past';
+    }
+
+    if (formData.emergencyContact && !/^\d{10}$/.test(formData.emergencyContact.trim())) {
+      errors.emergencyContact = 'Enter a valid 10-digit emergency number';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.collegeName.trim()) {
-      setErrorMsg('Please enter your College Name');
-      return;
-    }
-    if (!formData.dateOfBirth) {
-      setErrorMsg('Please enter your Date of Birth');
-      return;
-    }
-    if (formData.department === 'Other' && !customDepartment.trim()) {
-      setErrorMsg('Please enter your Department');
+    if (!validateForm()) {
+      setErrorMsg('Please fix the highlighted fields below.');
       return;
     }
 
@@ -110,8 +157,13 @@ export default function Register() {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="e.g. Balaji S"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.name ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.name && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.name}</span>
+                )}
               </div>
 
               <div>
@@ -123,8 +175,13 @@ export default function Register() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="student@example.com"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.email ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.email && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.email}</span>
+                )}
               </div>
 
               <div>
@@ -136,8 +193,10 @@ export default function Register() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full p-3 pr-11 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                    placeholder="Min 8 characters"
+                    className={`w-full p-3 pr-11 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                      fieldErrors.password ? 'border-red-500' : 'border-slate-700'
+                    }`}
                   />
                   <button
                     type="button"
@@ -147,6 +206,9 @@ export default function Register() {
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
+                  {fieldErrors.password && (
+                    <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.password}</span>
+                  )}
                 </div>
               </div>
 
@@ -156,11 +218,17 @@ export default function Register() {
                   type="tel"
                   name="phone"
                   required
+                  maxLength="10"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="9876543210"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.phone ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.phone && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.phone}</span>
+                )}
               </div>
             </div>
           </div>
@@ -181,8 +249,13 @@ export default function Register() {
                   value={formData.collegeName}
                   onChange={handleChange}
                   placeholder="Type your college name..."
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.collegeName ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.collegeName && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.collegeName}</span>
+                )}
               </div>
 
               <div>
@@ -191,7 +264,9 @@ export default function Register() {
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.department ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 >
                   <option value="Computer Science & Engineering">Computer Science & Engineering</option>
                   <option value="Information Technology">Information Technology</option>
@@ -211,10 +286,16 @@ export default function Register() {
                     name="customDepartment"
                     required
                     value={customDepartment}
-                    onChange={(e) => setCustomDepartment(e.target.value)}
+                    onChange={(e) => {
+                      setCustomDepartment(e.target.value);
+                      setFieldErrors((prev) => ({ ...prev, department: '' }));
+                    }}
                     placeholder="Type your department name"
                     className="mt-2 w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
                   />
+                )}
+                {fieldErrors.department && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.department}</span>
                 )}
               </div>
 
@@ -262,22 +343,34 @@ export default function Register() {
                   type="date"
                   name="dateOfBirth"
                   required
+                  max={new Date().toISOString().split('T')[0]}
                   value={formData.dateOfBirth}
                   onChange={handleChange}
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.dateOfBirth ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.dateOfBirth && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.dateOfBirth}</span>
+                )}
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-slate-300 font-semibold block mb-1">Emergency Contact Number</label>
+                <label className="text-slate-300 font-semibold block mb-1">Parent/Guardian Emergency Contact Number</label>
                 <input
-                  type="text"
+                  type="tel"
                   name="emergencyContact"
+                  maxLength="10"
                   value={formData.emergencyContact}
                   onChange={handleChange}
-                  placeholder="Parent / Guardian Mobile Number"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  placeholder="Parent / Guardian 10-digit mobile number"
+                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
+                    fieldErrors.emergencyContact ? 'border-red-500' : 'border-slate-700'
+                  }`}
                 />
+                {fieldErrors.emergencyContact && (
+                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.emergencyContact}</span>
+                )}
               </div>
             </div>
           </div>
@@ -290,6 +383,12 @@ export default function Register() {
             <UserPlus className="w-5 h-5" />
             <span>{loading ? 'Submitting Registration...' : 'Complete DATAVERSE Registration'}</span>
           </button>
+
+          <p className="text-center text-[10px] text-slate-500 leading-relaxed">
+            By registering you agree to our{' '}
+            <Link to="/terms" className="text-indigo-400 hover:underline">Terms of Service</Link> and{' '}
+            <Link to="/privacy-policy" className="text-indigo-400 hover:underline">Privacy Policy</Link>.
+          </p>
         </form>
 
         <p className="text-center text-slate-400 text-xs">
