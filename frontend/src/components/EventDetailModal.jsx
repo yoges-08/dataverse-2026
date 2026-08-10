@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { X, Calendar, MapPin, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
+import { X, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -89,10 +89,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">{event.title}</h2>
             </div>
-            <div className="text-right">
-              <span className="text-[10px] text-slate-400 block uppercase font-bold">Capacity</span>
-              <span className="text-sm font-bold text-indigo-400">{event.currentRegistrations} / {event.maxParticipants}</span>
-            </div>
           </div>
         </div>
 
@@ -100,25 +96,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
           
           <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
-
-          {/* Key Event Metadata */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center space-x-2.5">
-              <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-400 block">Date</span>
-                <span className="text-xs font-semibold text-white">{formatDate(event.date)}</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex items-center space-x-2.5 col-span-2 sm:col-span-1">
-              <MapPin className="w-4 h-4 text-indigo-400 shrink-0" />
-              <div>
-                <span className="text-[10px] text-slate-400 block">Venue</span>
-                <span className="text-xs font-semibold text-white truncate max-w-[130px]">{event.venue}</span>
-              </div>
-            </div>
-          </div>
 
           {/* Rules */}
           {event.rules && event.rules.length > 0 && (
@@ -131,12 +108,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </ul>
             </div>
           )}
-
-          {/* Coordinator */}
-          <div className="text-xs border-t border-slate-800 pt-4">
-            <span className="text-slate-400 block text-[10px] uppercase font-bold">Student Coordinator</span>
-            <span className="font-semibold text-white">{event.studentCoordinator?.name || 'TBA'}</span>
-          </div>
 
           {/* PDF Upload for Paper Presentation */}
           {event.pdfRequired && (

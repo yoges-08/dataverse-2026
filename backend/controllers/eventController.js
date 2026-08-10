@@ -114,6 +114,8 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
+const MAX_EVENT_REGISTRATIONS = 3;
+
 exports.registerForEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
@@ -129,6 +131,11 @@ exports.registerForEvent = async (req, res) => {
       const existing = await Registration.findOne({ student: student._id, event: eventId });
       if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
 
+      const totalRegistrations = await Registration.countDocuments({ student: student._id });
+      if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
+        return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+      }
+
       const registration = await Registration.create({ student: student._id, event: eventId });
       event.currentRegistrations += 1;
       await event.save();
@@ -143,6 +150,11 @@ exports.registerForEvent = async (req, res) => {
 
       const existing = mockStore.registrations.find(r => (r.student === student._id || String(r.student) === String(student._id)) && (r.event === eventId || String(r.event) === String(eventId)));
       if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
+
+      const totalRegistrations = mockStore.registrations.filter(r => r.student === student._id || String(r.student) === String(student._id)).length;
+      if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
+        return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+      }
 
       const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered' };
       mockStore.registrations.push(registration);

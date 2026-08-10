@@ -1,13 +1,9 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, ShieldCheck, Sparkles, User, MapPin } from 'lucide-react';
+import { X, ShieldCheck, Sparkles, User, MapPin } from 'lucide-react';
 
 export default function StudentBadgeModal({ student, onClose }) {
   if (!student) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
@@ -19,21 +15,12 @@ export default function StudentBadgeModal({ student, onClose }) {
             <Sparkles className="w-5 h-5 text-indigo-400" />
             <h3 className="text-white font-bold text-base">Official Symposium Ticket Badge</h3>
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handlePrint}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Badge</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Printable Badge Area */}

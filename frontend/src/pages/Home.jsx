@@ -53,16 +53,11 @@ export default function Home() {
           
           {/* College Logo */}
           <div className="flex justify-center mb-4">
-            <div className="relative group">
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-3xl blur opacity-45 group-hover:opacity-100 transition duration-500"></div>
-              <div className="relative w-28 h-28 sm:w-36 sm:h-36 glass-card rounded-3xl p-3 border-2 border-amber-500/50 flex items-center justify-center overflow-hidden shadow-2xl bg-slate-950/90">
-                <img
-                  src="/college_logo.png"
-                  alt="AAMEC Official College Emblem"
-                  className="w-full h-full object-contain filter drop-shadow-md"
-                />
-              </div>
-            </div>
+            <img
+              src="/college_logo.png"
+              alt="AAMEC Official College Emblem"
+              className="w-28 h-28 sm:w-36 sm:h-36 object-contain"
+            />
           </div>
 
           {/* College Badge */}

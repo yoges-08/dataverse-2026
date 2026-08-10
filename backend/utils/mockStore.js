@@ -200,29 +200,6 @@ class MockStore {
         bannerImage: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80'
       },
       {
-        _id: 'e6',
-        title: 'Funfinity',
-        category: 'Non-Technical',
-        tagline: 'Endless fun, laughter, and games',
-        description: 'Funfinity playfully blends fun and infinity, promising an endless, non-stop stream of laughter, games, and good times.',
-        rules: [
-          'Balance Battle',
-          'Cups and Chaos',
-          'Pictomime',
-          'No Look Just Eat'
-        ],
-        venue: 'A/C Conference Hall',
-        date: '2026-09-12',
-        time: '',
-        registrationDeadline: '2026-09-11',
-        maxParticipants: 150,
-        currentRegistrations: 0,
-        facultyCoordinator: { name: '', phone: '' },
-        studentCoordinator: { name: 'Sojamani', phone: '' },
-        prizes: { first: '₹4,500 + Trophy & Certificate', second: '₹2,500 + Trophy & Certificate', third: '₹1,200 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80'
-      },
-      {
         _id: 'e7',
         title: 'Viral Vision',
         category: 'Non-Technical',

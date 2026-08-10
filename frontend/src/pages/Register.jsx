@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { UserPlus, Sparkles, AlertCircle } from 'lucide-react';
+import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
   const { user, registerStudent } = useContext(AuthContext);
@@ -29,6 +29,8 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [customDepartment, setCustomDepartment] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,12 +42,25 @@ export default function Register() {
       setErrorMsg('Please enter your College Name');
       return;
     }
+    if (!formData.dateOfBirth) {
+      setErrorMsg('Please enter your Date of Birth');
+      return;
+    }
+    if (formData.department === 'Other' && !customDepartment.trim()) {
+      setErrorMsg('Please enter your Department');
+      return;
+    }
 
     try {
       setLoading(true);
       setErrorMsg('');
 
-      const res = await registerStudent(formData);
+      const finalData = {
+        ...formData,
+        department: formData.department === 'Other' ? customDepartment.trim() : formData.department
+      };
+
+      const res = await registerStudent(finalData);
       if (res.success) {
         navigate('/dashboard/student', { replace: true });
       }
@@ -114,28 +129,48 @@ export default function Register() {
 
               <div>
                 <label className="text-slate-300 font-semibold block mb-1">Password *</label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className="w-full p-3 pr-11 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-400 transition-colors"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Mobile Phone Number *</label>
-                <input
-                  type="text"
-                  name="phone"
-                  required
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="9876543210"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                />
+                <label className="text-slate-300 font-semibold block mb-1">Password *</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className="w-full p-3 pr-11 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-400 transition-colors"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -171,12 +206,26 @@ export default function Register() {
                   <option value="Computer Science & Engineering">Computer Science & Engineering</option>
                   <option value="Information Technology">Information Technology</option>
                   <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                  <option value="Artificial Intelligence & Machine Learning">Artificial Intelligence & Machine Learning</option>
+                  <option value="Chemical Engineering">Chemical Engineering</option>
                   <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
                   <option value="Electrical & Electronics Engineering">Electrical & Electronics Engineering</option>
                   <option value="Mechanical Engineering">Mechanical Engineering</option>
                   <option value="Civil Engineering">Civil Engineering</option>
                   <option value="MCA / Computer Applications">MCA / Computer Applications</option>
+                  <option value="Other">Other (type your department)</option>
                 </select>
+                {formData.department === 'Other' && (
+                  <input
+                    type="text"
+                    name="customDepartment"
+                    required
+                    value={customDepartment}
+                    onChange={(e) => setCustomDepartment(e.target.value)}
+                    placeholder="Type your department name"
+                    className="mt-2 w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  />
+                )}
               </div>
 
               <div>
@@ -218,10 +267,11 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Date of Birth</label>
+                <label className="text-slate-300 font-semibold block mb-1">Date of Birth *</label>
                 <input
                   type="date"
                   name="dateOfBirth"
+                  required
                   value={formData.dateOfBirth}
                   onChange={handleChange}
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"

@@ -477,7 +477,6 @@ export default function AdminDashboard() {
               <div key={ev._id} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-indigo-400">{ev.category}</span>
-                  <span className="text-xs font-bold text-white">{ev.currentRegistrations} / {ev.maxParticipants}</span>
                 </div>
                 <h4 className="text-lg font-bold text-white">{ev.title}</h4>
                 <p className="text-xs text-slate-400">{ev.venue} • {ev.date}</p>
