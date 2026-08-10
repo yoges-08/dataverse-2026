@@ -68,14 +68,14 @@ export default function Login() {
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
             <label className="text-slate-300 font-semibold block mb-1">
-              Username or Email Address
+              Email Address
             </label>
             <input
               type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="username or email@aamec.edu.in"
+              placeholder="Enter email"
               className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>

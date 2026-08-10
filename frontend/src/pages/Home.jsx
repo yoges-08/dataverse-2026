@@ -186,8 +186,7 @@ export default function Home() {
               <div className="p-6 space-y-3">
                 <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{ev.title}</h3>
                 <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                  <span className="text-indigo-300 font-semibold">{ev.venue}</span>
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-end text-xs">
                   <Link to="/events" className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1">
                     <span>View Details</span>
                     <ChevronRight className="w-4 h-4" />

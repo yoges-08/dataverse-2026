@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import EventDetailModal from '../components/EventDetailModal';
-import { Search, Filter, Sparkles, Trophy, Calendar, Clock, MapPin, ChevronRight, Zap } from 'lucide-react';
+import { Search, Filter, Sparkles, Trophy, Calendar, ChevronRight, Zap } from 'lucide-react';
 import API from '../services/api';
 
 export default function Events() {
@@ -122,17 +122,6 @@ export default function Events() {
                 </div>
 
                 <div className="space-y-3 pt-3 border-t border-slate-800">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center space-x-1">
-                      <Clock className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>{ev.date}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <MapPin className="w-3.5 h-3.5 text-indigo-400" />
-                      <span className="truncate max-w-[120px]">{ev.venue}</span>
-                    </span>
-                  </div>
-
                   <button
                     onClick={() => setSelectedEvent(ev)}
                     className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-indigo-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center space-x-1.5 border border-indigo-500/30"
