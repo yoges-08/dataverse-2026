@@ -185,6 +185,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteEvent = async (eventId, title) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"? This will remove all its registrations too.`)) return;
+    try {
+      const res = await API.delete(`/events/${eventId}`);
+      if (res.data.success) {
+        loadAdminData();
+      }
+    } catch (err) {
+      console.error('Error deleting event:', err);
+    }
+  };
+
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
     try {
@@ -497,6 +509,13 @@ export default function AdminDashboard() {
                   >
                     <UserCheck className="w-3.5 h-3.5" />
                     <span>Registrants</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteEvent(ev._id, ev.title)}
+                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs border border-red-500/30 transition-colors flex items-center justify-center space-x-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>

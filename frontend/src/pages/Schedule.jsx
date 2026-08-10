@@ -15,7 +15,7 @@ export default function Schedule() {
     Day2: [
       { time: '09:30 AM - 10:30 AM', title: 'Day 2 Keynote: Future of Generative AI', venue: 'Auditorium Block A', category: 'Keynote' },
       { time: '10:00 AM - 12:30 PM', title: 'Layman Vibes Tech Explanation Challenge', venue: 'Open Air Theatre (OAT)', category: 'Non-Technical' },
-      { time: '10:30 AM - 03:30 PM', title: 'Fun & Games Arena (E-Sports & Treasure Hunt)', venue: 'Student Activity Center', category: 'Non-Technical' },
+      { time: '10:30 AM - 03:30 PM', title: 'Viral Vision Reel Screening & Submission', venue: 'A/C Conference Hall', category: 'Non-Technical' },
       { time: '01:30 PM - 03:30 PM', title: 'Luminas Fest Cultural Stage Performance', venue: 'Main Auditorium', category: 'Non-Technical' },
       { time: '03:45 PM - 05:00 PM', title: 'Valedictory Function & Trophy Distribution', venue: 'Main Auditorium', category: 'Valedictory' }
     ]
