@@ -275,7 +275,7 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-black text-white mt-1">Management & Analytics Dashboard</h1>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowQRScanner(true)}
             className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-2"
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Analytics Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-card p-5 rounded-2xl border border-slate-800">
           <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Registered</span>
           <span className="text-3xl font-black text-white">{stats.totalStudents || 0}</span>
@@ -310,7 +310,7 @@ export default function AdminDashboard() {
         </div>
         <div className="glass-card p-5 rounded-2xl border border-indigo-500/30">
           <span className="text-[10px] text-indigo-400 font-bold uppercase block">Venue Checked-In</span>
-          <span className="text-3xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
+          <span className="text-2xl sm:text-3xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
         </div>
       </div>
 

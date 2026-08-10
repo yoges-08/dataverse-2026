@@ -166,12 +166,12 @@ export default function StudentDashboard() {
                 const ev = reg.event;
                 if (!ev) return null;
                 return (
-                  <div key={reg._id} className="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between gap-4">
+                  <div key={reg._id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
                       <img
                         src={ev.bannerImage}
                         alt={ev.title}
-                        className="w-16 h-16 rounded-xl object-cover border border-slate-700"
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-700"
                       />
                       <div>
                         <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>
@@ -179,7 +179,7 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
                       {reg.status}
                     </span>
                   </div>

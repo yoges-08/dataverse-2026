@@ -41,7 +41,7 @@ export default function Home() {
   };
 
   return (
-    <div className="space-y-24 pb-16 overflow-hidden">
+    <div className="space-y-16 sm:space-y-24 pb-16 overflow-hidden">
       
       {/* Hero Section */}
       <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8">
@@ -209,7 +209,7 @@ export default function Home() {
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               Established in Kovilvenni, Tiruvarur District, Tamil Nadu, AAMEC is a premier engineering institution committed to academic excellence, state-of-the-art laboratory infrastructure, research innovation, and holistic student development.
             </p>
-            <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold text-slate-300">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>NAAC Accredited Campus</span>
