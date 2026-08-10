@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import {
   Sparkles, Calendar, Users, Award, ShieldCheck,
-  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft
+  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy
 } from 'lucide-react';
 import API from '../services/api';
 
@@ -31,12 +31,15 @@ export default function Home() {
     try {
       const res = await API.get('/events');
       if (res.data.success) {
-        setEvents(res.data.events);
+        const categoryOrder = { 'Technical': 0, 'Non-Technical': 1 };
+        const sorted = [...res.data.events].sort((a, b) => {
+          const catDiff = (categoryOrder[a.category] ?? 2) - (categoryOrder[b.category] ?? 2);
+          return catDiff !== 0 ? catDiff : a.title.localeCompare(b.title);
+        });
+        setEvents(sorted);
       }
     } catch (err) {
       console.error('Error fetching events:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -163,6 +166,11 @@ export default function Home() {
         <div className="text-center space-y-3">
           <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Featured Symposium Events</span>
           <h2 className="text-3xl sm:text-5xl font-black text-white">Technical & Non-Technical Lineup</h2>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+          <Trophy className="w-4 h-4 shrink-0" />
+          <span>Each student can register for a maximum of <span className="font-black">3 events</span> only.</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
