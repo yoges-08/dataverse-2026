@@ -2,9 +2,9 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
-import { 
-  Sparkles, Calendar, Users, Award, ShieldCheck, 
-  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2
+import {
+  Sparkles, Calendar, Users, Award, ShieldCheck,
+  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft
 } from 'lucide-react';
 import API from '../services/api';
 
@@ -230,8 +230,86 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Campus Photo Slider */}
+        <div className="mt-10">
+          <div className="text-center space-y-2 mb-6">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Campus Life</span>
+            <h3 className="text-2xl sm:text-3xl font-black text-white">Inside AAMEC</h3>
+          </div>
+          <CampusSlider />
+        </div>
       </section>
 
+    </div>
+  );
+}
+
+const campusImages = [
+  '/campus1.jpg',
+  '/campus2.jpg',
+  '/campus3.jpg',
+  '/campus4.jpg',
+  '/campus5.jpg',
+  '/campus6.jpg'
+];
+
+function CampusSlider() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % campusImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const goTo = (idx) => setCurrent((idx + campusImages.length) % campusImages.length);
+
+  return (
+    <div className="glass-card rounded-3xl overflow-hidden border border-violet-500/25 relative">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden">
+        {campusImages.map((src, idx) => (
+          <img
+            key={src}
+            src={src}
+            alt={`AAMEC Campus ${idx + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+              idx === current ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+            }`}
+          />
+        ))}
+
+        {/* Prev / Next controls */}
+        <button
+          onClick={() => goTo(current - 1)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
+          aria-label="Previous photo"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => goTo(current + 1)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
+          aria-label="Next photo"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Dots */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2">
+        {campusImages.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goTo(idx)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              idx === current ? 'w-6 bg-indigo-400' : 'w-2 bg-white/40 hover:bg-white/70'
+            }`}
+            aria-label={`Photo ${idx + 1}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

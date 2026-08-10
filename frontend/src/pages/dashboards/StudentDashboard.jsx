@@ -176,11 +176,6 @@ export default function StudentDashboard() {
                       <div>
                         <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>
                         <h4 className="text-base font-bold text-white">{ev.title}</h4>
-                        <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
-                          <span>{ev.date}</span>
-                          <span>•</span>
-                          <span>{ev.venue}</span>
-                        </p>
                       </div>
                     </div>
 
