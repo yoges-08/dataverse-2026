@@ -62,7 +62,6 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-8 text-xs font-bold text-slate-300">
             <Link to="/" className="hover:text-indigo-400 transition-colors">Home</Link>
             <Link to="/events" className="hover:text-indigo-400 transition-colors">Events</Link>
-            <Link to="/gallery" className="hover:text-indigo-400 transition-colors">Gallery</Link>
             <Link to="/about" className="hover:text-indigo-400 transition-colors">About AAMEC</Link>
             <Link to="/contact" className="hover:text-indigo-400 transition-colors">Contact</Link>
           </div>
@@ -123,7 +122,6 @@ export default function Navbar() {
         <div className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
           <Link to="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Home</Link>
           <Link to="/events" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Events</Link>
-          <Link to="/gallery" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Gallery</Link>
           <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">About AAMEC</Link>
           <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-slate-200">Contact</Link>
           
