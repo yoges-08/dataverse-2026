@@ -258,8 +258,7 @@ const campusImages = [
   '/campus3.jpg',
   '/campus4.jpg',
   '/campus5.jpg',
-  '/campus6.jpg',
-  '/campus7.jpg'
+  '/campus6.jpg'
 ];
 
 function CampusSlider() {
