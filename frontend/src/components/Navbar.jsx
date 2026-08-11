@@ -34,6 +34,11 @@ export default function Navbar() {
     { to: '/contact', label: 'Contact', end: false },
   ];
 
+  // Certificates tab is only shown to logged-in students (their own certificates).
+  const studentNavItems = user?.role === 'student'
+    ? [...navItems, { to: '/certificates', label: 'Certificates', end: false }]
+    : navItems;
+
   const isActive = (item) => {
     if (item.end) return location.pathname === item.to;
     return location.pathname.startsWith(item.to);
@@ -73,7 +78,7 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <div className="hidden lg:flex items-center space-x-8 text-xs font-bold text-slate-300">
-            {navItems.map((item) => (
+            {studentNavItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -138,7 +143,7 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
-          {navItems.map((item) => (
+          {studentNavItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
@@ -148,7 +153,6 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
-          
           <div className="pt-4 border-t border-slate-800 space-y-2">
             {user ? (
               <>

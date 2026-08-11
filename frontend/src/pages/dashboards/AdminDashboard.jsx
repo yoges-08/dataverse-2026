@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
-  Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User 
+  Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
+  FileBadge, Loader
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -15,6 +16,13 @@ export default function AdminDashboard() {
   const [events, setEvents] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+
+  // Certificate generation state
+  const [certStudentId, setCertStudentId] = useState('');
+  const [certEventId, setCertEventId] = useState('');
+  const [certType, setCertType] = useState('Participation');
+  const [certBusy, setCertBusy] = useState(false);
+  const [certMsg, setCertMsg] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,6 +205,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleGenerateCertificate = async (e) => {
+    e.preventDefault();
+    if (!certStudentId || !certEventId) {
+      setCertMsg({ type: 'error', text: 'Please select both a student and an event.' });
+      return;
+    }
+    try {
+      setCertBusy(true);
+      setCertMsg(null);
+      const res = await API.post('/certificates/generate', {
+        studentId: certStudentId,
+        eventId: certEventId,
+        type: certType
+      });
+      setCertMsg({ type: 'success', text: res.data.message || 'Certificate generated successfully!' });
+      setCertStudentId('');
+      setCertEventId('');
+    } catch (err) {
+      setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to generate certificate.' });
+    } finally {
+      setCertBusy(false);
+    }
+  };
+
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
     try {
@@ -319,6 +351,7 @@ export default function AdminDashboard() {
         {[
           { id: 'students', label: `Students (${students.length})` },
           { id: 'events', label: `Symposium Events (${events.length})` },
+          { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
           { id: 'announcements', label: `Announcements (${announcements.length})` }
         ].map(tab => (
@@ -524,7 +557,103 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB 3: STAFF MANAGEMENT */}
+      {/* TAB 3: CERTIFICATES */}
+      {activeTab === 'certificates' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-bold text-white">Issue E-Certificates</h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Generate verified participation / winner certificates for students. Only
+              approved &amp; checked-in students are eligible. Certificates instantly appear
+              in the student's <strong>Certificates</strong> tab.
+            </p>
+          </div>
+
+          <div className="glass-card p-6 rounded-2xl border border-amber-500/30 space-y-4">
+            <form onSubmit={handleGenerateCertificate} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
+                  Select Student
+                </label>
+                <select
+                  required
+                  value={certStudentId}
+                  onChange={(e) => setCertStudentId(e.target.value)}
+                  className="w-full p-3 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="">— Choose a student —</option>
+                  {filteredStudents.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.user?.name || s.name || s.email} — {s.symposiumCode} — {s.collegeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
+                  Select Event
+                </label>
+                <select
+                  required
+                  value={certEventId}
+                  onChange={(e) => setCertEventId(e.target.value)}
+                  className="w-full p-3 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="">— Choose an event —</option>
+                  {events.map((ev) => (
+                    <option key={ev._id} value={ev._id}>{ev.title} ({ev.category})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
+                  Certificate Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {['Participation', 'Winner'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setCertType(t)}
+                      className={`py-3 rounded-xl border font-bold transition-all ${
+                        certType === t
+                          ? 'bg-amber-600 border-amber-500 text-white shadow-md'
+                          : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-amber-500'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {certMsg && (
+                <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
+                  certMsg.type === 'success'
+                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                    : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                }`}>
+                  {certMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
+                  <span>{certMsg.text}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={certBusy}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-extrabold text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {certBusy ? <Loader className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+                <span>{certBusy ? 'Generating...' : 'Generate Certificate'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: STAFF MANAGEMENT */}
       {activeTab === 'staff' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">

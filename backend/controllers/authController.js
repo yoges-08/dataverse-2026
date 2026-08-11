@@ -26,9 +26,12 @@ const getJwtSecret = () => {
 };
 
 const generateSymposiumCode = () => {
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const randomNum = crypto.randomInt(100000, 1000000);
   return `DV2026-REG-${randomNum}`;
 };
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidPhone = (phone) => phone === 'N/A' || /^[0-9+\-\s]{7,15}$/.test(phone);
 
 // @desc    Register a new Student
 // @route   POST /api/auth/register-student
@@ -43,6 +46,18 @@ exports.registerStudent = async (req, res) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail || !password || !name || !collegeName) {
       return res.status(400).json({ success: false, message: 'Please fill all required registration fields' });
+    }
+
+    // Server-side input validation (the frontend also validates, but the API
+    // must never trust client checks).
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    }
+    if (phone && !isValidPhone(phone)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid phone number' });
     }
 
     if (isDbConnected()) {
@@ -76,12 +91,19 @@ exports.registerStudent = async (req, res) => {
 
       let symposiumCode = generateSymposiumCode();
       let codeExists = await Student.findOne({ symposiumCode });
-      while (codeExists) {
+      let attempts = 0;
+      while (codeExists && attempts < 20) {
         symposiumCode = generateSymposiumCode();
         codeExists = await Student.findOne({ symposiumCode });
+        attempts += 1;
+      }
+      if (codeExists) {
+        throw new Error('Unable to allocate a unique symposium code. Please try again.');
       }
 
-      const qrPayload = JSON.stringify({ symposiumCode, name, collegeName, department, email: cleanEmail });
+      // QR payload intentionally excludes PII (name, college, email, etc.) so
+      // a captured QR cannot leak personal data; it only carries the unique code.
+      const qrPayload = JSON.stringify({ symposiumCode, type: 'Registration' });
       const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
       const student = await Student.create({
@@ -148,12 +170,17 @@ exports.registerStudent = async (req, res) => {
 
       let symposiumCode = generateSymposiumCode();
       let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-      while (codeExists) {
+      let attempts = 0;
+      while (codeExists && attempts < 20) {
         symposiumCode = generateSymposiumCode();
         codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+        attempts += 1;
+      }
+      if (codeExists) {
+        throw new Error('Unable to allocate a unique symposium code. Please try again.');
       }
 
-      const qrPayload = JSON.stringify({ symposiumCode, name, collegeName, department, email: cleanEmail });
+      const qrPayload = JSON.stringify({ symposiumCode, type: 'Registration' });
       const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
       const studentId = 's' + (mockStore.students.length + 1);

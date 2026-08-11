@@ -17,9 +17,29 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Body Parser Middleware
-// Auth uses a Bearer token in the Authorization header, not cookies, so a
-// wildcard allow for every origin is safe here (no credential sharing risk).
-app.use(cors({ origin: '*' }));
+// CORS is restricted to an explicit allowlist (env `CORS_ORIGINS` overrides the
+// defaults) instead of a wildcard, so a compromised third-party page can never
+// make credentialed calls against this API.
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
+  'https://dataverse-2026-qhyb.vercel.app'
+];
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+  .concat(DEFAULT_CORS_ORIGINS);
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow server-to-server / non-browser requests with no Origin header.
+    if (!origin) return callback(null, true);
+    if (corsOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -27,13 +47,23 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Auto-persist: when MongoDB is offline (in-memory mode), save the data store
-// to disk after every request so registered students survive server restarts.
-app.use((req, res, next) => {
-  res.on('finish', () => {
+// to disk after mutating requests so registered students survive restarts.
+// Persisting on every request (including reads) wasted disk I/O; only writes
+// can change the in-memory store, and a short debounce coalesces bursts.
+let persistTimer = null;
+const persistSoon = () => {
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
     if (mongoose.connection.readyState !== 1) {
       mockStore.persist();
     }
-  });
+  }, 500);
+};
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    res.on('finish', persistSoon);
+  }
   next();
 });
 
@@ -79,6 +109,9 @@ app.get('/api/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  if (err && err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ success: false, message: 'Not allowed by CORS' });
+  }
   console.error('API Error:', err.stack);
   res.status(err.statusCode || 500).json({
     success: false,

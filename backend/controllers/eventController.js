@@ -6,6 +6,12 @@ const mockStore = require('../utils/mockStore');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
+// Transactions require a replica set / Atlas dedicated tiers. If they are not
+// available we fall back to the unique {student, event} index (which still
+// makes the duplicate case atomic via E11000) plus the count check.
+let txSupported = true;
+let txProbeDone = false;
+
 exports.getEvents = async (req, res) => {
   try {
     const { category } = req.query;
@@ -122,25 +128,62 @@ exports.registerForEvent = async (req, res) => {
     const userId = req.user.id || req.user._id;
 
     if (isDbConnected()) {
-      const event = await Event.findById(eventId);
-      if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+      // Run the duplicate-check + insert atomically so two simultaneous
+      // requests cannot both pass the check and create a duplicate or push the
+      // student over the event limit. Falls back to best-effort if the server
+      // does not support transactions (e.g. Atlas M0/M2 shared clusters).
+      const useTx = txSupported;
+      const session = useTx ? await mongoose.startSession() : null;
+      try {
+        if (session) session.startTransaction();
+        const event = useTx
+          ? await Event.findById(eventId).session(session)
+          : await Event.findById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
-      const student = await Student.findOne({ user: userId });
-      if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+        const student = useTx
+          ? await Student.findOne({ user: userId }).session(session)
+          : await Student.findOne({ user: userId });
+        if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
-      const existing = await Registration.findOne({ student: student._id, event: eventId });
-      if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
+        const existing = useTx
+          ? await Registration.findOne({ student: student._id, event: eventId }).session(session)
+          : await Registration.findOne({ student: student._id, event: eventId });
+        if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
 
-      const totalRegistrations = await Registration.countDocuments({ student: student._id });
-      if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
-        return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+        const totalRegistrations = useTx
+          ? await Registration.countDocuments({ student: student._id }).session(session)
+          : await Registration.countDocuments({ student: student._id });
+        if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
+          return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+        }
+
+        const registration = useTx
+          ? (await Registration.create([{ student: student._id, event: eventId }], { session }))[0]
+          : await Registration.create({ student: student._id, event: eventId });
+        event.currentRegistrations += 1;
+        if (useTx) await event.save({ session });
+        else await event.save();
+
+        if (session) await session.commitTransaction();
+
+        return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
+      } catch (err) {
+        if (session) { try { await session.abortTransaction(); } catch (e) {} }
+        // Unique-index duplicate key -> the race condition's loser.
+        if (err && err.code === 11000) {
+          return res.status(400).json({ success: false, message: 'Already registered for this event' });
+        }
+        // Probe once: if transactions are unsupported, fall back to the
+        // index-based path so shared Atlas tiers keep working.
+        if (!txProbeDone && /transaction|replica set|not supported/i.test(err.message || '')) {
+          txSupported = false;
+          console.warn('MongoDB transactions not available; using index-based registration fallback.');
+        }
+        throw err;
+      } finally {
+        if (session) session.endSession();
       }
-
-      const registration = await Registration.create({ student: student._id, event: eventId });
-      event.currentRegistrations += 1;
-      await event.save();
-
-      return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
     } else {
       const event = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });

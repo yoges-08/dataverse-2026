@@ -5,7 +5,7 @@ const connectDB = async () => {
     const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dataverse_symposium';
     console.log(`Connecting to MongoDB...`);
     const conn = await mongoose.connect(connStr, {
-      serverSelectionTimeoutMS: 4000
+      serverSelectionTimeoutMS: 30000
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     return true;

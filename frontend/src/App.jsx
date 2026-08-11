@@ -18,6 +18,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import CertificateVerify from './pages/CertificateVerify';
+import MyCertificates from './pages/MyCertificates';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 
@@ -108,6 +109,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify/:certNo?" element={<CertificateVerify />} />
+            <Route path="/certificates" element={<RoleRoute role="student"><MyCertificates /></RoleRoute>} />
 
             {/* Role Dashboards (protected) */}
             <Route path="/dashboard" element={<DashboardRedirect />} />

@@ -4,15 +4,21 @@ const User = require('../models/User');
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 const generateSpotCode = () => {
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `DV2026-SPOT-${randomNum}`;
 };
+
+// Spot-registered students get a unique, unguessable password instead of the
+// old shared hardcoded default. They are checked in immediately and can use the
+// forgot-password flow if they ever need to log in.
+const generateSpotPassword = () => crypto.randomBytes(10).toString('hex');
 
 exports.getProfile = async (req, res) => {
   try {
@@ -105,7 +111,7 @@ exports.spotRegistration = async (req, res) => {
       let student;
       if (!user) {
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('SpotPass2026!', salt);
+        const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
         user = await User.create({ name, email: cleanEmail, password: hashedPassword, role: 'student' });
       }
 
@@ -113,12 +119,17 @@ exports.spotRegistration = async (req, res) => {
       if (!student) {
         let symposiumCode = generateSpotCode();
         let codeExists = await Student.findOne({ symposiumCode });
-        while (codeExists) {
+        let attempts = 0;
+        while (codeExists && attempts < 20) {
           symposiumCode = generateSpotCode();
           codeExists = await Student.findOne({ symposiumCode });
+          attempts += 1;
+        }
+        if (codeExists) {
+          throw new Error('Unable to allocate a unique symposium code. Please try again.');
         }
 
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail, type: 'Spot Registration' });
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = await Student.create({
@@ -157,7 +168,7 @@ exports.spotRegistration = async (req, res) => {
       let user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (!user) {
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('SpotPass2026!', salt);
+        const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
         user = { _id: 'u' + (mockStore.users.length + 1), name, email: cleanEmail, password: hashedPassword, role: 'student' };
         mockStore.users.push(user);
       }
@@ -166,12 +177,17 @@ exports.spotRegistration = async (req, res) => {
       if (!student) {
         let symposiumCode = generateSpotCode();
         let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-        while (codeExists) {
+        let attempts = 0;
+        while (codeExists && attempts < 20) {
           symposiumCode = generateSpotCode();
           codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+          attempts += 1;
+        }
+        if (codeExists) {
+          throw new Error('Unable to allocate a unique symposium code. Please try again.');
         }
 
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, name, collegeName, department, email: cleanEmail, type: 'Spot Registration' });
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = {

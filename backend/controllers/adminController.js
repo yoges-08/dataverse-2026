@@ -152,7 +152,13 @@ exports.deleteStudent = async (req, res) => {
       await Student.findByIdAndDelete(student._id);
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     } else {
+      const student = mockStore.students.find(s => s._id === req.params.id);
+      if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
       mockStore.students = mockStore.students.filter(s => s._id !== req.params.id);
+      mockStore.registrations = mockStore.registrations.filter(r => String(r.student) !== String(req.params.id));
+      if (student.user) {
+        mockStore.users = mockStore.users.filter(u => String(u._id) !== String(student.user));
+      }
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     }
   } catch (error) {
