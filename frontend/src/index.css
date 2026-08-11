@@ -219,7 +219,7 @@
 /* Animated AI neural-network background */
 .ai-bg-canvas {
   z-index: 0;
-  opacity: 0.85;
+  opacity: 0.92;
 }
 @media (prefers-reduced-motion: reduce) {
   .ai-bg-canvas { display: none; }
