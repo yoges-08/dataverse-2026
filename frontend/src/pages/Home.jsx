@@ -255,11 +255,12 @@ export default function Home() {
 
 const campusImages = [
   '/campus1.jpg',
-  '/campus2.jpg',
   '/campus3.jpg',
   '/campus4.jpg',
   '/campus5.jpg',
-  '/campus6.jpg'
+  '/campus6.jpg',
+  '/campus7.jpg',
+  '/campus8.jpg'
 ];
 
 function CampusSlider() {
