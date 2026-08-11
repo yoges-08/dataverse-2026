@@ -219,6 +219,7 @@
 /* Printable Badge & Certificate Media Queries */
 @media print {
   body {
+    background: #ffffff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -231,16 +232,32 @@
     print-color-adjust: exact;
   }
   .printable-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    position: static !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
   }
-  /* The modal wrappers use fixed positioning + overflow clipping that breaks
-     printing; neutralise them so only the certificate itself is printed. */
+  .printable-content * {
+    overflow: visible !important;
+  }
+  /* Neutralise the modal wrappers so only the certificate is printed on one page */
+  .cert-modal-overlay {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+  }
+  .cert-modal-card {
+    max-width: 100% !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .cert-modal-header {
+    display: none !important;
+  }
   .printable-content, .printable-content > * {
     box-shadow: none !important;
     border-radius: 0 !important;

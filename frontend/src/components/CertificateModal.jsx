@@ -12,13 +12,17 @@ export default function CertificateModal({ certificate, onClose }) {
   const studentName = certificate.student?.user?.name || certificate.student?.name || 'Participant';
   const eventTitle = certificate.event?.title || 'DATAVERSE Symposium Event';
   const collegeName = certificate.student?.collegeName || 'Anjalai Ammal Mahalingam Engineering College';
+  const certType = certificate.type || 'Participation';
+  const isWinner = certType === 'Winner';
+  const isRunnerUp = certType === 'RunnerUp';
+  const prizeLabel = isWinner ? 'First Prize' : isRunnerUp ? 'Runner-Up' : 'Honorable Mention';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card max-w-2xl w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cert-modal-overlay">
+      <div className="glass-card max-w-2xl w-full rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl relative cert-modal-card">
         
         {/* Header */}
-        <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between cert-modal-header">
           <div className="flex items-center space-x-2">
             <Award className="w-5 h-5 text-amber-400" />
             <h3 className="text-white font-bold text-base">Official Symposium Certificate</h3>
@@ -56,7 +60,7 @@ export default function CertificateModal({ certificate, onClose }) {
                 ANJALAI AMMAL MAHALINGAM ENGINEERING COLLEGE, KOVILVENNI
               </span>
               <h2 className="text-3xl font-black text-amber-200 tracking-wider">
-                CERTIFICATE OF {certificate.type === 'Winner' ? 'EXCELLENCE' : 'PARTICIPATION'}
+                CERTIFICATE OF {isWinner ? 'EXCELLENCE' : 'ACHIEVEMENT'}
               </h2>
               <p className="text-xs text-slate-400 italic">DATAVERSE 2026 • Innovate • Inspire • Create</p>
             </div>
@@ -69,7 +73,7 @@ export default function CertificateModal({ certificate, onClose }) {
               </h3>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
                 from <strong className="text-white">{collegeName}</strong> has actively participated and secured 
-                <strong className="text-amber-300 font-bold"> {certificate.type === 'Winner' ? 'First Prize' : 'Honorable Mention'} </strong> 
+                <strong className="text-amber-300 font-bold"> {prizeLabel} </strong> 
                 in the event <strong className="text-white">{eventTitle}</strong> at DATAVERSE 2026.
               </p>
             </div>
