@@ -218,16 +218,31 @@
 
 /* Printable Badge & Certificate Media Queries */
 @media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   body * {
     visibility: hidden;
   }
   .printable-content, .printable-content * {
     visibility: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .printable-content {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  /* The modal wrappers use fixed positioning + overflow clipping that breaks
+     printing; neutralise them so only the certificate itself is printed. */
+  .printable-content, .printable-content > * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 }

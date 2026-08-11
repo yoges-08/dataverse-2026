@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [certType, setCertType] = useState('Participation');
   const [certBusy, setCertBusy] = useState(false);
   const [certMsg, setCertMsg] = useState(null);
+  const [certSearch, setCertSearch] = useState('');
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -293,6 +294,18 @@ export default function AdminDashboard() {
                           (s.user && s.user.name && s.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
     return matchesSearch && matchesStatus;
+  });
+
+  // Students filtered by the search box inside the Certificates tab
+  const certFilteredStudents = students.filter(s => {
+    if (!certSearch) return true;
+    const q = certSearch.toLowerCase();
+    const name = (s.user && s.user.name) || s.name || s.email || '';
+    return (s.symposiumCode && s.symposiumCode.toLowerCase().includes(q)) ||
+           (s.email && s.email.toLowerCase().includes(q)) ||
+           (name && name.toLowerCase().includes(q)) ||
+           (s.registerNumber && s.registerNumber.toLowerCase().includes(q)) ||
+           (s.collegeName && s.collegeName.toLowerCase().includes(q));
   });
 
   return (
@@ -573,21 +586,38 @@ export default function AdminDashboard() {
             <form onSubmit={handleGenerateCertificate} className="space-y-4 text-xs">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
-                  Select Student
+                  Search &amp; Select Student
                 </label>
+                <div className="relative mb-2">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, symposium code, register number or college..."
+                    value={certSearch}
+                    onChange={(e) => setCertSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-amber-500"
+                  />
+                </div>
                 <select
                   required
                   value={certStudentId}
                   onChange={(e) => setCertStudentId(e.target.value)}
                   className="w-full p-3 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-amber-500"
                 >
-                  <option value="">— Choose a student —</option>
-                  {filteredStudents.map((s) => (
+                  <option value="">
+                    {certSearch
+                      ? `— ${certFilteredStudents.length} student(s) found —`
+                      : '— Choose a student —'}
+                  </option>
+                  {certFilteredStudents.map((s) => (
                     <option key={s._id} value={s._id}>
                       {s.user?.name || s.name || s.email} — {s.symposiumCode} — {s.collegeName}
                     </option>
                   ))}
                 </select>
+                {certSearch && certFilteredStudents.length === 0 && (
+                  <p className="text-[10px] text-red-400 mt-1.5">No students match your search.</p>
+                )}
               </div>
 
               <div>

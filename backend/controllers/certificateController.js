@@ -43,7 +43,15 @@ exports.generateCertificate = async (req, res) => {
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
       let cert = await Certificate.findOne({ student: student._id, event: event._id });
-      if (cert) return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
+      if (cert) {
+        // Update the existing certificate's type (e.g. Participation -> Winner)
+        // instead of returning the stale old one.
+        if (cert.type !== (type || 'Participation')) {
+          cert.type = type || 'Participation';
+          await cert.save();
+        }
+        return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
+      }
 
       const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
       const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.user ? student.user.name : student.email, event: event.title }));
@@ -60,7 +68,12 @@ exports.generateCertificate = async (req, res) => {
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
       let cert = mockStore.certificates.find(c => (c.student === student._id || String(c.student) === String(student._id)) && (c.event === event._id || String(c.event) === String(event._id)));
-      if (cert) return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
+      if (cert) {
+        if (cert.type !== (type || 'Participation')) {
+          cert.type = type || 'Participation';
+        }
+        return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
+      }
 
       const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
       const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.email, event: event.title }));
