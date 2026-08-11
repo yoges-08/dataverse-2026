@@ -216,6 +216,15 @@
 /* Float animation helper (used for hero elements) */
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
 
+/* Animated AI neural-network background */
+.ai-bg-canvas {
+  z-index: 0;
+  opacity: 0.85;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-bg-canvas { display: none; }
+}
+
 /* Printable Badge & Certificate Media Queries */
 @media print {
   body {

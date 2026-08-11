@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
+import AiBackground from './components/AiBackground';
 import { AuthContext } from './context/AuthContext';
 
 // Pages
@@ -90,9 +91,11 @@ export default function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
+        <AiBackground />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/events" element={<Events />} />
@@ -125,6 +128,7 @@ export default function App() {
         </main>
         <Footer />
         <BackToTop />
+        </div>
       </div>
     </Router>
   );
