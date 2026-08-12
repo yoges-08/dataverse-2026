@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MapPin, Mail, Phone, ExternalLink, Heart, Globe, Award, Shield, Instagram, Linkedin } from 'lucide-react';
+import { Sparkles, MapPin, Mail, Phone, Heart, Globe, Award, Shield, Instagram, Linkedin, Navigation } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -77,20 +77,28 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Col 4: Campus Location */}
+          {/* Col 4: Campus Location — interactive map */}
           <div>
             <h4 className="text-white font-semibold text-sm tracking-wider uppercase mb-4">Campus Location</h4>
-            <div className="rounded-xl p-4 bg-slate-900/70 border border-slate-800 text-xs text-slate-400 space-y-2">
-              <p>Anjalai Ammal Mahalingam Engineering College,<br/>Kovilvenni, Tiruvarur District, Tamil Nadu.</p>
+            <div className="relative rounded-xl overflow-hidden border border-slate-800 shadow-lg shadow-black/30">
+              <iframe
+                title="AAMEC Campus Location Map"
+                src="https://www.google.com/maps?q=Anjalai%20Ammal%20Mahalingam%20Engineering%20College%2C%20Kovilvenni%2C%20Tamil%20Nadu&z=16&output=embed"
+                className="w-full h-52"
+                style={{ border: 0, filter: 'saturate(0.85)' }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
               <a
-                href="https://maps.app.goo.gl/Vjre7pWWT5fgBu6E9"
+                href="https://www.google.com/maps/dir/?api=1&destination=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-indigo-600/95 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 transition-colors"
+                title="Get directions to AAMEC on Google Maps"
               >
-                <MapPin className="w-3.5 h-3.5" />
-                <span>View Campus Location on Google Maps</span>
-                <ExternalLink className="w-3 h-3" />
+                <Navigation className="w-3.5 h-3.5" />
+                <span>Get Directions</span>
               </a>
             </div>
           </div>

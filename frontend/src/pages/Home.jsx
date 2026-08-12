@@ -72,20 +72,6 @@ export default function Home() {
             </span>
           </div>
 
-          {/* Show Map button */}
-          <div>
-            <a
-              href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-sm shadow-lg shadow-red-500/30 hover:scale-105 hover:shadow-red-500/50 transition-all"
-              title="Show AAMEC location on Google Maps"
-            >
-              <MapPin className="w-4 h-4" />
-              <span>Show Map</span>
-            </a>
-          </div>
-
           {/* Main Title & Tagline */}
           <div className="space-y-4">
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white leading-none">
