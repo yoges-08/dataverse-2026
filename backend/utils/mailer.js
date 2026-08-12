@@ -1,39 +1,12 @@
 const nodemailer = require('nodemailer');
 
-const isSmtpConfigured = () =>
-  !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-
-let transporter = null;
-
-const makeTransporter = (port, secure) =>
-  nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port,
-    secure,
-    connectionTimeout: 20000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-
-const getTransporter = () => {
-  if (!transporter) {
-    const port = Number(process.env.SMTP_PORT || 587);
-    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-    transporter = makeTransporter(port, secure);
-  }
-  return transporter;
-};
-
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+// SAFETY RULE: The app must NEVER log into an email account. Only sending
+// services that use an API key (Brevo) are allowed. No SMTP/Gmail fallback.
 
 const getFromEmail = () => {
-  const raw = String(process.env.SMTP_FROM || '').replace(/^["']|["']$/g, '').trim();
+  const raw = String(process.env.SMTP_FROM || process.env.BREVO_FROM || '').replace(/^["']|["']$/g, '').trim();
   if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
-  return process.env.SMTP_USER || 'no-reply@dataverse.aamec.in';
+  return 'no-reply@dataverse.aamec.in';
 };
 
 const sendViaBrevoApi = async ({ to, subject, html }) => {
@@ -64,13 +37,6 @@ const sendViaBrevoApi = async ({ to, subject, html }) => {
   }
 };
 
-const buildMail = ({ to, subject, html }) => ({
-  from: `"DATAVERSE 2026 - AAMEC" <${getFromEmail()}>`,
-  to,
-  subject,
-  html
-});
-
 const sendMail = async ({ to, subject, html }) => {
   // Preferred: Brevo HTTPS API (port 443) - reliable from cloud servers.
   if (process.env.BREVO_API_KEY) {
@@ -78,31 +44,9 @@ const sendMail = async ({ to, subject, html }) => {
     if (viaApi) return viaApi;
   }
 
-  if (isSmtpConfigured()) {
-    const configuredPort = Number(process.env.SMTP_PORT || 587);
-    const ports = configuredPort === 465 ? [465, 587] : [587, 465];
-    let lastError = null;
-
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const port = ports[attempt % 2];
-      const secure = port === 465;
-      try {
-        const info = await makeTransporter(port, secure).sendMail(buildMail({ to, subject, html }));
-        console.log(`📧 Email DELIVERED to ${to}: ${info.messageId} (port ${port})`);
-        return { success: true, messageId: info.messageId, port };
-      } catch (error) {
-        lastError = error;
-        console.error(`📧 Email attempt failed (${process.env.SMTP_HOST || 'smtp.gmail.com'}:${port}): ${error.message}`);
-        await delay(1500);
-      }
-    }
-
-    console.error('Email sending failed after retries:', lastError.message);
-    return { success: false, message: lastError.message };
-  }
-
-  // No SMTP configured: send through Ethereal (nodemailer test inbox) so emails are
-  // genuinely transmitted and openable via the printed preview URL.
+  // No Brevo key configured: dev-only fallback via Ethereal (nodemailer test
+  // inbox) so emails are genuinely transmitted and openable via the printed
+  // preview URL. This never logs into a real/personal email account.
   try {
     const account = await nodemailer.createTestAccount();
     const demoTransporter = nodemailer.createTransport({
@@ -122,7 +66,7 @@ const sendMail = async ({ to, subject, html }) => {
     console.log(`📧 [OPEN EMAIL HERE] ${previewUrl}`);
     return { success: true, devMode: true, previewUrl };
   } catch (error) {
-    console.log(`[DEV MODE] No SMTP & Ethereal unreachable -> email only logged. To: ${to} | Subject: ${subject}`);
+    console.log(`[DEV MODE] No Brevo key & Ethereal unreachable -> email only logged. To: ${to} | Subject: ${subject}`);
     console.log(`[DEV MODE] Preview:\n${html}`);
     return { success: true, devMode: true };
   }
@@ -261,4 +205,4 @@ const sendLoginMail = async ({ to, name }) => {
   `);
   return sendMail({ to, subject: 'DATAVERSE 2026 - New Sign-in Alert', html });
 };
-module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail, sendLoginMail, isSmtpConfigured };
+module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail, sendLoginMail };

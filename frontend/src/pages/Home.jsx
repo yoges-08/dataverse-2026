@@ -64,35 +64,25 @@ export default function Home() {
             />
           </div>
 
-          {/* College Badge — clickable, opens Google Maps */}
-          <a
-            href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 hover:border-indigo-400 hover:shadow-indigo-500/30 hover:scale-105 transition-all group"
-            title="Open AAMEC location on Google Maps"
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-white">
+          {/* College Name — visible, not clickable */}
+          <div className="inline-flex items-center gap-2.5 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full bg-gradient-to-r from-indigo-600/40 via-purple-600/30 to-indigo-600/40 border-2 border-indigo-400/60 shadow-lg shadow-indigo-500/25">
+            <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+            <span className="text-sm sm:text-lg font-black tracking-wide text-white">
               Anjalai Ammal Mahalingam Engineering College, Kovilvenni
             </span>
-            <MapPin className="w-4 h-4 text-pink-400 group-hover:text-pink-300 transition-colors" />
-          </a>
+          </div>
 
-          {/* Google-Map-style location pill with marker */}
+          {/* Show Map button */}
           <div>
             <a
               href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:scale-105 transition-all font-bold text-xs"
-              title="View campus location on Google Maps"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-sm shadow-lg shadow-red-500/30 hover:scale-105 hover:shadow-red-500/50 transition-all"
+              title="Show AAMEC location on Google Maps"
             >
-              <span className="relative flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60"></span>
-                <MapPin className="relative w-4 h-4 fill-red-400 text-red-400" />
-              </span>
-              <span>View our location on Google Maps</span>
+              <MapPin className="w-4 h-4" />
+              <span>Show Map</span>
             </a>
           </div>
 
