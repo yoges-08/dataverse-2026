@@ -16,6 +16,7 @@ const eventSchema = new mongoose.Schema({
   registrationDeadline: { type: String, required: true },
   maxParticipants: { type: Number, default: 100 },
   currentRegistrations: { type: Number, default: 0 },
+  teamLimit: { type: Number, default: 0 },
   facultyCoordinator: { 
     name: { type: String, default: '' },
     phone: { type: String, default: '' }

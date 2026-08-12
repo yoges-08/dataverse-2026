@@ -7,14 +7,8 @@ const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
-// A phone number may be stored with dashes/spaces/+ (e.g. "+91 98765 43210").
-// Compare only the digits so "9876543210", "98765 43210" and "+91-98765-43210"
-// all resolve to the same person.
+// Normalize a phone number to a digit-only form.
 const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
-
-// Total participants for an event registration, including the registered
-// student themselves (1 student + up to 5 teammates).
-const MAX_TEAM_MEMBERS = 5;
 
 const findByNormalizedPhone = async (phoneDigits) => {
   if (isDbConnected()) {
@@ -24,8 +18,22 @@ const findByNormalizedPhone = async (phoneDigits) => {
   return mockStore.students.find((s) => normalizePhone(s.phone) === phoneDigits) || null;
 };
 
-// Verify a classmate's phone belongs to someone already registered — used by
-// the event registration modal before a teammate is added.
+// 0 (or missing) means the event is solo-only - no teammates may be added.
+const getEffectiveTeamLimit = (event) =>
+  Number.isFinite(event && event.teamLimit) ? event.teamLimit : 0;
+
+// A teammate must already be individually registered for the same event.
+const isStudentRegisteredForEvent = async (studentId, eventId) => {
+  if (isDbConnected()) {
+    return !!(await Registration.findOne({ student: studentId, event: eventId }));
+  }
+  return mockStore.registrations.some((r) =>
+    String(r.student) === String(studentId) && String(r.event) === String(eventId)
+  );
+};
+
+// Verify a classmate's phone belongs to someone registered on DATAVERSE and -
+// when an eventId is passed - that they are already registered for that event.
 exports.lookupTeammate = async (req, res) => {
   try {
     const phoneDigits = normalizePhone(req.params.phone || '');
@@ -37,6 +45,18 @@ exports.lookupTeammate = async (req, res) => {
       return res.status(200).json({ success: true, found: false });
     }
     const name = student.user?.name || student.name || student.email || 'Registered Student';
+    const eventId = req.query.eventId;
+    if (eventId) {
+      const registeredForEvent = await isStudentRegisteredForEvent(student._id, eventId);
+      if (!registeredForEvent) {
+        return res.status(200).json({
+          success: true,
+          found: false,
+          notRegisteredForEvent: true,
+          message: 'This classmate must register for the event before they can be added as a teammate.'
+        });
+      }
+    }
     return res.status(200).json({
       success: true,
       found: true,
@@ -66,22 +86,30 @@ const parseTeamMembers = (raw) => {
   }
 };
 
-// Validate that every proposed teammate is someone registered on DATAVERSE.
-const validateTeamMembers = async (teamMembers) => {
+// Validate that every proposed teammate is a registered DATAVERSE student who
+// is ALSO already individually registered for the same event, and cap the list
+// at the event's teamLimit (0 = solo only, teammates rejected server-side).
+const validateTeamMembers = async (teamMembers, event, teamLimit) => {
   const clean = [];
   const normalized = [];
+  if (teamLimit <= 0 && (teamMembers || []).length > 0) {
+    return { error: `${event.title} does not allow team members. You can register as a solo participant only.`, members: null };
+  }
   for (const member of teamMembers || []) {
     const name = String(member?.name || '').trim();
     const phoneDigits = normalizePhone(member?.phone || '');
     if (!name || !phoneDigits) continue;
     if (normalized.includes(phoneDigits)) continue; // drop duplicates within the list
-    const found = await findByNormalizedPhone(null, phoneDigits);
+    const found = await findByNormalizedPhone(phoneDigits);
     if (!found) return { error: `${name} (${member?.phone}) is not registered on DATAVERSE. Only classmates who are already registered can be added as teammates.`, members: null };
+    if (!(await isStudentRegisteredForEvent(found._id, event._id))) {
+      return { error: `${name} must register for ${event.title} before they can be added as a teammate.`, members: null };
+    }
     normalized.push(phoneDigits);
     clean.push({ name, phone: phoneDigits });
   }
-  if (clean.length > MAX_TEAM_MEMBERS) {
-    return { error: `You can add up to ${MAX_TEAM_MEMBERS} teammates.`, members: null };
+  if (clean.length > teamLimit) {
+    return { error: `You can add up to ${teamLimit} teammates for ${event.title}.`, members: null };
   }
   return { members: clean };
 };
@@ -251,8 +279,13 @@ exports.registerForEvent = async (req, res) => {
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-        // Teammates must be registered DATAVERSE students (validated server-side).
-        const teamMemberResult = await validateTeamMembers(parseTeamMembers(req.body.teamMembers));
+        // Teammates must be registered DATAVERSE students who are ALSO already
+        // registered for this same event, and the total is capped by teamLimit.
+        const teamMemberResult = await validateTeamMembers(
+          parseTeamMembers(req.body.teamMembers),
+          event,
+          getEffectiveTeamLimit(event)
+        );
         if (teamMemberResult.error) {
           return res.status(400).json({ success: false, message: teamMemberResult.error });
         }
@@ -320,8 +353,13 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      // Teammates must be registered DATAVERSE students (validated server-side).
-      const teamMemberResult = await validateTeamMembers(parseTeamMembers(req.body.teamMembers));
+      // Teammates must be registered DATAVERSE students who are ALSO already
+      // registered for this same event, and the total is capped by teamLimit.
+      const teamMemberResult = await validateTeamMembers(
+        parseTeamMembers(req.body.teamMembers),
+        event,
+        getEffectiveTeamLimit(event)
+      );
       if (teamMemberResult.error) {
         return res.status(400).json({ success: false, message: teamMemberResult.error });
       }

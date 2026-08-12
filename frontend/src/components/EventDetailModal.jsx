@@ -25,6 +25,9 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
   if (!event) return null;
 
+  // 0 (or missing) means solo-only: no teammates for this event.
+  const teamLimit = Number.isFinite(event.teamLimit) ? event.teamLimit : 0;
+
   const removeTeammate = (idx) => {
     setTeamMembers((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -40,6 +43,10 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       setTmMsg({ type: 'error', text: 'Enter a valid 10-digit mobile number.' });
       return;
     }
+    if (teamMembers.length >= teamLimit) {
+      setTmMsg({ type: 'error', text: `You can add up to ${teamLimit} teammates for this event.` });
+      return;
+    }
     if (teamMembers.some((m) => m.phone === digits)) {
       setTmMsg({ type: 'error', text: 'This classmate is already added.' });
       return;
@@ -48,7 +55,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
     setTmChecking(true);
     setTmMsg({ type: '', text: '' });
     try {
-      const res = await API.get(`/events/teammate/${digits}`);
+      const res = await API.get(`/events/teammate/${digits}?eventId=${event._id}`);
       if (res.data.success && res.data.found) {
         const t = res.data.student;
         setTeamMembers((prev) => [
@@ -58,6 +65,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         setTmName('');
         setTmPhone('');
         setTmMsg({ type: 'success', text: `${t.name} verified — added as a teammate.` });
+      } else if (res.data.notRegisteredForEvent) {
+        setTmMsg({ type: 'error', text: res.data.message || 'This classmate must register for this event before they can be added as a teammate.' });
       } else {
         setTmMsg({ type: 'error', text: 'This classmate is not registered on DATAVERSE. Only registered students can be added as teammates.' });
       }
@@ -240,14 +249,16 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           )}
 
           {/* Team Members */}
+          {teamLimit > 0 && (
           <div className="p-3 bg-slate-900 rounded-xl border border-cyan-500/30 space-y-3">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 text-cyan-300">
                 <UserPlus className="w-4 h-4" />
-                <span>Add Team Members (Optional)</span>
+                <span>Add Team Members (Optional — up to {teamLimit})</span>
               </span>
               <p className="text-[10px] text-slate-400 mt-1">
-                Add classmates already registered on DATAVERSE by their name and mobile number.
+                Add classmates already registered on DATAVERSE by their name and mobile number. They must be
+                registered for this event to be added as teammates.
               </p>
             </div>
 
@@ -270,7 +281,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 <button
                   type="button"
                   onClick={handleAddTeammate}
-                  disabled={tmChecking}
+                  disabled={tmChecking || teamMembers.length >= teamLimit}
                   className="shrink-0 px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-60 flex items-center space-x-1"
                 >
                   {tmChecking ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
@@ -319,6 +330,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </div>
             )}
           </div>
+          )}
 
           {/* Message feedback */}
           {msg.text && (

@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const seedIfEmpty = require('./config/seedIfEmpty');
 const seedData = require('./seed');
+const Event = require('./models/Event');
 const mongoose = require('mongoose');
 const mockStore = require('./utils/mockStore');
 
@@ -107,8 +108,37 @@ connectDB().then(async (connected) => {
     } catch (err) {
       console.error('Auto-seed failed (continuing startup):', err.message);
     }
+    try {
+      await syncEventTeamLimits();
+    } catch (err) {
+      console.error('Event-team-limit sync failed (continuing startup):', err.message);
+    }
   }
 });
+
+// Idempotent migration: apply the scheduled teamLimit for each event by title
+// so existing databases get the per-event limits without manual edits.
+const EVENT_TEAM_LIMITS = [
+  { title: 'Agentic AI', teamLimit: 4 },
+  { title: 'NovaSpeak', teamLimit: 4 },
+  { title: 'Knowledge Knockout', teamLimit: 0 },
+  { title: 'Layman Vibes', teamLimit: 3 },
+  { title: 'Luminas Fest', teamLimit: 2 },
+  { title: 'Viral Vision', teamLimit: 4 }
+];
+const syncEventTeamLimits = async () => {
+  if (mongoose.connection.readyState !== 1) return 0;
+  let updated = 0;
+  for (const spec of EVENT_TEAM_LIMITS) {
+    const result = await Event.updateMany(
+      { title: { $regex: new RegExp(spec.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') } },
+      { $set: { teamLimit: spec.teamLimit } }
+    );
+    updated += (result.modifiedCount || 0) + (result.upsertedCount || 0);
+  }
+  if (updated > 0) console.log(`Applied event team limits to ${updated} event(s).`);
+  return updated;
+};
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));

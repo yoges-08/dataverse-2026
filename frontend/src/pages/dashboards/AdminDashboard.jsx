@@ -44,12 +44,12 @@ export default function AdminDashboard() {
 
   // New Event Form State
   const [newEvent, setNewEvent] = useState({
-    title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
+    title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
   });
 
   // Edit Event Form State
   const [editEvent, setEditEvent] = useState({
-    id: '', title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
+    id: '', title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
   });
 
   const openEditEvent = (ev) => {
@@ -65,6 +65,7 @@ export default function AdminDashboard() {
       time: ev.time || '',
       registrationDeadline: ev.registrationDeadline || '2026-09-11',
       maxParticipants: ev.maxParticipants || 100,
+      teamLimit: ev.teamLimit ?? 0,
       facultyName: ev.facultyCoordinator?.name || '',
       facultyPhone: ev.facultyCoordinator?.phone || '',
       studentName: ev.studentCoordinator?.name || '',
@@ -144,6 +145,7 @@ export default function AdminDashboard() {
     try {
       const res = await API.post('/events', {
         ...newEvent,
+        teamLimit: Number(newEvent.teamLimit) || 0,
         rules: (newEvent.rules || '').split('\n'),
         facultyCoordinator: { name: newEvent.facultyName, phone: newEvent.facultyPhone },
         studentCoordinator: { name: newEvent.studentName, phone: newEvent.studentPhone },
@@ -264,6 +266,7 @@ export default function AdminDashboard() {
         time: editEvent.time || '',
         registrationDeadline: editEvent.registrationDeadline,
         maxParticipants: Number(editEvent.maxParticipants) || 100,
+        teamLimit: Number(editEvent.teamLimit) || 0,
         facultyCoordinator: { name: editEvent.facultyName, phone: editEvent.facultyPhone },
         studentCoordinator: { name: editEvent.studentName, phone: editEvent.studentPhone },
         prizes: { first: editEvent.firstPrize, second: editEvent.secondPrize, third: editEvent.thirdPrize }
@@ -849,6 +852,7 @@ export default function AdminDashboard() {
                 <input type="date" value={newEvent.registrationDeadline} onChange={e => setNewEvent({...newEvent, registrationDeadline: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
               <input type="number" placeholder="Max Participants (default 100)" value={newEvent.maxParticipants} onChange={e => setNewEvent({...newEvent, maxParticipants: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
+              <input type="number" placeholder="Team Limit (0 = solo only, no teammates)" value={newEvent.teamLimit} onChange={e => setNewEvent({...newEvent, teamLimit: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Student Coordinator Name (optional)" value={newEvent.studentName} onChange={e => setNewEvent({...newEvent, studentName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Faculty Coordinator Name (optional)" value={newEvent.facultyName} onChange={e => setNewEvent({...newEvent, facultyName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <textarea placeholder="Rules & Guidelines (one per line)" value={newEvent.rules} onChange={e => setNewEvent({...newEvent, rules: e.target.value})} rows={4} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white font-mono" />
@@ -926,6 +930,10 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-2 gap-3">
                 <input type="text" placeholder="Venue" required value={editEvent.venue} onChange={e => setEditEvent({...editEvent, venue: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <input type="date" required value={editEvent.date} onChange={e => setEditEvent({...editEvent, date: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input type="number" placeholder="Max Participants" value={editEvent.maxParticipants} onChange={e => setEditEvent({...editEvent, maxParticipants: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
+                <input type="number" placeholder="Team Limit (0 = solo only)" value={editEvent.teamLimit} onChange={e => setEditEvent({...editEvent, teamLimit: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
               <input type="text" placeholder="Student Coordinator Name (optional)" value={editEvent.studentName} onChange={e => setEditEvent({...editEvent, studentName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Faculty Coordinator Name (optional)" value={editEvent.facultyName} onChange={e => setEditEvent({...editEvent, facultyName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
