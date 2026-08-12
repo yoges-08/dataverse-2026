@@ -126,16 +126,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 </div>
               </div>
             )}
-            {event.registrationDeadline && (
-              <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
-                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Registration Deadline</span>
-                  <span className="text-xs font-bold text-amber-300">{formatDate(event.registrationDeadline)}</span>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
 
           {/* Event Coordinators */}
           {(event.facultyCoordinator?.name || event.studentCoordinator?.name) && (
