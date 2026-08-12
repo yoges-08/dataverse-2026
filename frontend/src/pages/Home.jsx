@@ -4,7 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import {
   Sparkles, Calendar, Users, Award, ShieldCheck,
-  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy
+  ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy,
+  Mail, Phone, User
 } from 'lucide-react';
 import API from '../services/api';
 
@@ -255,11 +256,71 @@ export default function Home() {
 
         {/* Campus Photo Slider */}
         <div className="mt-10">
-          <div className="text-center space-y-2 mb-6">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Campus Life</span>
-            <h3 className="text-2xl sm:text-3xl font-black text-white">Inside AAMEC</h3>
+          <div className="text-center space-y-3 mb-8">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-400/40 text-indigo-300 font-extrabold text-xs uppercase tracking-widest">Campus Life</span>
+            <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+              Inside <span className="gradient-text">AAMEC</span>
+            </h3>
+            <p className="text-sm text-slate-400 max-w-xl mx-auto">
+              A glimpse of the vibrant campus that powers DATAVERSE 2026.
+            </p>
           </div>
           <CampusSlider />
+
+          {/* Contact info */}
+          <div className="mt-8 glass-card rounded-2xl border border-indigo-500/25 p-6 sm:p-8">
+            <div className="text-center mb-6">
+              <h4 className="text-xl sm:text-2xl font-black text-white">Have Questions? Reach Us</h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+              <div className="space-y-1.5">
+                <Mail className="w-6 h-6 text-indigo-400 mx-auto" />
+                <span className="text-slate-300 font-bold text-sm block">Email</span>
+                <a
+                  href="mailto:dataverse26ai@gmail.com"
+                  className="text-indigo-300 hover:text-indigo-200 font-semibold text-sm break-all transition-colors"
+                >
+                  dataverse26ai@gmail.com
+                </a>
+              </div>
+
+              <div className="space-y-1.5">
+                <User className="w-6 h-6 text-emerald-400 mx-auto" />
+                <span className="text-slate-300 font-bold text-sm block">Symposium Coordinator</span>
+                <span className="text-xs text-slate-400 block">Dr. K. Jayanthi</span>
+                <a
+                  href="tel:+919994718221"
+                  className="inline-flex items-center gap-1.5 text-indigo-300 hover:text-indigo-200 font-bold text-base transition-colors"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  9994718221
+                </a>
+              </div>
+
+              <div className="space-y-1.5">
+                <Users className="w-6 h-6 text-cyan-400 mx-auto" />
+                <span className="text-slate-300 font-bold text-sm block">Organizer Members</span>
+                <ul className="space-y-1 text-xs text-slate-400">
+                  <li>
+                    <span className="font-semibold text-slate-300">B. Yogeswaran:</span>{' '}
+                    <a href="tel:+919791656236" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9791656236</a>
+                  </li>
+                  <li>
+                    <span className="font-semibold text-slate-300">Suluckshanya S M:</span>{' '}
+                    <a href="tel:+918122310171" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">8122310171</a>
+                  </li>
+                  <li>
+                    <span className="font-semibold text-slate-300">Kaleeswaran A:</span>{' '}
+                    <a href="tel:+919489034836" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9489038346</a>
+                  </li>
+                  <li>
+                    <span className="font-semibold text-slate-300">Atchaya S:</span>{' '}
+                    <a href="tel:+918838999607" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">8838999607</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
