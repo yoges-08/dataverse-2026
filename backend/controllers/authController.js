@@ -32,6 +32,7 @@ const generateSymposiumCode = () => {
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isValidPhone = (phone) => phone === 'N/A' || /^[0-9+\-\s]{7,15}$/.test(phone);
+const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
 
 // @desc    Register a new Student
 // @route   POST /api/auth/register-student
@@ -53,8 +54,8 @@ exports.registerStudent = async (req, res) => {
     if (!isValidEmail(cleanEmail)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    if (password.length < 4) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 4 characters long' });
     }
     if (phone && !isValidPhone(phone)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid phone number' });
@@ -89,6 +90,17 @@ exports.registerStudent = async (req, res) => {
         isEmailVerified: true
       });
 
+      // A phone number must not be reused by another registered student.
+      const phoneDigits = normalizePhone(phone);
+      if (phoneDigits) {
+        const phoneReuse = await Student.findOne({ phone: phoneDigits });
+        if (phoneReuse) {
+          await User.findByIdAndDelete(createdUser._id).catch(() => {});
+          createdUser = null;
+          return res.status(400).json({ success: false, message: 'This phone number is already registered' });
+        }
+      }
+
       let symposiumCode = generateSymposiumCode();
       let codeExists = await Student.findOne({ symposiumCode });
       let attempts = 0;
@@ -114,7 +126,7 @@ exports.registerStudent = async (req, res) => {
         department: department || 'Computer Science & Engineering',
         year: year || 'III',
         email: cleanEmail,
-        phone: phone || 'N/A',
+        phone: phoneDigits || 'N/A',
         gender: gender || 'Male',
         dateOfBirth: dateOfBirth || '',
         address: address || '',
@@ -168,6 +180,13 @@ exports.registerStudent = async (req, res) => {
       const user = { _id: userId, name, email: cleanEmail, password: hashedPassword, role: 'student', isEmailVerified: true };
       mockStore.users.push(user);
 
+      // A phone number must not be reused by another registered student.
+      const phoneDigits = normalizePhone(phone);
+      if (phoneDigits && mockStore.students.some(s => normalizePhone(s.phone) === phoneDigits)) {
+        mockStore.users = mockStore.users.filter(u => String(u._id) !== String(userId));
+        return res.status(400).json({ success: false, message: 'This phone number is already registered' });
+      }
+
       let symposiumCode = generateSymposiumCode();
       let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
       let attempts = 0;
@@ -193,7 +212,7 @@ exports.registerStudent = async (req, res) => {
         department: department || 'Computer Science & Engineering',
         year: year || 'III',
         email: cleanEmail,
-        phone: phone || 'N/A',
+        phone: phoneDigits || 'N/A',
         gender: gender || 'Male',
         dateOfBirth: dateOfBirth || '',
         address: address || '',
@@ -392,6 +411,9 @@ exports.resetPassword = async (req, res) => {
 
     if (!cleanEmail || !token || !newPassword) {
       return res.status(400).json({ success: false, message: 'Please provide email, OTP code, and new password' });
+    }
+    if (newPassword.length < 4) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 4 characters long' });
     }
 
     const salt = await bcrypt.genSalt(10);

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { X, AlertCircle, FileText, Upload, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
+import { X, AlertCircle, FileText, Upload, Sparkles, Calendar, Clock, MapPin, User, Plus, UserPlus, CheckCircle2, Trash2, Loader } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -16,7 +16,57 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
+  // Team members (classmates who are already registered on DATAVERSE)
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [tmName, setTmName] = useState('');
+  const [tmPhone, setTmPhone] = useState('');
+  const [tmChecking, setTmChecking] = useState(false);
+  const [tmMsg, setTmMsg] = useState({ type: '', text: '' });
+
   if (!event) return null;
+
+  const removeTeammate = (idx) => {
+    setTeamMembers((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAddTeammate = async () => {
+    const name = tmName.trim();
+    const digits = tmPhone.replace(/\D/g, '');
+    if (!name || !tmPhone.trim()) {
+      setTmMsg({ type: 'error', text: 'Enter the classmate name and their 10-digit mobile number.' });
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(digits)) {
+      setTmMsg({ type: 'error', text: 'Enter a valid 10-digit mobile number.' });
+      return;
+    }
+    if (teamMembers.some((m) => m.phone === digits)) {
+      setTmMsg({ type: 'error', text: 'This classmate is already added.' });
+      return;
+    }
+
+    setTmChecking(true);
+    setTmMsg({ type: '', text: '' });
+    try {
+      const res = await API.get(`/events/teammate/${digits}`);
+      if (res.data.success && res.data.found) {
+        const t = res.data.student;
+        setTeamMembers((prev) => [
+          ...prev,
+          { name: t.name, phone: digits, collegeName: t.collegeName, department: t.department }
+        ]);
+        setTmName('');
+        setTmPhone('');
+        setTmMsg({ type: 'success', text: `${t.name} verified — added as a teammate.` });
+      } else {
+        setTmMsg({ type: 'error', text: 'This classmate is not registered on DATAVERSE. Only registered students can be added as teammates.' });
+      }
+    } catch (err) {
+      setTmMsg({ type: 'error', text: err.response?.data?.message || 'Could not verify this classmate right now.' });
+    } finally {
+      setTmChecking(false);
+    }
+  };
 
   const handleRegister = async () => {
     if (!user) {
@@ -41,6 +91,9 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       const formData = new FormData();
       if (paperFile) {
         formData.append('paperPdf', paperFile);
+      }
+      if (teamMembers.length) {
+        formData.append('teamMembers', JSON.stringify(teamMembers.map((m) => ({ name: m.name, phone: m.phone }))));
       }
 
       const res = await API.post(`/events/${event._id}/register`, formData, {
@@ -185,6 +238,87 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               />
             </div>
           )}
+
+          {/* Team Members */}
+          <div className="p-3 bg-slate-900 rounded-xl border border-cyan-500/30 space-y-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 text-cyan-300">
+                <UserPlus className="w-4 h-4" />
+                <span>Add Team Members (Optional)</span>
+              </span>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Add classmates already registered on DATAVERSE by their name and mobile number.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={tmName}
+                onChange={(e) => setTmName(e.target.value)}
+                placeholder="Classmate name"
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={tmPhone}
+                  onChange={(e) => setTmPhone(e.target.value)}
+                  placeholder="10-digit mobile number"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTeammate}
+                  disabled={tmChecking}
+                  className="shrink-0 px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold disabled:opacity-60 flex items-center space-x-1"
+                >
+                  {tmChecking ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            {tmMsg.text && (
+              <div className={`p-2.5 rounded-lg text-[10px] flex items-center space-x-1.5 ${
+                tmMsg.type === 'success'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-red-500/10 text-red-400 border border-red-500/30'
+              }`}>
+                {tmMsg.type === 'success' ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
+                <span>{tmMsg.text}</span>
+              </div>
+            )}
+
+            {teamMembers.length > 0 && (
+              <div className="space-y-1.5">
+                {teamMembers.map((member, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-2 bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-white">
+                        <CheckCircle2 className="w-3.5 h-3.5 inline text-emerald-400 mr-1 -mt-0.5" />
+                        {member.name}
+                        <span className="text-slate-400 font-normal"> • {member.phone}</span>
+                      </p>
+                      {member.collegeName && (
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {member.collegeName}
+                          {member.department ? ` • ${member.department}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => removeTeammate(idx)}
+                      className="shrink-0 p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                      title="Remove teammate"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Message feedback */}
           {msg.text && (

@@ -56,10 +56,8 @@ export default function Register() {
 
     if (!formData.password) {
       errors.password = 'Please create a password';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    } else if (!/[A-Za-z]/.test(formData.password) || !/[0-9]/.test(formData.password)) {
-      errors.password = 'Password must contain letters and numbers';
+    } else if (formData.password.length < 4) {
+      errors.password = 'Password must be at least 4 characters';
     }
 
     const phoneRegex = /^[6-9]\d{9}$/;
@@ -193,7 +191,7 @@ export default function Register() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Min 8 characters"
+                    placeholder="Min 4 characters"
                     className={`w-full p-3 pr-11 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
                       fieldErrors.password ? 'border-red-500' : 'border-slate-700'
                     }`}

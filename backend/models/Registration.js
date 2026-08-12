@@ -5,6 +5,15 @@ const registrationSchema = new mongoose.Schema({
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   status: { type: String, enum: ['Registered', 'Attended', 'Cancelled'], default: 'Registered' },
   paperPdfUrl: { type: String, default: null },
+  teamMembers: {
+    type: [
+      {
+        name: { type: String, trim: true },
+        phone: { type: String, trim: true }
+      }
+    ],
+    default: []
+  },
   registrationDate: { type: Date, default: Date.now }
 }, { timestamps: true });
 

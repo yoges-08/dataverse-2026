@@ -7,6 +7,85 @@ const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
+// A phone number may be stored with dashes/spaces/+ (e.g. "+91 98765 43210").
+// Compare only the digits so "9876543210", "98765 43210" and "+91-98765-43210"
+// all resolve to the same person.
+const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
+
+// Total participants for an event registration, including the registered
+// student themselves (1 student + up to 5 teammates).
+const MAX_TEAM_MEMBERS = 5;
+
+const findByNormalizedPhone = async (phoneDigits) => {
+  if (isDbConnected()) {
+    const candidates = await Student.find({}, 'phone user collegeName department').populate('user', 'name').lean();
+    return candidates.find((s) => normalizePhone(s.phone) === phoneDigits) || null;
+  }
+  return mockStore.students.find((s) => normalizePhone(s.phone) === phoneDigits) || null;
+};
+
+// Verify a classmate's phone belongs to someone already registered — used by
+// the event registration modal before a teammate is added.
+exports.lookupTeammate = async (req, res) => {
+  try {
+    const phoneDigits = normalizePhone(req.params.phone || '');
+    if (phoneDigits.length < 10) {
+      return res.status(400).json({ success: false, message: 'Enter a valid 10-digit mobile number.' });
+    }
+    const student = await findByNormalizedPhone(phoneDigits);
+    if (!student) {
+      return res.status(200).json({ success: true, found: false });
+    }
+    const name = student.user?.name || student.name || student.email || 'Registered Student';
+    return res.status(200).json({
+      success: true,
+      found: true,
+      student: {
+        _id: student._id,
+        name,
+        collegeName: student.collegeName || '',
+        department: student.department || '',
+        phone: student.phone || phoneDigits
+      }
+    });
+  } catch (error) {
+    console.error('Teammate lookup error:', error);
+    res.status(500).json({ success: false, message: 'Error verifying teammate' });
+  }
+};
+
+// Parse teamMembers sent as a multipart JSON string or a JSON array.
+const parseTeamMembers = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+// Validate that every proposed teammate is someone registered on DATAVERSE.
+const validateTeamMembers = async (teamMembers) => {
+  const clean = [];
+  const normalized = [];
+  for (const member of teamMembers || []) {
+    const name = String(member?.name || '').trim();
+    const phoneDigits = normalizePhone(member?.phone || '');
+    if (!name || !phoneDigits) continue;
+    if (normalized.includes(phoneDigits)) continue; // drop duplicates within the list
+    const found = await findByNormalizedPhone(null, phoneDigits);
+    if (!found) return { error: `${name} (${member?.phone}) is not registered on DATAVERSE. Only classmates who are already registered can be added as teammates.`, members: null };
+    normalized.push(phoneDigits);
+    clean.push({ name, phone: phoneDigits });
+  }
+  if (clean.length > MAX_TEAM_MEMBERS) {
+    return { error: `You can add up to ${MAX_TEAM_MEMBERS} teammates.`, members: null };
+  }
+  return { members: clean };
+};
+
 // Transactions require a replica set / Atlas dedicated tiers. If they are not
 // available we fall back to the unique {student, event} index (which still
 // makes the duplicate case atomic via E11000) plus the count check.
@@ -171,9 +250,17 @@ exports.registerForEvent = async (req, res) => {
         }
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+        // Teammates must be registered DATAVERSE students (validated server-side).
+        const teamMemberResult = await validateTeamMembers(parseTeamMembers(req.body.teamMembers));
+        if (teamMemberResult.error) {
+          return res.status(400).json({ success: false, message: teamMemberResult.error });
+        }
+        const teamMembers = teamMemberResult.members;
+
         const registration = useTx
-          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl }], { session }))[0]
-          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl });
+          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl, teamMembers }], { session }))[0]
+          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl, teamMembers });
         event.currentRegistrations += 1;
         if (useTx) await event.save({ session });
         else await event.save();
@@ -233,7 +320,14 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null };
+      // Teammates must be registered DATAVERSE students (validated server-side).
+      const teamMemberResult = await validateTeamMembers(parseTeamMembers(req.body.teamMembers));
+      if (teamMemberResult.error) {
+        return res.status(400).json({ success: false, message: teamMemberResult.error });
+      }
+      const teamMembers = teamMemberResult.members;
+
+      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null, teamMembers };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
 
