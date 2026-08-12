@@ -13,7 +13,9 @@ exports.getMyCertificates = async (req, res) => {
     if (isDbConnected()) {
       const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
-      const certificates = await Certificate.find({ student: student._id }).populate('event', 'title category date');
+      const certificates = await Certificate.find({ student: student._id })
+        .populate({ path: 'student', populate: { path: 'user', select: 'name' } })
+        .populate('event', 'title category date');
       return res.status(200).json({ success: true, certificates });
     } else {
       const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
