@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, Award, ShieldCheck, Sparkles, Medal, Crown, Star } from 'lucide-react';
+import { toPng } from 'html-to-image';
+import { X, Printer, Download, Award, ShieldCheck, Sparkles, Medal, Crown, Star } from 'lucide-react';
 
 export default function CertificateModal({ certificate, onClose }) {
+  const sheetRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
   if (!certificate) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownload = async () => {
+    if (!sheetRef.current) return;
+    setDownloading(true);
+    try {
+      const dataUrl = await toPng(sheetRef.current, {
+        pixelRatio: 2,
+        backgroundColor: '#0b1220'
+      });
+      const link = document.createElement('a');
+      link.download = `${certificate.certificateNo}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Download certificate failed:', err);
+      alert('Could not download the certificate. Please use Print -> Save as PDF instead.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const studentName = certificate.student?.user?.name || certificate.student?.name || 'Participant';
@@ -52,11 +76,19 @@ export default function CertificateModal({ certificate, onClose }) {
           </div>
           <div className="flex items-center space-x-2">
             <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className="flex items-center space-x-1 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md transition-colors disabled:opacity-60"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{downloading ? 'Downloading...' : 'Download Image'}</span>
+            </button>
+            <button
               onClick={handlePrint}
               className="flex items-center space-x-1 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-md transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span>Print / Download PDF</span>
+              <span>Print / Save as PDF</span>
             </button>
             <button
               onClick={onClose}
@@ -69,7 +101,11 @@ export default function CertificateModal({ certificate, onClose }) {
 
         {/* Certificate Display Area */}
         <div className="p-6 printable-content">
-          <div className={`bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 p-7 sm:p-9 rounded-2xl relative text-center shadow-2xl overflow-hidden`} style={{ border: `3px solid ${theme.accentBorder}`, outline: '1px dashed rgba(255,255,255,0.18)', outlineOffset: '6px' }}>
+          <div
+            ref={sheetRef}
+            className="certificate-sheet bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 p-7 sm:p-9 rounded-2xl relative text-center shadow-2xl overflow-hidden"
+            style={{ border: `3px solid ${theme.accentBorder}`, outline: '1px dashed rgba(255,255,255,0.18)', outlineOffset: '6px' }}
+          >
 
             {/* Soft radial glow */}
             <div

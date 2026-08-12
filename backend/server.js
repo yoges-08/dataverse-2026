@@ -119,6 +119,7 @@ app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/certificates', require('./routes/certificateRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/gallery', require('./routes/galleryRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

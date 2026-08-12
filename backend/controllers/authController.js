@@ -338,20 +338,29 @@ exports.forgotPassword = async (req, res) => {
 
     if (isDbConnected()) {
       const user = await User.findOne({ email: cleanEmail });
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found with this email address' });
+      if (user) {
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpire = resetExpire;
+        await user.save();
+      } else {
+        // Return the same generic response for unknown emails too, so the
+        // endpoint cannot be used to enumerate registered accounts.
+        return res.status(200).json({
+          success: true,
+          message: 'If that email is registered, a password reset code has been sent.'
+        });
       }
-
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpire = resetExpire;
-      await user.save();
     } else {
       const user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found with this email address' });
+      if (user) {
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpire = resetExpire;
+      } else {
+        return res.status(200).json({
+          success: true,
+          message: 'If that email is registered, a password reset code has been sent.'
+        });
       }
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpire = resetExpire;
     }
 
     const emailResult = await sendEmail({

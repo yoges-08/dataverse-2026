@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 
-export default function CountdownTimer({ targetDate = '2026-09-15T09:00:00' }) {
+export default function CountdownTimer({ targetDate = '2026-09-12T09:00:00' }) {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   function calculateTimeLeft() {

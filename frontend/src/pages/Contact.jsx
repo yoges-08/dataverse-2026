@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Mail, Phone, Send, CheckCircle2, Building, ExternalLink, AlertCircle } from 'lucide-react';
+import API from '../services/api';
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -7,18 +8,23 @@ export default function Contact() {
   const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
     setErrorMsg('');
 
-    // Simulate a short sending delay; form is handled client-side.
-    setTimeout(() => {
+    try {
+      const res = await API.post('/contact/submit', formData);
+      if (res.data.success) {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSubmitted(false), 6000);
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to send your message. Please try again later.');
+    } finally {
       setSending(false);
-      setSubmitted(true);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSubmitted(false), 6000);
-    }, 800);
+    }
   };
 
   return (
