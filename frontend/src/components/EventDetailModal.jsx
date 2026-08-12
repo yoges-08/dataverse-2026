@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { X, AlertCircle, FileText, Upload, Sparkles } from 'lucide-react';
+import { X, AlertCircle, FileText, Upload, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -96,6 +96,68 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
           
           <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
+
+          {/* Event Schedule & Venue Details */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {event.date && (
+              <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
+                <Calendar className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Event Date</span>
+                  <span className="text-xs font-bold text-white">{formatDate(event.date)}</span>
+                </div>
+              </div>
+            )}
+            {event.time && (
+              <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
+                <Clock className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Event Time</span>
+                  <span className="text-xs font-bold text-white">{event.time}</span>
+                </div>
+              </div>
+            )}
+            {event.venue && (
+              <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
+                <MapPin className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Venue</span>
+                  <span className="text-xs font-bold text-white">{event.venue}</span>
+                </div>
+              </div>
+            )}
+            {event.registrationDeadline && (
+              <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Registration Deadline</span>
+                  <span className="text-xs font-bold text-amber-300">{formatDate(event.registrationDeadline)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Event Coordinators */}
+          {(event.facultyCoordinator?.name || event.studentCoordinator?.name) && (
+            <div className="p-3 bg-slate-900/70 rounded-xl border border-emerald-500/20 space-y-2">
+              <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center space-x-1.5">
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Event Coordinators</span>
+              </span>
+              {event.facultyCoordinator?.name && (
+                <p className="text-xs text-slate-300">
+                  <span className="text-emerald-400 font-bold">Faculty:</span> {event.facultyCoordinator.name}
+                  {event.facultyCoordinator.phone ? ` • ${event.facultyCoordinator.phone}` : ''}
+                </p>
+              )}
+              {event.studentCoordinator?.name && (
+                <p className="text-xs text-slate-300">
+                  <span className="text-cyan-400 font-bold">Student:</span> {event.studentCoordinator.name}
+                  {event.studentCoordinator.phone ? ` • ${event.studentCoordinator.phone}` : ''}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Registration limit notice */}
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start space-x-2">

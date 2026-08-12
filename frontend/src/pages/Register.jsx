@@ -384,11 +384,6 @@ export default function Register() {
             <span>{loading ? 'Submitting Registration...' : 'Complete DATAVERSE Registration'}</span>
           </button>
 
-          <p className="text-center text-[10px] text-slate-500 leading-relaxed">
-            By registering you agree to our{' '}
-            <Link to="/terms" className="text-indigo-400 hover:underline">Terms of Service</Link> and{' '}
-            <Link to="/privacy-policy" className="text-indigo-400 hover:underline">Privacy Policy</Link>.
-          </p>
         </form>
 
         <p className="text-center text-slate-400 text-xs">

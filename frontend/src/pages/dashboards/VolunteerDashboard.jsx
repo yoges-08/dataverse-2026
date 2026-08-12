@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import QRScannerModal from '../../components/QRScannerModal';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import { 
   QrCode, Search, UserCheck, ShieldCheck, UserPlus, 
-  Sparkles, AlertCircle, Camera, Printer, CheckCircle2, Clock 
+  Sparkles, AlertCircle, Camera, Printer, CheckCircle2, Clock, Calendar 
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -14,6 +14,7 @@ export default function VolunteerDashboard() {
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [lastVerifiedStudent, setLastVerifiedStudent] = useState(null);
   const [badgeStudent, setBadgeStudent] = useState(null);
+  const [events, setEvents] = useState([]);
 
   // Spot registration form
   const [spotForm, setSpotForm] = useState({
@@ -27,8 +28,21 @@ export default function VolunteerDashboard() {
     foodPreference: 'Veg',
     accommodationRequired: 'No'
   });
+  const [selectedEventIds, setSelectedEventIds] = useState([]);
   const [spotLoading, setSpotLoading] = useState(false);
   const [spotMsg, setSpotMsg] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    API.get('/events').then((res) => {
+      if (res.data.success) setEvents(res.data.events);
+    }).catch(() => {});
+  }, []);
+
+  const toggleEvent = (id) => {
+    setSelectedEventIds(prev =>
+      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+    );
+  };
 
   const handleSpotSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +50,10 @@ export default function VolunteerDashboard() {
       setSpotLoading(true);
       setSpotMsg({ type: '', text: '' });
 
-      const res = await API.post('/student/spot-registration', spotForm);
+      const res = await API.post('/student/spot-registration', {
+        ...spotForm,
+        eventIds: selectedEventIds
+      });
       if (res.data.success) {
         setSpotMsg({ type: 'success', text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}` });
         setBadgeStudent(res.data.student);
@@ -51,6 +68,7 @@ export default function VolunteerDashboard() {
           foodPreference: 'Veg',
           accommodationRequired: 'No'
         });
+        setSelectedEventIds([]);
       }
     } catch (err) {
       setSpotMsg({ type: 'error', text: err.response?.data?.message || 'Spot registration failed' });
@@ -163,6 +181,39 @@ export default function VolunteerDashboard() {
 
           <form onSubmit={handleSpotSubmit} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {/* Register the walk-in student to events */}
+              <div className="sm:col-span-2">
+                <label className="text-slate-300 font-semibold block mb-1 flex items-center space-x-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Register for Events (optional — select one or more)</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto p-2 rounded-xl bg-slate-900 border border-slate-700">
+                  {events.length === 0 ? (
+                    <span className="text-[10px] text-slate-500 col-span-2 p-2">Loading events...</span>
+                  ) : (
+                    events.map(ev => (
+                      <button
+                        key={ev._id}
+                        type="button"
+                        onClick={() => toggleEvent(ev._id)}
+                        className={`text-left p-2.5 rounded-lg border text-[10px] font-semibold transition-all ${
+                          selectedEventIds.includes(ev._id)
+                            ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-teal-500/50'
+                        }`}
+                      >
+                        <span className="block font-bold">{ev.title}</span>
+                        <span className="block text-[9px] opacity-70">{ev.venue}{ev.date ? ` • ${ev.date}` : ''}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+                {selectedEventIds.length > 0 && (
+                  <span className="text-[9px] text-teal-300 mt-1 block">Selected: {selectedEventIds.length} event(s)</span>
+                )}
+              </div>
+
               <div>
                 <label className="text-slate-300 font-semibold block mb-1">Student Full Name *</label>
                 <input

@@ -64,12 +64,36 @@ export default function Home() {
             />
           </div>
 
-          {/* College Badge */}
-          <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-slate-900/90 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+          {/* College Badge — clickable, opens Google Maps */}
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/90 border border-indigo-500/30 shadow-lg shadow-indigo-500/10 hover:border-indigo-400 hover:shadow-indigo-500/30 hover:scale-105 transition-all group"
+            title="Open AAMEC location on Google Maps"
+          >
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-200">
+            <span className="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-white">
               Anjalai Ammal Mahalingam Engineering College, Kovilvenni
             </span>
+            <MapPin className="w-4 h-4 text-pink-400 group-hover:text-pink-300 transition-colors" />
+          </a>
+
+          {/* Google-Map-style location pill with marker */}
+          <div>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Anjalai+Ammal+Mahalingam+Engineering+College%2C+Kovilvenni%2C+Tamil+Nadu"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/25 hover:text-red-200 hover:scale-105 transition-all font-bold text-xs"
+              title="View campus location on Google Maps"
+            >
+              <span className="relative flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60"></span>
+                <MapPin className="relative w-4 h-4 fill-red-400 text-red-400" />
+              </span>
+              <span>View our location on Google Maps</span>
+            </a>
           </div>
 
           {/* Main Title & Tagline */}
@@ -195,6 +219,20 @@ export default function Home() {
               <div className="p-6 space-y-3">
                 <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{ev.title}</h3>
                 <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                  {ev.date && (
+                    <span className="inline-flex items-center space-x-1">
+                      <Calendar className="w-3 h-3 text-indigo-400" />
+                      <span>{ev.date.split('-').reverse().join('/')}</span>
+                    </span>
+                  )}
+                  {ev.venue && (
+                    <span className="inline-flex items-center space-x-1">
+                      <MapPin className="w-3 h-3 text-pink-400" />
+                      <span className="truncate max-w-[120px]">{ev.venue}</span>
+                    </span>
+                  )}
+                </div>
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-end text-xs">
                   <Link to="/events" className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1">
                     <span>View Details</span>
@@ -256,6 +294,7 @@ export default function Home() {
 const campusImages = [
   '/campus1.jpg',
   '/campus3.jpg',
+  '/campus7.jpg',
   '/campus4.jpg',
   '/campus5.jpg',
   '/campus6.jpg'

@@ -159,6 +159,30 @@ exports.spotRegistration = async (req, res) => {
         await student.save();
       }
 
+      // Register the walk-in student for the selected events (if any)
+      const registerEvents = async (regModelFind, regModelCreate, eventUpdate) => {
+        for (const eventId of eventIds || []) {
+          const exists = await regModelFind(eventId);
+          if (exists) continue;
+          await regModelCreate(eventId);
+          await eventUpdate(eventId);
+        }
+      };
+      if (Array.isArray(eventIds) && eventIds.length) {
+        await registerEvents(
+          (eventId) => Registration.findOne({ student: student._id, event: eventId }),
+          (eventId) => Registration.create({ student: student._id, event: eventId, status: 'Registered' }),
+          async (eventId) => {
+            const ev = await Event.findById(eventId);
+            if (ev) {
+              if (ev.maxParticipants && ev.currentRegistrations >= ev.maxParticipants) return;
+              ev.currentRegistrations += 1;
+              await ev.save();
+            }
+          }
+        );
+      }
+
       return res.status(201).json({
         success: true,
         message: 'Spot Registration & Check-In completed successfully!',
@@ -218,6 +242,20 @@ exports.spotRegistration = async (req, res) => {
         student.isCheckedIn = true;
         student.checkInTime = new Date().toISOString();
         student.checkedInBy = req.user ? req.user.name : 'Spot Counter Volunteer';
+      }
+
+      // Register walk-in for selected events (mock branch)
+      if (Array.isArray(eventIds) && eventIds.length) {
+        for (const eventId of eventIds) {
+          const exists = mockStore.registrations.find(r =>
+            (r.student === student._id || String(r.student) === String(student._id)) &&
+            (r.event === eventId || String(r.event) === String(eventId)));
+          if (exists) continue;
+          const ev = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
+          if (ev && ev.maxParticipants && ev.currentRegistrations >= ev.maxParticipants) continue;
+          mockStore.registrations.push({ _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered' });
+          if (ev) ev.currentRegistrations = (ev.currentRegistrations || 0) + 1;
+        }
       }
 
       return res.status(201).json({

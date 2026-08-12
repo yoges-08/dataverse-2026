@@ -63,10 +63,24 @@ class MockStore {
     if (this.restored) return; // data already loaded from disk - do not re-seed
 
     console.log('⚡ Initializing DATAVERSE In-Memory Data Engine (fresh seed)...');
+
+    // Security: never seed staff accounts with hardcoded default passwords. If
+    // the env vars are missing we fail loudly instead of exposing a guessable
+    // admin/coordinator/volunteer login (same contract as seed.js).
+    const adminPassRaw = process.env.ADMIN_SEED_PASSWORD;
+    const coordPassRaw = process.env.COORDINATOR_SEED_PASSWORD;
+    const volPassRaw = process.env.VOLUNTEER_SEED_PASSWORD;
+    if (!adminPassRaw || !coordPassRaw || !volPassRaw) {
+      throw new Error(
+        'ADMIN_SEED_PASSWORD, COORDINATOR_SEED_PASSWORD, and VOLUNTEER_SEED_PASSWORD ' +
+        'must be set even for offline/in-memory mode. Refusing to seed staff accounts with default passwords.'
+      );
+    }
+
     const salt = await bcrypt.genSalt(10);
-    const adminPass = await bcrypt.hash(process.env.ADMIN_SEED_PASSWORD || 'aids@2025', salt);
-    const coordPass = await bcrypt.hash(process.env.COORDINATOR_SEED_PASSWORD || 'coord123', salt);
-    const volPass = await bcrypt.hash(process.env.VOLUNTEER_SEED_PASSWORD || 'vol123', salt);
+    const adminPass = await bcrypt.hash(adminPassRaw, salt);
+    const coordPass = await bcrypt.hash(coordPassRaw, salt);
+    const volPass = await bcrypt.hash(volPassRaw, salt);
 
     // Users
     const uAdmin = { _id: 'u1', name: 'Dr. R. K. Varma (Convener)', username: 'admin', email: 'dataverse2k26ai@gmail.com', password: adminPass, role: 'super_admin', isEmailVerified: true };

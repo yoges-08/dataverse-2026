@@ -7,6 +7,7 @@ const Attendance = require('../models/Attendance');
 const Certificate = require('../models/Certificate');
 const bcrypt = require('bcryptjs');
 const mockStore = require('../utils/mockStore');
+const { sendApprovalMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -128,6 +129,18 @@ exports.updateStudentStatus = async (req, res) => {
       student.verificationStatus = status;
       student.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Rejected by Admin') : '';
       await student.save();
+
+      if (status === 'Approved') {
+        const user = await User.findById(student.user);
+        const studentName = user?.name || student.email.split('@')[0] || 'there';
+        sendApprovalMail({
+          to: student.email,
+          name: studentName,
+          registerNumber: student.registerNumber,
+          symposiumCode: student.symposiumCode
+        }).catch((mailErr) => console.error('Approval email failed:', mailErr.message));
+      }
+
       return res.status(200).json({ success: true, message: `Student registration ${status.toLowerCase()} successfully`, student });
     } else {
       const student = mockStore.students.find(s => s._id === req.params.id);
@@ -135,6 +148,17 @@ exports.updateStudentStatus = async (req, res) => {
 
       student.verificationStatus = status;
       student.rejectionReason = status === 'Rejected' ? (rejectionReason || 'Rejected by Admin') : '';
+
+      if (status === 'Approved') {
+        const mockUser = mockStore.users.find(u => u._id === student.user || String(u._id) === String(student.user));
+        sendApprovalMail({
+          to: student.email,
+          name: mockUser?.name || student.email.split('@')[0] || 'there',
+          registerNumber: student.registerNumber,
+          symposiumCode: student.symposiumCode
+        }).catch((mailErr) => console.error('Approval email failed:', mailErr.message));
+      }
+
       return res.status(200).json({ success: true, message: `Student registration ${status.toLowerCase()} successfully`, student });
     }
   } catch (error) {
@@ -169,6 +193,10 @@ exports.deleteStudent = async (req, res) => {
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    const allowedRoles = ['super_admin', 'coordinator', 'volunteer'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: `Role must be one of: ${allowedRoles.join(', ')}` });
+    }
     if (isDbConnected()) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);

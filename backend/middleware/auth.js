@@ -6,13 +6,14 @@ const mockStore = require('../utils/mockStore');
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 const protect = async (req, res, next) => {
-  let token;
-
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET environment variable is required');
+    // Throwing outside try/catch would hang the request; respond with 500.
+    console.error('JWT_SECRET environment variable is required');
+    return res.status(500).json({ success: false, message: 'Server misconfiguration' });
   }
 
+  let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
+import ScrollToTop from './components/ScrollToTop';
 import { AuthContext } from './context/AuthContext';
 
 // Pages
@@ -19,8 +20,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import CertificateVerify from './pages/CertificateVerify';
 import MyCertificates from './pages/MyCertificates';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
 
 // Dashboards
 import StudentDashboard from './pages/dashboards/StudentDashboard';
@@ -89,6 +88,7 @@ function DashboardRedirect() {
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
         <div className="relative z-10 flex flex-col min-h-screen">
           <Navbar />
@@ -101,8 +101,6 @@ export default function App() {
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />

@@ -31,8 +31,6 @@ export default function Footer() {
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Technical Events</Link></li>
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Non-Technical Events</Link></li>
               <li><Link to="/faq" className="hover:text-indigo-400 transition-colors">Frequently Asked Questions</Link></li>
-              <li><Link to="/privacy-policy" className="hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
             </ul>
 
             <div className="flex items-center space-x-3 mt-5">

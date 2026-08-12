@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import EventDetailModal from '../components/EventDetailModal';
-import { Search, Filter, Sparkles, Trophy, Calendar, ChevronRight, Zap } from 'lucide-react';
+import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap } from 'lucide-react';
 import API from '../services/api';
 
 export default function Events() {
@@ -131,6 +131,22 @@ export default function Events() {
                   </h3>
                   <p className="text-xs text-indigo-300 font-medium mb-2">{ev.tagline}</p>
                   <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{ev.description}</p>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[10px] text-slate-400">
+                    <Calendar className="w-3 h-3 text-indigo-400 inline" />
+                    {ev.date && <span className="inline-flex items-center space-x-1"><Calendar className="w-3 h-3 text-indigo-400" /><span>{ev.date.split('-').reverse().join('/')}</span></span>}
+                    {ev.venue && <span className="inline-flex items-center space-x-1"><MapPin className="w-3 h-3 text-pink-400" /><span>{ev.venue}</span></span>}
+                    {ev.facultyCoordinator?.name && (
+                      <span className="inline-flex items-center space-x-1">
+                        <span className="text-emerald-400 font-bold">Faculty: {ev.facultyCoordinator.name}</span>
+                      </span>
+                    )}
+                    {ev.studentCoordinator?.name && (
+                      <span className="inline-flex items-center space-x-1">
+                        <span className="text-cyan-400 font-bold">Coord: {ev.studentCoordinator.name}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-3 pt-3 border-t border-slate-800">

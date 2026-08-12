@@ -3,6 +3,7 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
+const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -141,6 +142,17 @@ exports.registerForEvent = async (req, res) => {
           : await Event.findById(eventId);
         if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
+        // Capacity & deadline enforcement
+        if (event.maxParticipants && event.currentRegistrations >= event.maxParticipants) {
+          return res.status(400).json({ success: false, message: 'This event is already full.' });
+        }
+        if (event.registrationDeadline && new Date() > new Date(event.registrationDeadline)) {
+          return res.status(400).json({ success: false, message: 'Registration deadline for this event has passed.' });
+        }
+        if (event.pdfRequired && !req.file) {
+          return res.status(400).json({ success: false, message: 'This event requires a paper presentation PDF upload.' });
+        }
+
         const student = useTx
           ? await Student.findOne({ user: userId }).session(session)
           : await Student.findOne({ user: userId });
@@ -158,14 +170,25 @@ exports.registerForEvent = async (req, res) => {
           return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
         }
 
+        const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
         const registration = useTx
-          ? (await Registration.create([{ student: student._id, event: eventId }], { session }))[0]
-          : await Registration.create({ student: student._id, event: eventId });
+          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl }], { session }))[0]
+          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl });
         event.currentRegistrations += 1;
         if (useTx) await event.save({ session });
         else await event.save();
 
         if (session) await session.commitTransaction();
+
+        // Notify the student about their new event booking.
+        sendEventRegistrationMail({
+          to: student.email,
+          name: req.user?.name || student.email.split('@')[0] || 'there',
+          eventTitle: event.title,
+          eventVenue: event.venue,
+          eventDate: event.date,
+          eventTime: event.time
+        }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
         return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
       } catch (err) {
@@ -188,6 +211,17 @@ exports.registerForEvent = async (req, res) => {
       const event = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
+      // Capacity & deadline enforcement (mock branch)
+      if (event.maxParticipants && event.currentRegistrations >= event.maxParticipants) {
+        return res.status(400).json({ success: false, message: 'This event is already full.' });
+      }
+      if (event.registrationDeadline && new Date() > new Date(event.registrationDeadline)) {
+        return res.status(400).json({ success: false, message: 'Registration deadline for this event has passed.' });
+      }
+      if (event.pdfRequired && !req.file) {
+        return res.status(400).json({ success: false, message: 'This event requires a paper presentation PDF upload.' });
+      }
+
       const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
@@ -199,9 +233,18 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered' };
+      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
+
+      sendEventRegistrationMail({
+        to: student.email,
+        name: req.user?.name || student.email.split('@')[0] || 'there',
+        eventTitle: event.title,
+        eventVenue: event.venue,
+        eventDate: event.date,
+        eventTime: event.time
+      }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
       return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
     }

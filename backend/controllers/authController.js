@@ -7,7 +7,7 @@ const Student = require('../models/Student');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
 const sendEmail = require('../utils/sendEmail');
-const { sendRegistrationMail } = require('../utils/mailer');
+const { sendRegistrationMail, sendLoginMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -118,8 +118,8 @@ exports.registerStudent = async (req, res) => {
         gender: gender || 'Male',
         dateOfBirth: dateOfBirth || '',
         address: address || '',
-        profilePhoto: 'N/A',
-        collegeIdCard: 'N/A',
+        profilePhoto: req.files?.profilePhoto?.[0] ? `/uploads/${req.files.profilePhoto[0].filename}` : 'N/A',
+        collegeIdCard: req.files?.collegeIdCard?.[0] ? `/uploads/${req.files.collegeIdCard[0].filename}` : 'N/A',
         emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
@@ -197,8 +197,8 @@ exports.registerStudent = async (req, res) => {
         gender: gender || 'Male',
         dateOfBirth: dateOfBirth || '',
         address: address || '',
-        profilePhoto: 'N/A',
-        collegeIdCard: 'N/A',
+        profilePhoto: req.files?.profilePhoto?.[0] ? `/uploads/${req.files.profilePhoto[0].filename}` : 'N/A',
+        collegeIdCard: req.files?.collegeIdCard?.[0] ? `/uploads/${req.files.collegeIdCard[0].filename}` : 'N/A',
         emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
@@ -259,6 +259,11 @@ exports.login = async (req, res) => {
       let student = null;
       if (user.role === 'student') student = await Student.findOne({ user: user._id });
 
+      if (user.role === 'student') {
+        // Fire-and-forget so a slow email provider never delays login.
+        sendLoginMail({ to: user.email, name: user.name }).catch(() => {});
+      }
+
       return res.status(200).json({
         success: true,
         token,
@@ -278,6 +283,11 @@ exports.login = async (req, res) => {
       const token = generateToken(user._id);
       let student = null;
       if (user.role === 'student') student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));
+
+      if (user.role === 'student') {
+        // Fire-and-forget so a slow email provider never delays login.
+        sendLoginMail({ to: user.email, name: user.name }).catch(() => {});
+      }
 
       return res.status(200).json({
         success: true,

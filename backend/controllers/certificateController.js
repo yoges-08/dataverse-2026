@@ -53,7 +53,18 @@ exports.generateCertificate = async (req, res) => {
         return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
       }
 
-      const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+      let certNo;
+      let certNoExists = true;
+      let certAttempts = 0;
+      while (certNoExists && certAttempts < 20) {
+        certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+        certNoExists = await Certificate.findOne({ certificateNo: certNo });
+        certAttempts += 1;
+      }
+      if (certNoExists) {
+        return res.status(500).json({ success: false, message: 'Unable to allocate a unique certificate number. Please try again.' });
+      }
+
       const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.user ? student.user.name : student.email, event: event.title }));
 
       cert = await Certificate.create({ certificateNo: certNo, student: student._id, event: event._id, type: type || 'Participation', verificationQrCode: qrData });
@@ -75,7 +86,18 @@ exports.generateCertificate = async (req, res) => {
         return res.status(200).json({ success: true, certificate: cert, message: 'Certificate already exists' });
       }
 
-      const certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+      let certNo;
+      let certNoExists = true;
+      let certAttempts = 0;
+      while (certNoExists && certAttempts < 20) {
+        certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+        certNoExists = mockStore.certificates.some(c => c.certificateNo === certNo);
+        certAttempts += 1;
+      }
+      if (certNoExists) {
+        return res.status(500).json({ success: false, message: 'Unable to allocate a unique certificate number. Please try again.' });
+      }
+
       const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.email, event: event.title }));
 
       cert = { _id: 'c' + (mockStore.certificates.length + 1), certificateNo: certNo, student: student._id, event: event._id, type: type || 'Participation', issuedAt: new Date().toISOString(), verificationQrCode: qrData };
