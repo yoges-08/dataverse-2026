@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MapPin, Mail, Phone, Heart, Globe, Award, Shield, Instagram, Linkedin, Navigation } from 'lucide-react';
+import { Sparkles, MapPin, Mail, Heart, Globe, Award, Shield, Instagram, Linkedin, Navigation } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -65,14 +65,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-2.5">
                 <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span>dataverse2026@aamec.edu.in</span>
-              </div>
-              <div className="flex items-start space-x-2.5">
-                <Phone className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                <div>
-                  <span className="block"><span className="text-slate-300 font-semibold">Symposium Coordinator:</span> Dr. K. Jayanthi - 9994718221</span>
-                  <span className="block mt-1"><span className="text-slate-300 font-semibold">Organizer Members:</span> 9791656236 / 8122310171 / 9489038346 / 8838999607</span>
-                </div>
+                <span>dataverse26ai@gmail.com</span>
               </div>
             </div>
           </div>

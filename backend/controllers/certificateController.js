@@ -32,6 +32,47 @@ exports.getMyCertificates = async (req, res) => {
   }
 };
 
+exports.getAllCertificates = async (req, res) => {
+  try {
+    if (isDbConnected()) {
+      const certificates = await Certificate.find()
+        .populate({ path: 'student', populate: { path: 'user', select: 'name' } })
+        .populate('event', 'title category')
+        .sort({ issuedAt: -1 });
+      return res.status(200).json({ success: true, count: certificates.length, certificates });
+    } else {
+      const certificates = mockStore.certificates
+        .map((c) => {
+          const s = mockStore.students.find((st) => st._id === c.student || String(st._id) === String(c.student));
+          const u = s ? mockStore.users.find((usr) => usr._id === s.user || String(usr._id) === String(s.user)) : null;
+          const ev = mockStore.events.find((e) => e._id === c.event || String(e._id) === String(c.event));
+          return { ...c, student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null, event: ev };
+        })
+        .reverse();
+      return res.status(200).json({ success: true, count: certificates.length, certificates });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching certificates' });
+  }
+};
+
+exports.deleteCertificate = async (req, res) => {
+  try {
+    if (isDbConnected()) {
+      const cert = await Certificate.findByIdAndDelete(req.params.id);
+      if (!cert) return res.status(404).json({ success: false, message: 'Certificate not found' });
+      return res.status(200).json({ success: true, message: 'Certificate deleted successfully' });
+    } else {
+      const idx = mockStore.certificates.findIndex((c) => c._id === req.params.id || String(c._id) === String(req.params.id));
+      if (idx === -1) return res.status(404).json({ success: false, message: 'Certificate not found' });
+      mockStore.certificates.splice(idx, 1);
+      return res.status(200).json({ success: true, message: 'Certificate deleted successfully' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting certificate' });
+  }
+};
+
 exports.generateCertificate = async (req, res) => {
   try {
     const { studentId, eventId, type } = req.body;

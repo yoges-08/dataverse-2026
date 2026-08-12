@@ -130,7 +130,7 @@ export default function Contact() {
                 <Mail className="w-5 h-5 text-indigo-400 shrink-0" />
                 <div>
                   <span className="font-bold text-white block">Official Email</span>
-                  <span className="text-slate-400">dataverse2026@aamec.edu.in</span>
+                  <span className="text-slate-400">dataverse26ai@gmail.com</span>
                 </div>
               </div>
 

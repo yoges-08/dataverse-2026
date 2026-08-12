@@ -268,39 +268,46 @@ export default function Home() {
           <CampusSlider />
 
           {/* Contact info */}
-          <div className="mt-8 glass-card rounded-2xl border border-indigo-500/25 p-6 sm:p-8">
-            <div className="text-center mb-6">
-              <h4 className="text-xl sm:text-2xl font-black text-white">Have Questions? Reach Us</h4>
+          <div className="mt-8 glass-card rounded-2xl border-2 border-indigo-400/40 bg-indigo-950/30 p-6 sm:p-10">
+            <div className="text-center mb-8">
+              <h4 className="text-2xl sm:text-3xl font-black text-white">Have Questions? Reach Us</h4>
+              <p className="text-xs text-slate-400 mt-1.5">We're happy to help — reach out to any of us.</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-              <div className="space-y-1.5">
-                <Mail className="w-6 h-6 text-indigo-400 mx-auto" />
-                <span className="text-slate-300 font-bold text-sm block">Email</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
+              <div className="flex flex-col items-center gap-2.5 px-4 py-6 rounded-2xl bg-slate-900/70 border border-indigo-500/30">
+                <div className="w-12 h-12 rounded-full bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center">
+                  <Mail className="w-6 h-6 text-indigo-300" />
+                </div>
+                <span className="text-slate-200 font-bold text-base block">Email</span>
                 <a
                   href="mailto:dataverse26ai@gmail.com"
-                  className="text-indigo-300 hover:text-indigo-200 font-semibold text-sm break-all transition-colors"
+                  className="text-indigo-300 hover:text-indigo-200 font-semibold text-sm break-all underline underline-offset-4 decoration-indigo-500/40 transition-colors"
                 >
                   dataverse26ai@gmail.com
                 </a>
               </div>
 
-              <div className="space-y-1.5">
-                <User className="w-6 h-6 text-emerald-400 mx-auto" />
-                <span className="text-slate-300 font-bold text-sm block">Symposium Coordinator</span>
-                <span className="text-xs text-slate-400 block">Dr. K. Jayanthi</span>
+              <div className="flex flex-col items-center gap-2.5 px-4 py-6 rounded-2xl bg-slate-900/70 border border-emerald-500/30">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center">
+                  <User className="w-6 h-6 text-emerald-300" />
+                </div>
+                <span className="text-slate-200 font-bold text-base block">Symposium Coordinator</span>
+                <span className="text-sm text-slate-400">Dr. K. Jayanthi</span>
                 <a
                   href="tel:+919994718221"
-                  className="inline-flex items-center gap-1.5 text-indigo-300 hover:text-indigo-200 font-bold text-base transition-colors"
+                  className="inline-flex items-center gap-1.5 text-indigo-300 hover:text-indigo-200 font-bold text-lg transition-colors"
                 >
-                  <Phone className="w-3.5 h-3.5" />
+                  <Phone className="w-4 h-4" />
                   9994718221
                 </a>
               </div>
 
-              <div className="space-y-1.5">
-                <Users className="w-6 h-6 text-cyan-400 mx-auto" />
-                <span className="text-slate-300 font-bold text-sm block">Organizer Members</span>
-                <ul className="space-y-1 text-xs text-slate-400">
+              <div className="flex flex-col items-center gap-2.5 px-4 py-6 rounded-2xl bg-slate-900/70 border border-cyan-500/30">
+                <div className="w-12 h-12 rounded-full bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-cyan-300" />
+                </div>
+                <span className="text-slate-200 font-bold text-base block">Organizer Members</span>
+                <ul className="space-y-2 text-sm text-slate-400">
                   <li>
                     <span className="font-semibold text-slate-300">B. Yogeswaran:</span>{' '}
                     <a href="tel:+919791656236" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9791656236</a>

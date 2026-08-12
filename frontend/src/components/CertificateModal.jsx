@@ -1,6 +1,6 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, Award, ShieldCheck, Sparkles, Medal, Crown } from 'lucide-react';
+import { X, Printer, Award, ShieldCheck, Sparkles, Medal, Crown, Star } from 'lucide-react';
 
 export default function CertificateModal({ certificate, onClose }) {
   if (!certificate) return null;
@@ -18,20 +18,25 @@ export default function CertificateModal({ certificate, onClose }) {
 
   const isWinner = certType === 'Winner';
   const isRunnerUp = certType === 'RunnerUp';
+  const isThird = certType === 'Third';
   const isParticipation = certType === 'Participation';
 
-  // Trophy = gold, RunnerUp = silver, Participation = indigo
+  // Trophy = gold, 2nd = silver, 3rd = bronze, Participation = indigo
   const theme = isWinner
     ? { accent: '#fbbf24', accentSoft: '#fef3c7', accentBorder: 'rgba(251,191,36,0.55)', bar: 'from-amber-600 via-yellow-500 to-amber-600', text: 'text-amber-300', title: 'CERTIFICATE OF EXCELLENCE', ribbon: 'First Prize Winner', sealText: '#f59e0b' }
     : isRunnerUp
-      ? { accent: '#cbd5e1', accentSoft: '#f1f5f9', accentBorder: 'rgba(203,213,225,0.5)', bar: 'from-slate-500 via-slate-300 to-slate-500', text: 'text-slate-300', title: 'CERTIFICATE OF ACHIEVEMENT', ribbon: 'Runner-Up', sealText: '#94a3b8' }
-      : { accent: '#818cf8', accentSoft: '#e0e7ff', accentBorder: 'rgba(129,140,248,0.55)', bar: 'from-indigo-600 via-violet-500 to-indigo-600', text: 'text-indigo-300', title: 'CERTIFICATE OF PARTICIPATION', ribbon: isWinner ? 'Winner' : 'Participation', sealText: '#818cf8' };
+      ? { accent: '#cbd5e1', accentSoft: '#f1f5f9', accentBorder: 'rgba(203,213,225,0.5)', bar: 'from-slate-500 via-slate-300 to-slate-500', text: 'text-slate-300', title: 'CERTIFICATE OF ACHIEVEMENT', ribbon: 'Second Prize Winner', sealText: '#94a3b8' }
+      : isThird
+        ? { accent: '#d99650', accentSoft: '#fdebd0', accentBorder: 'rgba(217,150,80,0.55)', bar: 'from-amber-700 via-orange-600 to-amber-700', text: 'text-orange-300', title: 'CERTIFICATE OF ACHIEVEMENT', ribbon: 'Third Prize Winner', sealText: '#d97706' }
+        : { accent: '#818cf8', accentSoft: '#e0e7ff', accentBorder: 'rgba(129,140,248,0.55)', bar: 'from-indigo-600 via-violet-500 to-indigo-600', text: 'text-indigo-300', title: 'CERTIFICATE OF PARTICIPATION', ribbon: isWinner ? 'Winner' : 'Participation', sealText: '#818cf8' };
 
   const achievementLine = isWinner
     ? `for securing the First Prize and being adjudged WINNER in`
     : isRunnerUp
-      ? 'for securing the Runner-Up position in'
-      : 'for actively and successfully participating in the';
+      ? 'for securing the Second Prize (Runner-Up) position in'
+      : isThird
+        ? 'for securing the Third Prize position in'
+        : 'for actively and successfully participating in the';
 
   const perfWord = isWinner ? 'outstanding' : 'commendable';
 
@@ -87,7 +92,7 @@ export default function CertificateModal({ certificate, onClose }) {
 
             {/* Type ribbon */}
             <div className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r ${theme.bar} text-white text-[10px] font-extrabold uppercase tracking-widest shadow-lg mb-4`}>
-              {isWinner ? <Crown className="w-3.5 h-3.5" /> : isRunnerUp ? <Medal className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {isWinner ? <Crown className="w-3.5 h-3.5" /> : isRunnerUp ? <Medal className="w-3.5 h-3.5" /> : isThird ? <Star className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
               {theme.ribbon}
             </div>
 
@@ -177,7 +182,7 @@ export default function CertificateModal({ certificate, onClose }) {
                   <ShieldCheck className="w-3 h-3" /> Verified &amp; Authentic
                 </div>
                 <div className="w-28 h-0.5 mb-1 ml-auto" style={{ background: theme.accent }}></div>
-                <span className="text-xs font-bold text-white block">Dr. R. K. Varma</span>
+                <span className="text-xs font-bold text-white block">Dr. G. Nanthakumar</span>
                 <span className="text-[9px] text-slate-400 block">Convener — DATAVERSE</span>
                 <span className="text-[9px] text-slate-500 block">Anjalai Ammal Mahalingam Engineering College</span>
               </div>

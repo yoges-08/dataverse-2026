@@ -24,6 +24,8 @@ export default function AdminDashboard() {
   const [certBusy, setCertBusy] = useState(false);
   const [certMsg, setCertMsg] = useState(null);
   const [certSearch, setCertSearch] = useState('');
+  const [certificates, setCertificates] = useState([]);
+  const [certDeleting, setCertDeleting] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,12 +91,13 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const [analyticsRes, studentRes, eventRes, staffRes, annRes] = await Promise.all([
+      const [analyticsRes, studentRes, eventRes, staffRes, annRes, certRes] = await Promise.all([
         API.get('/admin/analytics'),
         API.get('/admin/students'),
         API.get('/events'),
         API.get('/admin/staff'),
-        API.get('/announcements')
+        API.get('/announcements'),
+        API.get('/certificates/all')
       ]);
 
       if (analyticsRes.data.success) {
@@ -105,6 +108,7 @@ export default function AdminDashboard() {
       if (eventRes.data.success) setEvents(eventRes.data.events);
       if (staffRes.data.success) setStaffList(staffRes.data.staff);
       if (annRes.data.success) setAnnouncements(annRes.data.announcements);
+      if (certRes.data.success) setCertificates(certRes.data.certificates);
     } catch (err) {
       console.error('Error loading admin dashboard:', err);
     } finally {
@@ -227,6 +231,22 @@ export default function AdminDashboard() {
       setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to generate certificate.' });
     } finally {
       setCertBusy(false);
+    }
+  };
+
+  const handleDeleteCertificate = async (certId, certLabel) => {
+    if (!window.confirm(`Delete certificate "${certLabel}"? This cannot be undone.`)) return;
+    try {
+      setCertDeleting(certId);
+      const res = await API.delete(`/certificates/${certId}`);
+      if (res.data.success) {
+        setCertificates(prev => prev.filter(c => c._id !== certId));
+        setCertMsg({ type: 'success', text: res.data.message || 'Certificate deleted successfully.' });
+      }
+    } catch (err) {
+      setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to delete certificate.' });
+    } finally {
+      setCertDeleting(null);
     }
   };
 
@@ -641,19 +661,24 @@ export default function AdminDashboard() {
                 <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
                   Certificate Type
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {['Participation', 'Winner'].map((t) => (
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: 'Participation', value: 'Participation' },
+                    { label: '1st Prize', value: 'Winner' },
+                    { label: '2nd Prize', value: 'RunnerUp' },
+                    { label: '3rd Prize', value: 'Third' }
+                  ].map((t) => (
                     <button
-                      key={t}
+                      key={t.value}
                       type="button"
-                      onClick={() => setCertType(t)}
-                      className={`py-3 rounded-xl border font-bold transition-all ${
-                        certType === t
+                      onClick={() => setCertType(t.value)}
+                      className={`py-2.5 px-1 rounded-xl border font-bold text-[11px] transition-all ${
+                        certType === t.value
                           ? 'bg-amber-600 border-amber-500 text-white shadow-md'
                           : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-amber-500'
                       }`}
                     >
-                      {t}
+                      {t.label}
                     </button>
                   ))}
                 </div>
@@ -679,6 +704,47 @@ export default function AdminDashboard() {
                 <span>{certBusy ? 'Generating...' : 'Generate Certificate'}</span>
               </button>
             </form>
+          </div>
+
+          {/* Issued certificates list */}
+          <div>
+            <h4 className="text-sm font-bold text-white mb-3 flex items-center justify-between">
+              <span>Issued Certificates ({certificates.length})</span>
+            </h4>
+            {certificates.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6 bg-slate-900/40 rounded-xl border border-slate-800">
+                No certificates issued yet.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                {certificates.map((cert) => {
+                  const certLabel = `${cert.student?.user?.name || cert.student?.name || 'Participant'} — ${cert.event?.title || 'Event'} (${cert.type})`;
+                  return (
+                    <div key={cert._id} className="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">
+                          {cert.student?.user?.name || cert.student?.name || 'Participant'}
+                          <span className="text-slate-400 font-normal"> — {cert.event?.title || 'Event'}</span>
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {cert.certificateNo} • {cert.type}
+                          {cert.student?.department ? ` • ${cert.student.department}` : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteCertificate(cert._id, `${cert.certificateNo} (${certLabel})`)}
+                        disabled={certDeleting === cert._id}
+                        className="shrink-0 flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-[10px] font-bold disabled:opacity-50 transition-colors"
+                        title="Delete certificate (sent by mistake)"
+                      >
+                        {certDeleting === cert._id ? <Loader className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
