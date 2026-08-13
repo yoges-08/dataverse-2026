@@ -9,12 +9,10 @@ const {
   updateEvent,
   deleteEvent,
   registerForEvent,
-  uploadWinners,
-  lookupTeammate
+  uploadWinners
 } = require('../controllers/eventController');
 
 router.get('/', getEvents);
-router.get('/teammate/:phone', protect, lookupTeammate);
 router.get('/:id', getEventById);
 
 router.post('/', protect, authorize('super_admin'), upload.single('bannerImage'), createEvent);

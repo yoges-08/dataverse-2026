@@ -3,90 +3,14 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
+const teamController = require('./teamController');
 const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
-// Normalize a phone number to a digit-only form.
-const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
-
-const findByNormalizedPhone = async (phoneDigits) => {
-  if (isDbConnected()) {
-    const candidates = await Student.find({}, 'phone user collegeName department').populate('user', 'name').lean();
-    return candidates.find((s) => normalizePhone(s.phone) === phoneDigits) || null;
-  }
-  return mockStore.students.find((s) => normalizePhone(s.phone) === phoneDigits) || null;
-};
-
-// 0 (or missing) means the event is solo-only - no teammates may be added.
+// 0 (or missing) means the event is solo-only - no teams allowed.
 const getEffectiveTeamLimit = (event) =>
   Number.isFinite(event && event.teamLimit) ? event.teamLimit : 0;
-
-// A teammate must be a registered DATAVERSE student (verified by phone). The
-// list is capped at the event's teamLimit (0 = solo only, teammates rejected).
-const validateTeamMembers = async (teamMembers, event, teamLimit) => {
-  const clean = [];
-  const normalized = [];
-  if (teamLimit <= 0 && (teamMembers || []).length > 0) {
-    return { error: `${event.title} does not allow team members. You can register as a solo participant only.`, members: null };
-  }
-  for (const member of teamMembers || []) {
-    const name = String(member?.name || '').trim();
-    const phoneDigits = normalizePhone(member?.phone || '');
-    if (!name || !phoneDigits) continue;
-    if (normalized.includes(phoneDigits)) continue; // drop duplicates within the list
-    const found = await findByNormalizedPhone(phoneDigits);
-    if (!found) return { error: `${name} (${member?.phone}) is not registered on DATAVERSE. Only classmates who are already registered can be added as teammates.`, members: null };
-    normalized.push(phoneDigits);
-    clean.push({ name, phone: phoneDigits });
-  }
-  if (teamLimit > 0 && clean.length > teamLimit) {
-    return { error: `You can add up to ${teamLimit} teammates for ${event.title}.`, members: null };
-  }
-  return { members: clean };
-};
-
-// Parse teamMembers sent as a multipart JSON string or a JSON array.
-const parseTeamMembers = (raw) => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-// Verify a classmate's phone belongs to someone registered on DATAVERSE, so
-// only real registered students can be added as teammates.
-exports.lookupTeammate = async (req, res) => {
-  try {
-    const phoneDigits = normalizePhone(req.params.phone || '');
-    if (phoneDigits.length < 10) {
-      return res.status(400).json({ success: false, message: 'Enter a valid 10-digit mobile number.' });
-    }
-    const student = await findByNormalizedPhone(phoneDigits);
-    if (!student) {
-      return res.status(200).json({ success: true, found: false });
-    }
-    const name = student.user?.name || student.name || student.email || 'Registered Student';
-    return res.status(200).json({
-      success: true,
-      found: true,
-      student: {
-        _id: student._id,
-        name,
-        collegeName: student.collegeName || '',
-        department: student.department || '',
-        phone: student.phone || phoneDigits
-      }
-    });
-  } catch (error) {
-    console.error('Teammate lookup error:', error);
-    res.status(500).json({ success: false, message: 'Error verifying teammate' });
-  }
-};
 
 // Transactions require a replica set / Atlas dedicated tiers. If they are not
 // available we fall back to the unique {student, event} index (which still
@@ -112,40 +36,6 @@ exports.getEvents = async (req, res) => {
   }
 };
 
-// Attach full student details (register number, email, college, department,
-// symposium code) to each teammate by matching their stored phone number.
-const enrichTeamMembers = async (teamMembers) => {
-  if (!teamMembers || teamMembers.length === 0) return teamMembers || [];
-  let students;
-  if (isDbConnected()) {
-    students = await Student.find({}, 'phone registerNumber email collegeName department symposiumCode').populate('user', 'name').lean();
-  } else {
-    students = mockStore.students.map(s => {
-      const u = mockStore.users.find(usr => String(usr._id) === String(s.user));
-      return { ...s, user: u ? { name: u.name } : { name: s.email } };
-    });
-  }
-  const byPhone = new Map();
-  students.forEach(s => {
-    const key = normalizePhone(s.phone);
-    if (key) byPhone.set(key, s);
-  });
-  return teamMembers.map(m => {
-    const st = byPhone.get(normalizePhone(m.phone));
-    return {
-      name: m.name,
-      phone: m.phone,
-      ...(st ? {
-        registerNumber: st.registerNumber || '',
-        email: st.email || '',
-        collegeName: st.collegeName || '',
-        department: st.department || '',
-        symposiumCode: st.symposiumCode || ''
-      } : {})
-    };
-  });
-};
-
 exports.getEventById = async (req, res) => {
   try {
     if (isDbConnected()) {
@@ -156,25 +46,22 @@ exports.getEventById = async (req, res) => {
         select: 'symposiumCode registerNumber collegeName department year email phone verificationStatus isCheckedIn',
         populate: { path: 'user', select: 'name' }
       });
-      for (const reg of registrations) {
-        reg.teamMembers = await enrichTeamMembers(reg.teamMembers || []);
-      }
-      return res.status(200).json({ success: true, event, registrations });
+      const enriched = await teamController.attachTeamsToRegistrations(registrations, event._id);
+      return res.status(200).json({ success: true, event, registrations: enriched });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
       const regs = mockStore.registrations.filter(r => r.event === event._id || String(r.event) === String(event._id));
-      const populated = regs.map(async r => {
+      const populated = regs.map(r => {
         const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
         const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
-        const teamMembers = await enrichTeamMembers(r.teamMembers || []);
         return {
           ...r,
-          teamMembers,
           student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null
         };
       });
-      return res.status(200).json({ success: true, event, registrations: await Promise.all(populated) });
+      const enriched = await teamController.attachTeamsToRegistrations(populated, event._id);
+      return res.status(200).json({ success: true, event, registrations: enriched });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching event details' });
@@ -291,27 +178,24 @@ exports.registerForEvent = async (req, res) => {
         }
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-        // Teammates must be registered DATAVERSE students, and the total is capped by
-        // teamLimit (validated server-side).
-        const teamMemberResult = await validateTeamMembers(
-          parseTeamMembers(req.body.teamMembers),
-          event,
-          getEffectiveTeamLimit(event)
-        );
-        if (teamMemberResult.error) {
-          return res.status(400).json({ success: false, message: teamMemberResult.error });
-        }
-        const teamMembers = teamMemberResult.members;
+        const teamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
 
         const registration = useTx
-          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl, teamMembers }], { session }))[0]
-          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl, teamMembers });
+          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl }], { session }))[0]
+          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl });
         event.currentRegistrations += 1;
         if (useTx) await event.save({ session });
         else await event.save();
 
         if (session) await session.commitTransaction();
+
+        // Non-solo event: create the Team (leader = creator) and email the
+        // private team-management link. If team creation fails the registration
+        // still stands; organizers can recover via the admin Teams panel.
+        let team = null;
+        if (getEffectiveTeamLimit(event) > 0) {
+          team = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: teamSize });
+        }
 
         // Notify the student about their new event booking.
         sendEventRegistrationMail({
@@ -323,7 +207,16 @@ exports.registerForEvent = async (req, res) => {
           eventTime: event.time
         }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
-        return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
+        if (team) {
+          teamController.sendTeamLinkEmail({ student, event, team, userName: req.user?.name || student.email?.split('@')[0] || 'there' });
+        }
+
+        return res.status(201).json({
+          success: true,
+          message: `Registered for ${event.title}!`,
+          registration,
+          team: team ? await teamController.serializeTeam(team, event) : null
+        });
       } catch (err) {
         if (session) { try { await session.abortTransaction(); } catch (e) {} }
         // Unique-index duplicate key -> the race condition's loser.
@@ -366,21 +259,18 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      // Teammates must be registered DATAVERSE students, and the total is capped by
-      // teamLimit (validated server-side).
-      const teamMemberResult = await validateTeamMembers(
-        parseTeamMembers(req.body.teamMembers),
-        event,
-        getEffectiveTeamLimit(event)
-      );
-      if (teamMemberResult.error) {
-        return res.status(400).json({ success: false, message: teamMemberResult.error });
-      }
-      const teamMembers = teamMemberResult.members;
+      // Non-solo event: create the Team (leader = creator) and email the
+      // private team-management link.
+      const teamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
 
-      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null, teamMembers };
+      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
+
+      let team = null;
+      if (getEffectiveTeamLimit(event) > 0) {
+        team = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: teamSize });
+      }
 
       sendEventRegistrationMail({
         to: student.email,
@@ -391,7 +281,16 @@ exports.registerForEvent = async (req, res) => {
         eventTime: event.time
       }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
-      return res.status(201).json({ success: true, message: `Registered for ${event.title}!`, registration });
+      if (team) {
+        teamController.sendTeamLinkEmail({ student, event, team, userName: req.user?.name || student.email?.split('@')[0] || 'there' });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: `Registered for ${event.title}!`,
+        registration,
+        team: team ? await teamController.serializeTeam(team, event) : null
+      });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error registering for event' });
