@@ -112,6 +112,40 @@ exports.getEvents = async (req, res) => {
   }
 };
 
+// Attach full student details (register number, email, college, department,
+// symposium code) to each teammate by matching their stored phone number.
+const enrichTeamMembers = async (teamMembers) => {
+  if (!teamMembers || teamMembers.length === 0) return teamMembers || [];
+  let students;
+  if (isDbConnected()) {
+    students = await Student.find({}, 'phone registerNumber email collegeName department symposiumCode').populate('user', 'name').lean();
+  } else {
+    students = mockStore.students.map(s => {
+      const u = mockStore.users.find(usr => String(usr._id) === String(s.user));
+      return { ...s, user: u ? { name: u.name } : { name: s.email } };
+    });
+  }
+  const byPhone = new Map();
+  students.forEach(s => {
+    const key = normalizePhone(s.phone);
+    if (key) byPhone.set(key, s);
+  });
+  return teamMembers.map(m => {
+    const st = byPhone.get(normalizePhone(m.phone));
+    return {
+      name: m.name,
+      phone: m.phone,
+      ...(st ? {
+        registerNumber: st.registerNumber || '',
+        email: st.email || '',
+        collegeName: st.collegeName || '',
+        department: st.department || '',
+        symposiumCode: st.symposiumCode || ''
+      } : {})
+    };
+  });
+};
+
 exports.getEventById = async (req, res) => {
   try {
     if (isDbConnected()) {
@@ -122,20 +156,25 @@ exports.getEventById = async (req, res) => {
         select: 'symposiumCode registerNumber collegeName department year email phone verificationStatus isCheckedIn',
         populate: { path: 'user', select: 'name' }
       });
+      for (const reg of registrations) {
+        reg.teamMembers = await enrichTeamMembers(reg.teamMembers || []);
+      }
       return res.status(200).json({ success: true, event, registrations });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
       const regs = mockStore.registrations.filter(r => r.event === event._id || String(r.event) === String(event._id));
-      const populated = regs.map(r => {
+      const populated = regs.map(async r => {
         const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
         const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
+        const teamMembers = await enrichTeamMembers(r.teamMembers || []);
         return {
           ...r,
+          teamMembers,
           student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null
         };
       });
-      return res.status(200).json({ success: true, event, registrations: populated });
+      return res.status(200).json({ success: true, event, registrations: await Promise.all(populated) });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching event details' });

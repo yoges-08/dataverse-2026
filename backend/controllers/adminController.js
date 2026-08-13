@@ -24,7 +24,31 @@ exports.getAnalytics = async (req, res) => {
       const nonTechnicalEvents = await Event.countDocuments({ category: 'Non-Technical' });
 
       const events = await Event.find().select('title category currentRegistrations maxParticipants');
-      const eventWiseRegistrations = events.map(e => ({ title: e.title, category: e.category, registrations: e.currentRegistrations, capacity: e.maxParticipants }));
+      const regCounts = await Registration.aggregate([
+        {
+          $group: {
+            _id: '$event',
+            total: { $sum: 1 },
+            teams: {
+              $sum: {
+                $cond: [{ $gt: [{ $size: { $ifNull: ['$teamMembers', []] } }, 0] }, 1, 0]
+              }
+            }
+          }
+        }
+      ]);
+      const regCountMap = {};
+      regCounts.forEach(r => {
+        regCountMap[String(r._id)] = { total: r.total, teams: r.teams, solo: r.total - r.teams };
+      });
+      const eventWiseRegistrations = events.map(e => ({
+        _id: e._id,
+        title: e.title,
+        category: e.category,
+        registrations: e.currentRegistrations,
+        capacity: e.maxParticipants,
+        ...(regCountMap[String(e._id)] || { total: 0, teams: 0, solo: 0 })
+      }));
 
       const collegeWiseStats = await Student.aggregate([{ $group: { _id: '$collegeName', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]);
       const deptWiseStats = await Student.aggregate([{ $group: { _id: '$department', count: { $sum: 1 } } }, { $sort: { count: -1 } }]);
@@ -44,7 +68,26 @@ exports.getAnalytics = async (req, res) => {
       const technicalEvents = mockStore.events.filter(e => e.category === 'Technical').length;
       const nonTechnicalEvents = mockStore.events.filter(e => e.category === 'Non-Technical').length;
 
-      const eventWiseRegistrations = mockStore.events.map(e => ({ title: e.title, category: e.category, registrations: e.currentRegistrations, capacity: e.maxParticipants }));
+      const teamCountMap = {};
+      mockStore.registrations.forEach(r => {
+        const key = String(r.event);
+        if (!teamCountMap[key]) teamCountMap[key] = { total: 0, teams: 0 };
+        teamCountMap[key].total += 1;
+        if ((r.teamMembers || []).length > 0) teamCountMap[key].teams += 1;
+      });
+      const eventWiseRegistrations = mockStore.events.map(e => {
+        const c = teamCountMap[String(e._id)] || { total: 0, teams: 0 };
+        return {
+          _id: e._id,
+          title: e.title,
+          category: e.category,
+          registrations: e.currentRegistrations,
+          capacity: e.maxParticipants,
+          total: c.total,
+          teams: c.teams,
+          solo: c.total - c.teams
+        };
+      });
 
       const collegeMap = {};
       const deptMap = {};

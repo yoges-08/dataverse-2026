@@ -572,41 +572,57 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {events.map((ev) => (
-              <div key={ev._id} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-indigo-400">{ev.category}</span>
+            {(() => {
+              const teamStatsMap = {};
+              (charts.eventWiseRegistrations || []).forEach(r => { if (r._id) teamStatsMap[String(r._id)] = r; });
+              return events.map((ev) => {
+                const t = teamStatsMap[String(ev._id)];
+                return (
+                <div key={ev._id} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-indigo-400">{ev.category}</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-white">{ev.title}</h4>
+                  <p className="text-xs text-slate-400">{ev.venue} • {ev.date}</p>
+                  {t ? (
+                    <p className="text-[11px] text-slate-300 flex items-center space-x-2">
+                      <span className="font-bold text-white">{t.registrations || 0} registered</span>
+                      <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-[10px] font-bold text-cyan-300">{t.teams || 0} team{(t.teams || 0) !== 1 ? 's' : ''}</span>
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400">{t.solo || 0} solo</span>
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-slate-400">{ev.currentRegistrations || 0} registered</p>
+                  )}
+                  {ev.studentCoordinator?.name && (
+                    <p className="text-xs text-emerald-400 font-medium">Coordinator: {ev.studentCoordinator.name}</p>
+                  )}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <button
+                      onClick={() => openEditEvent(ev)}
+                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-indigo-300 hover:text-white font-bold text-xs border border-indigo-500/30 transition-colors flex items-center justify-center space-x-1.5"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleViewEventRegistrations(ev)}
+                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-emerald-400 hover:text-white font-bold text-xs border border-emerald-500/30 transition-colors flex items-center justify-center space-x-1.5"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      <span>Registrants</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(ev._id, ev.title)}
+                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs border border-red-500/30 transition-colors flex items-center justify-center space-x-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
-                <h4 className="text-lg font-bold text-white">{ev.title}</h4>
-                <p className="text-xs text-slate-400">{ev.venue} • {ev.date}</p>
-                {ev.studentCoordinator?.name && (
-                  <p className="text-xs text-emerald-400 font-medium">Coordinator: {ev.studentCoordinator.name}</p>
-                )}
-                <div className="flex items-center space-x-2 pt-1">
-                  <button
-                    onClick={() => openEditEvent(ev)}
-                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-indigo-300 hover:text-white font-bold text-xs border border-indigo-500/30 transition-colors flex items-center justify-center space-x-1.5"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                  <button
-                    onClick={() => handleViewEventRegistrations(ev)}
-                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-emerald-400 hover:text-white font-bold text-xs border border-emerald-500/30 transition-colors flex items-center justify-center space-x-1.5"
-                  >
-                    <UserCheck className="w-3.5 h-3.5" />
-                    <span>Registrants</span>
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEvent(ev._id, ev.title)}
-                    className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs border border-red-500/30 transition-colors flex items-center justify-center space-x-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         </div>
       )}
@@ -1044,6 +1060,7 @@ export default function AdminDashboard() {
                             {reg.teamMembers.map((tm, i) => (
                               <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
                                 {tm.name}
+                                {tm.registerNumber && <span className="text-cyan-300/70 font-mono">({tm.registerNumber})</span>}
                                 <span className="text-slate-500 font-mono">{tm.phone}</span>
                               </span>
                             ))}
