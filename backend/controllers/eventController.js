@@ -108,8 +108,8 @@ const validateTeamMembers = async (teamMembers, event, teamLimit) => {
     normalized.push(phoneDigits);
     clean.push({ name, phone: phoneDigits });
   }
-  if (clean.length > teamLimit) {
-    return { error: `You can add up to ${teamLimit} teammates for ${event.title}.`, members: null };
+  if (teamLimit > 0 && clean.length !== teamLimit) {
+    return { error: `You must add exactly ${teamLimit} teammates for ${event.title} to complete the team (${clean.length}/${teamLimit} added).`, members: null };
   }
   return { members: clean };
 };
