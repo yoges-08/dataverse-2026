@@ -1,7 +1,5 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
+﻿const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const qrcode = require('qrcode');
 const XLSX = require('xlsx');
 const Student = require('../models/Student');
 const User = require('../models/User');
@@ -13,10 +11,6 @@ const mockStore = require('../utils/mockStore');
 const { sendApprovalMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
-
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
-const generateSymposiumCode = () => `DV2026-REG-${crypto.randomInt(100000, 1000000)}`;
 
 exports.getAnalytics = async (req, res) => {
   try {
@@ -278,173 +272,53 @@ exports.getStaffList = async (req, res) => {
   }
 };
 
-// Excel columns accepted by the bulk import. Extra columns in the sheet are ignored.
-const IMPORT_HEADERS = ['Name', 'Email', 'Register Number', 'College Name', 'Department', 'Year', 'Phone', 'Gender', 'Date of Birth', 'Address', 'Emergency Contact'];
-const IMPORT_EXAMPLE = ['Santhosh Kumar', 'santhosh@gmail.com', '20CS123', 'Anjalai Ammal Mahalingam Engineering College, Kovilvenni', 'Artificial Intelligence & Data Science', 'III', '9876543210', 'Male', '2005-01-15', '', ''];
 
-exports.downloadStudentTemplate = async (req, res) => {
+// Export all registered students as an Excel (.xlsx) file
+exports.exportStudentsExcel = async (req, res) => {
   try {
-    const ws = XLSX.utils.aoa_to_sheet([IMPORT_HEADERS, IMPORT_EXAMPLE]);
-    ws['!cols'] = IMPORT_HEADERS.map(h => ({ wch: Math.max(h.length + 6, 24) }));
+    let students;
+    if (isDbConnected()) {
+      students = await Student.find().populate('user', 'name email role').sort({ createdAt: -1 }).lean();
+    } else {
+      students = mockStore.students.map(s => {
+        const u = mockStore.users.find(usr => String(usr._id) === String(s.user));
+        return { ...s, user: u ? { name: u.name, email: u.email } : { name: s.email } };
+      });
+    }
+
+    const headers = ['Symposium Code', 'Name', 'Email', 'Phone', 'Date of Birth', 'College', 'Department', 'Year', 'Register Number', 'Status', 'Checked In', 'Registered At'];
+    const rows = students.map(s => {
+      const rawName = String((s.user && s.user.name) || '').trim();
+      const name = rawName && rawName !== '.' ? rawName : String(s.email || '');
+      const createdAt = s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : '';
+      return [
+        s.symposiumCode || '',
+        name,
+        s.email || '',
+        s.phone || '',
+        s.dateOfBirth ? new Date(s.dateOfBirth).toISOString().slice(0, 10) : '',
+        s.collegeName || '',
+        s.department || '',
+        s.year || '',
+        s.registerNumber || '',
+        s.verificationStatus || '',
+        s.isCheckedIn ? 'Yes' : 'No',
+        createdAt
+      ];
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 14) }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Students');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename="DATAVERSE_Student_Import_Template.xlsx"');
+    res.setHeader('Content-Disposition', `attachment; filename="DATAVERSE_Student_Registrations_${Date.now()}.xlsx"`);
     return res.send(buf);
   } catch (error) {
-    console.error('Template download error:', error);
-    res.status(500).json({ success: false, message: 'Error generating import template' });
+    console.error('Export students error:', error);
+    return res.status(500).json({ success: false, message: 'Error exporting students' });
   }
 };
 
-exports.importStudents = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Please upload an Excel (.xlsx/.xls) or CSV file' });
-    }
-
-    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      return res.status(400).json({ success: false, message: 'The file has no readable sheet' });
-    }
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-    if (!rows.length) {
-      return res.status(400).json({ success: false, message: 'The file is empty or has no data rows' });
-    }
-
-    const defaultPassword = process.env.IMPORT_DEFAULT_PASSWORD || 'Dataverse@2026';
-    const results = { imported: 0, skipped: [], errors: [] };
-    const seenEmails = new Set();
-
-    for (const [index, row] of rows.entries()) {
-      const lineNo = index + 2; // +1 for the header row
-      const name = String(row.Name || row.name || '').trim();
-      const email = String(row.Email || row.email || '').toLowerCase().trim();
-      const registerNumber = String(row['Register Number'] || row.registerNumber || '').trim() || 'N/A';
-      const collegeName = String(row['College Name'] || row.collegeName || '').trim();
-      const department = String(row.Department || row.department || '').trim();
-      const year = String(row.Year || row.year || '').trim() || 'III';
-      const phone = String(row.Phone || row.phone || '').trim();
-      const gender = String(row.Gender || row.gender || '').trim() || 'Male';
-      const dateOfBirth = String(row['Date of Birth'] || row.DOB || row.dateOfBirth || '').trim();
-      const address = String(row.Address || row.address || '').trim();
-      const emergencyContact = String(row['Emergency Contact'] || row.emergencyContact || '').trim();
-      const phoneDigits = phone ? normalizePhone(phone) : '';
-
-      if (!name || name === '.' || name.length < 3) {
-        results.skipped.push({ lineNo, email: email || name, name, reason: 'Missing/invalid Name' });
-        continue;
-      }
-      if (!email || !isValidEmail(email)) {
-        results.skipped.push({ lineNo, email: email || name, name, reason: 'Missing/invalid Email' });
-        continue;
-      }
-      if (!collegeName) {
-        results.skipped.push({ lineNo, email, name, reason: 'Missing College Name' });
-        continue;
-      }
-      if (seenEmails.has(email)) {
-        results.skipped.push({ lineNo, email, name, reason: 'Duplicate row (email repeated in file)' });
-        continue;
-      }
-      seenEmails.add(email);
-
-      const createStudent = async (userId) => {
-        let symposiumCode = generateSymposiumCode();
-        let codeExists = isDbConnected() ? await Student.findOne({ symposiumCode }) : mockStore.students.some(s => s.symposiumCode === symposiumCode);
-        let attempts = 0;
-        while (codeExists && attempts < 20) {
-          symposiumCode = generateSymposiumCode();
-          codeExists = isDbConnected() ? await Student.findOne({ symposiumCode }) : mockStore.students.some(s => s.symposiumCode === symposiumCode);
-          attempts += 1;
-        }
-        const qrPayload = JSON.stringify({ symposiumCode, type: 'Import' });
-        const qrCodeDataUrl = isDbConnected() ? await qrcode.toDataURL(qrPayload) : 'mock-qr';
-        return {
-          userId,
-          symposiumCode,
-          registerNumber,
-          collegeName,
-          department,
-          year,
-          email,
-          phone: phoneDigits || 'N/A',
-          gender,
-          dateOfBirth,
-          address,
-          emergencyContact,
-          verificationStatus: 'Approved',
-          foodPreference: 'N/A',
-          accommodationRequired: 'N/A',
-          qrCodeData: qrCodeDataUrl
-        };
-      };
-
-      if (isDbConnected()) {
-        try {
-          const existingUser = await User.findOne({ email });
-          if (existingUser) {
-            results.skipped.push({ lineNo, email, name, reason: 'Email already registered' });
-            continue;
-          }
-          if (phoneDigits) {
-            const phoneReuse = await Student.findOne({ phone: phoneDigits });
-            if (phoneReuse) {
-              results.skipped.push({ lineNo, email, name, reason: 'Phone number already registered' });
-              continue;
-            }
-          }
-
-          const salt = await bcrypt.genSalt(10);
-          const hashedPassword = await bcrypt.hash(defaultPassword, salt);
-          const user = await User.create({ name, email, password: hashedPassword, role: 'student', isEmailVerified: true });
-
-          try {
-            const data = await createStudent(user._id);
-            await Student.create({ user: user._id, ...data });
-            results.imported += 1;
-          } catch (err) {
-            await User.findByIdAndDelete(user._id).catch(() => {});
-            throw err;
-          }
-        } catch (err) {
-          if (/E11000|already registered/i.test(err.message || '')) {
-            results.skipped.push({ lineNo, email, name, reason: 'Already registered (unique key)' });
-          } else {
-            console.error('Import row failed:', err.message);
-            results.errors.push({ lineNo, email, name, reason: err.message });
-          }
-        }
-      } else {
-        if (mockStore.users.some(u => String(u.email).toLowerCase().trim() === email)) {
-          results.skipped.push({ lineNo, email, name, reason: 'Email already registered' });
-          continue;
-        }
-        if (phoneDigits && mockStore.students.some(s => normalizePhone(s.phone) === phoneDigits)) {
-          results.skipped.push({ lineNo, email, name, reason: 'Phone number already registered' });
-          continue;
-        }
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(defaultPassword, salt);
-        const userId = 'u' + (mockStore.users.length + 1);
-        mockStore.users.push({ _id: userId, name, email, password: hashedPassword, role: 'student', isEmailVerified: true });
-        const data = await createStudent(userId);
-        mockStore.students.push({ _id: 's' + (mockStore.students.length + 1), user: userId, ...data });
-        results.imported += 1;
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: `Imported ${results.imported} student(s)`,
-      ...results,
-      defaultPassword,
-      columns: IMPORT_HEADERS
-    });
-  } catch (error) {
-    console.error('Import students error:', error);
-    res.status(500).json({ success: false, message: 'Error importing students' });
-  }
-};

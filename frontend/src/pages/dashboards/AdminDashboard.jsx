@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
-  FileBadge, Loader, Upload, X
+  FileBadge, Loader
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -85,11 +85,8 @@ export default function AdminDashboard() {
   // New Staff Form State
   const [newStaff, setNewStaff] = useState({ name: '', email: '', password: '', role: 'coordinator' });
 
-  // Excel bulk import of students
-  const fileInputRef = useRef(null);
-  const [importing, setImporting] = useState(false);
-  const [importMsg, setImportMsg] = useState(null);
-  const [importResult, setImportResult] = useState(null);
+  // Excel export of students
+  const [exporting, setExporting] = useState(false);
 
   // New Announcement Form State
   const [newAnn, setNewAnn] = useState({ title: '', content: '', category: 'General', priority: 'Normal' });
@@ -138,51 +135,6 @@ const loadContactMessages = async () => {
       console.error('Error loading contact messages:', err);
     } finally {
       setMessagesBusy(false);
-    }
-  };
-
-  const handleDownloadTemplate = async () => {
-    try {
-      const res = await API.get('/admin/students/import-template', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'DATAVERSE_Student_Import_Template.xlsx';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      setImportMsg({ type: 'error', text: 'Could not download the template.' });
-    }
-  };
-
-  const handleImportFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
-      setImportMsg({ type: 'error', text: 'Please upload an Excel (.xlsx / .xls) or CSV file.' });
-      return;
-    }
-    const formData = new FormData();
-    formData.append('file', file);
-    setImporting(true);
-    setImportMsg(null);
-    setImportResult(null);
-    try {
-      const res = await API.post('/admin/students/import', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      if (res.data.success) {
-        setImportMsg({ type: 'success', text: res.data.message });
-        setImportResult(res.data);
-        loadAdminData();
-      } else {
-        setImportMsg({ type: 'error', text: res.data.message });
-      }
-    } catch (err) {
-      setImportMsg({ type: 'error', text: err.response?.data?.message || 'Import failed. Please check your file.' });
-    } finally {
-      setImporting(false);
     }
   };
 
@@ -364,19 +316,22 @@ const loadContactMessages = async () => {
     }
   };
 
-  const exportCSV = () => {
-    const headers = ['Symposium Code,Name,Email,Phone,DOB,College,Department,Year,Status,Checked In\n'];
-    const rows = students.map(s => {
-      const uName = getStudentName(s, s.email || 'Student');
-      return `"${s.symposiumCode}","${uName}","${s.email}","${s.phone || ''}","${s.dateOfBirth || ''}","${s.collegeName}","${s.department}","${s.year}","${s.verificationStatus}","${s.isCheckedIn ? 'Yes' : 'No'}"\n`;
-    });
-
-    const blob = new Blob([headers.concat(rows).join('')], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `DATAVERSE_Student_Registrations_${Date.now()}.csv`);
-    a.click();
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      const res = await API.get('/admin/students/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DATAVERSE_Student_Registrations_${Date.now()}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Could not export students. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const filteredStudents = students.filter(s => {
@@ -422,11 +377,12 @@ const loadContactMessages = async () => {
           </button>
 
           <button
-            onClick={exportCSV}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 transition-all flex items-center space-x-2"
+            onClick={handleExportExcel}
+            disabled={exporting}
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="w-4 h-4" />
-            <span>Export CSV</span>
+            {exporting ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span>{exporting ? 'Exporting...' : 'Export Excel'}</span>
           </button>
         </div>
       </div>
@@ -502,67 +458,8 @@ const loadContactMessages = async () => {
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
               </select>
-
-              <button
-                type="button"
-                onClick={handleDownloadTemplate}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold flex items-center space-x-1.5 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Template</span>
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={handleImportFile}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={importing}
-                className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors disabled:opacity-60"
-              >
-                {importing ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                <span>{importing ? 'Importing...' : 'Import Excel'}</span>
-              </button>
             </div>
           </div>
-
-          {/* Import result banner */}
-          {(importMsg || importResult) && (
-            <div className={`p-3 rounded-xl text-xs flex items-start justify-between gap-3 ${
-              importMsg?.type === 'error'
-                ? 'bg-red-500/10 border border-red-500/30 text-red-400'
-                : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-            }`}>
-              <div className="space-y-1">
-                <p className="font-bold">{importMsg?.text}</p>
-                {importResult && (
-                  <p className="opacity-90">
-                    Imported <strong>{importResult.imported}</strong> • Skipped <strong>{importResult.skipped?.length || 0}</strong>
-                    {importResult.errors?.length ? ` • Failed <strong>${importResult.errors.length}</strong>` : ''}
-                    {importResult.defaultPassword ? ` • Default login password: <strong>${importResult.defaultPassword}</strong>` : ''}
-                  </p>
-                )}
-                {importResult?.skipped?.length > 0 && (
-                  <ul className="list-disc list-inside opacity-80 space-y-0.5 max-h-28 overflow-y-auto">
-                    {importResult.skipped.slice(0, 10).map((s, i) => (
-                      <li key={i}>Row {s.lineNo}: {s.email || s.name} — {s.reason}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <button
-                onClick={() => { setImportMsg(null); setImportResult(null); }}
-                className="shrink-0 p-1 rounded-lg hover:bg-slate-900/50 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
 
           {/* Students Table */}
           <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
