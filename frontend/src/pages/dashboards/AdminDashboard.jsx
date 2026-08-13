@@ -992,7 +992,12 @@ export default function AdminDashboard() {
                             ))}
                           </div>
                         </div>
-                      ) : null}
+                      ) : (
+                        <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+                          <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">No teammates added</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400">Solo</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
