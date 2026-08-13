@@ -17,6 +17,10 @@ export default function AdminDashboard() {
   const [staffList, setStaffList] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
+  // Contact form messages (inbox)
+  const [contactMessages, setContactMessages] = useState([]);
+  const [messagesBusy, setMessagesBusy] = useState(false);
+
   // Certificate generation state
   const [certStudentId, setCertStudentId] = useState('');
   const [certEventId, setCertEventId] = useState('');
@@ -114,6 +118,19 @@ export default function AdminDashboard() {
       console.error('Error loading admin dashboard:', err);
     } finally {
       setLoading(false);
+    }
+    loadContactMessages();
+  };
+
+  const loadContactMessages = async () => {
+    try {
+      setMessagesBusy(true);
+      const res = await API.get('/contact/messages');
+      if (res.data.success) setContactMessages(res.data.messages || []);
+    } catch (err) {
+      console.error('Error loading contact messages:', err);
+    } finally {
+      setMessagesBusy(false);
     }
   };
 
@@ -389,7 +406,8 @@ export default function AdminDashboard() {
           { id: 'events', label: `Symposium Events (${events.length})` },
           { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
-          { id: 'announcements', label: `Announcements (${announcements.length})` }
+          { id: 'announcements', label: `Announcements (${announcements.length})` },
+          { id: 'messages', label: `Contact Messages (${contactMessages.length})` }
         ].map(tab => (
           <button
             key={tab.id}
@@ -812,6 +830,45 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* TAB 5: CONTACT MESSAGES INBOX */}
+      {activeTab === 'messages' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white">Contact Form Inbox</h3>
+            <button
+              onClick={loadContactMessages}
+              disabled={messagesBusy}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center space-x-1.5 disabled:opacity-60"
+            >
+              <Download className="w-4 h-4" />
+              <span>{messagesBusy ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+          </div>
+
+          {contactMessages.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/50 rounded-xl border border-slate-800">
+              No messages received from the contact form yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {contactMessages.map((msg, idx) => (
+                <div key={msg._id || idx} className="glass-card p-4 rounded-2xl border border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <span className="font-bold text-white text-sm">{msg.name}</span>
+                      <a href={`mailto:${msg.email}`} className="text-indigo-400 text-xs ml-2 hover:underline">{msg.email}</a>
+                    </div>
+                    <span className="text-[10px] text-slate-500">{new Date(msg.createdAt || msg.receivedAt || Date.now()).toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs font-bold text-indigo-300 mt-2">{msg.subject}</p>
+                  <p className="text-xs text-slate-300 mt-1 whitespace-pre-wrap">{msg.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
