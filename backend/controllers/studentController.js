@@ -101,18 +101,24 @@ exports.spotRegistration = async (req, res) => {
     } = req.body;
 
     const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanName = (name || '').trim();
 
-    if (!name || !cleanEmail || !registerNumber || !collegeName || !department) {
+    if (!cleanName || cleanName === '.' || cleanName.length < 3 || !cleanEmail || !registerNumber || !collegeName || !department) {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
     }
 
     if (isDbConnected()) {
       let user = await User.findOne({ email: cleanEmail });
       let student;
+      // Repair any previously stored junk name (e.g. ".") from an old entry.
+      if (user && (!String(user.name || '').trim() || String(user.name).trim() === '.')) {
+        user.name = cleanName;
+        await user.save();
+      }
       if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
-        user = await User.create({ name, email: cleanEmail, password: hashedPassword, role: 'student' });
+        user = await User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' });
       }
 
       student = await Student.findOne({ user: user._id });
@@ -193,7 +199,7 @@ exports.spotRegistration = async (req, res) => {
       if (!user) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
-        user = { _id: 'u' + (mockStore.users.length + 1), name, email: cleanEmail, password: hashedPassword, role: 'student' };
+        user = { _id: 'u' + (mockStore.users.length + 1), name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
         mockStore.users.push(user);
       }
 

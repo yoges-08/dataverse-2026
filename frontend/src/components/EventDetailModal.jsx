@@ -67,6 +67,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           <img
             src={event.bannerImage || 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80'}
             alt={event.title}
+            loading="lazy"
             className="w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>

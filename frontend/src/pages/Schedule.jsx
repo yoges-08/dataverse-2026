@@ -33,7 +33,7 @@ export default function Schedule() {
       </div>
 
       {/* Day Selector */}
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {[
           { key: 'Day1', label: 'Day 1 • September 15, 2026' },
           { key: 'Day2', label: 'Day 2 • September 16, 2026' }

@@ -143,11 +143,11 @@ export default function VolunteerDashboard() {
           </div>
 
           {lastVerifiedStudent && (
-            <div className="glass-card p-6 rounded-2xl border border-emerald-500/30 flex items-center justify-between">
-              <div>
+            <div className="glass-card p-6 rounded-2xl border border-emerald-500/30 flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <span className="text-[10px] text-emerald-400 font-bold uppercase block">Last Verified Student:</span>
-                <h4 className="text-lg font-bold text-white">{lastVerifiedStudent.name}</h4>
-                <p className="text-xs text-slate-400">{lastVerifiedStudent.symposiumCode} • {lastVerifiedStudent.collegeName}</p>
+                <h4 className="text-lg font-bold text-white truncate">{lastVerifiedStudent.name}</h4>
+                <p className="text-xs text-slate-400 truncate">{lastVerifiedStudent.symposiumCode} • {lastVerifiedStudent.collegeName}</p>
               </div>
               <button
                 onClick={() => setBadgeStudent(lastVerifiedStudent)}
@@ -219,6 +219,7 @@ export default function VolunteerDashboard() {
                 <input
                   type="text"
                   required
+                  minLength={3}
                   value={spotForm.name}
                   onChange={(e) => setSpotForm({ ...spotForm, name: e.target.value })}
                   placeholder="e.g. Santhosh Kumar"

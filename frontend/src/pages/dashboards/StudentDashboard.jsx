@@ -181,6 +181,7 @@ export default function StudentDashboard() {
                       <img
                         src={ev.bannerImage}
                         alt={ev.title}
+                        loading="lazy"
                         className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-700"
                       />
                       <div>

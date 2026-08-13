@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { lazy, Suspense, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -6,26 +6,32 @@ import BackToTop from './components/BackToTop';
 import ScrollToTop from './components/ScrollToTop';
 import { AuthContext } from './context/AuthContext';
 
-// Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import Events from './pages/Events';
-import Schedule from './pages/Schedule';
-import Sponsors from './pages/Sponsors';
-import FAQ from './pages/FAQ';
-import Contact from './pages/Contact';
-import Register from './pages/Register';
-import Login from './pages/Login';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import CertificateVerify from './pages/CertificateVerify';
-import MyCertificates from './pages/MyCertificates';
+// Pages (code-split so the initial bundle stays small and fast)
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Events = lazy(() => import('./pages/Events'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Sponsors = lazy(() => import('./pages/Sponsors'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Register = lazy(() => import('./pages/Register'));
+const Login = lazy(() => import('./pages/Login'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const CertificateVerify = lazy(() => import('./pages/CertificateVerify'));
+const MyCertificates = lazy(() => import('./pages/MyCertificates'));
 
-// Dashboards
-import StudentDashboard from './pages/dashboards/StudentDashboard';
-import AdminDashboard from './pages/dashboards/AdminDashboard';
-import CoordinatorDashboard from './pages/dashboards/CoordinatorDashboard';
-import VolunteerDashboard from './pages/dashboards/VolunteerDashboard';
+// Dashboards (heavy — loaded on demand only)
+const StudentDashboard = lazy(() => import('./pages/dashboards/StudentDashboard'));
+const AdminDashboard = lazy(() => import('./pages/dashboards/AdminDashboard'));
+const CoordinatorDashboard = lazy(() => import('./pages/dashboards/CoordinatorDashboard'));
+const VolunteerDashboard = lazy(() => import('./pages/dashboards/VolunteerDashboard'));
+
+const PageLoader = () => (
+  <div className="max-w-4xl mx-auto px-4 py-24 text-center text-slate-400">
+    <p className="text-sm">Loading...</p>
+  </div>
+);
 
 const getRoleDashboard = (role) => {
   switch (role) {
@@ -93,7 +99,8 @@ export default function App() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/events" element={<Events />} />
@@ -120,7 +127,8 @@ export default function App() {
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+            </Suspense>
         </main>
         <Footer />
         <BackToTop />

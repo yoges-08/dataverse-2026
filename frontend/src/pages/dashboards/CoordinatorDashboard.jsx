@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Calendar, Users, Trophy, Download, CheckCircle2, Award, Sparkles } from 'lucide-react';
-import CertificateModal from '../../components/CertificateModal';
+import { getStudentName } from '../../utils/studentName';
 import API from '../../services/api';
 
 export default function CoordinatorDashboard() {
@@ -72,7 +72,7 @@ export default function CoordinatorDashboard() {
     const headers = ['Symposium Code,Register No,Student Name,College,Department,Team Members,Status,Checked In\n'];
     const rows = registrations.map(r => {
       const s = r.student;
-      const uName = s?.user?.name || s?.email || 'Student';
+      const uName = getStudentName(s, 'Student');
       const team = (r.teamMembers || []).map(tm => `${tm.name} (${tm.phone})`).join('; ');
       return `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
@@ -149,7 +149,7 @@ export default function CoordinatorDashboard() {
                     {registrations.map(r => {
                       const s = r.student;
                       if (!s) return null;
-                      const uName = s.user?.name || s.email;
+                      const uName = getStudentName(s, 'Student');
                       return (
                         <tr key={r._id}>
                           <td className="p-3 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>

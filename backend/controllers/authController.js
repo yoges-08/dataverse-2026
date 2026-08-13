@@ -45,7 +45,8 @@ exports.registerStudent = async (req, res) => {
     } = req.body;
 
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail || !password || !name || !collegeName) {
+    const cleanName = (name || '').trim();
+    if (!cleanEmail || !password || !cleanName || cleanName === '.' || cleanName.length < 3 || !collegeName) {
       return res.status(400).json({ success: false, message: 'Please fill all required registration fields' });
     }
 
@@ -83,7 +84,7 @@ exports.registerStudent = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       createdUser = await User.create({
-        name,
+        name: cleanName,
         email: cleanEmail,
         password: hashedPassword,
         role: 'student',
@@ -143,7 +144,7 @@ exports.registerStudent = async (req, res) => {
 
       const emailResult = await sendRegistrationMail({
         to: cleanEmail,
-        name,
+        name: cleanName,
         registerNumber: student.registerNumber,
         symposiumCode,
         qrCodeData: symposiumCode
@@ -177,7 +178,7 @@ exports.registerStudent = async (req, res) => {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const userId = 'u' + (mockStore.users.length + 1);
-      const user = { _id: userId, name, email: cleanEmail, password: hashedPassword, role: 'student', isEmailVerified: true };
+      const user = { _id: userId, name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student', isEmailVerified: true };
       mockStore.users.push(user);
 
       // A phone number must not be reused by another registered student.

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
+import { getStudentName } from '../../utils/studentName';
 import API from '../../services/api';
 
 export default function AdminDashboard() {
@@ -315,7 +316,7 @@ export default function AdminDashboard() {
   const exportCSV = () => {
     const headers = ['Symposium Code,Name,Email,Phone,DOB,College,Department,Year,Status,Checked In\n'];
     const rows = students.map(s => {
-      const uName = s.user?.name || s.name || s.email;
+      const uName = getStudentName(s, s.email || 'Student');
       return `"${s.symposiumCode}","${uName}","${s.email}","${s.phone || ''}","${s.dateOfBirth || ''}","${s.collegeName}","${s.department}","${s.year}","${s.verificationStatus}","${s.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
 
@@ -471,7 +472,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
                   {filteredStudents.map((s) => {
-                    const name = s.user?.name || s.name || s.email;
+                    const name = getStudentName(s, s.email || 'Student');
                     return (
                       <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
                         <td className="p-4 flex items-center space-x-3">
@@ -668,7 +669,7 @@ export default function AdminDashboard() {
                   </option>
                   {certFilteredStudents.map((s) => (
                     <option key={s._id} value={s._id}>
-                      {s.user?.name || s.name || s.email} — {s.symposiumCode} — {s.collegeName}
+                      {getStudentName(s, s.email || 'Student')} — {s.symposiumCode} — {s.collegeName}
                     </option>
                   ))}
                 </select>
@@ -698,7 +699,7 @@ export default function AdminDashboard() {
                 <label className="block text-[10px] uppercase font-bold text-amber-400 mb-1.5">
                   Certificate Type
                 </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { label: 'Participation', value: 'Participation' },
                     { label: '1st Prize', value: 'Winner' },
@@ -755,12 +756,12 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                 {certificates.map((cert) => {
-                  const certLabel = `${cert.student?.user?.name || cert.student?.name || 'Participant'} — ${cert.event?.title || 'Event'} (${cert.type})`;
+                  const certLabel = `${getStudentName(cert.student, 'Participant')} — ${cert.event?.title || 'Event'} (${cert.type})`;
                   return (
                     <div key={cert._id} className="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 rounded-xl px-3.5 py-2.5">
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-white truncate">
-                          {cert.student?.user?.name || cert.student?.name || 'Participant'}
+                          {getStudentName(cert.student, 'Participant')}
                           <span className="text-slate-400 font-normal"> — {cert.event?.title || 'Event'}</span>
                         </p>
                         <p className="text-[10px] text-slate-500">
@@ -830,11 +831,11 @@ export default function AdminDashboard() {
 
           <div className="space-y-3">
             {announcements.map((ann) => (
-              <div key={ann._id} className="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
-                <div>
+              <div key={ann._id} className="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <span className="text-[10px] font-bold text-indigo-400 uppercase">{ann.category}</span>
-                  <h4 className="text-base font-bold text-white">{ann.title}</h4>
-                  <p className="text-xs text-slate-300">{ann.content}</p>
+                  <h4 className="text-base font-bold text-white truncate">{ann.title}</h4>
+                  <p className="text-xs text-slate-300 line-clamp-2">{ann.content}</p>
                 </div>
                 <button
                   onClick={() => handleDeleteAnnouncement(ann._id)}
@@ -916,11 +917,11 @@ export default function AdminDashboard() {
               </select>
               <input type="text" placeholder="Tagline" value={newEvent.tagline} onChange={e => setNewEvent({...newEvent, tagline: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <textarea placeholder="Description" required value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
-              <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input type="text" placeholder="Venue (e.g. CS Lab 1)" required value={newEvent.venue} onChange={e => setNewEvent({...newEvent, venue: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <input type="date" required value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input type="text" placeholder="Time (e.g. 10:00 AM)" value={newEvent.time} onChange={e => setNewEvent({...newEvent, time: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <input type="date" value={newEvent.registrationDeadline} onChange={e => setNewEvent({...newEvent, registrationDeadline: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
@@ -983,7 +984,7 @@ export default function AdminDashboard() {
           <div className="glass-card max-w-xl w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white">Edit Event</h3>
             <form onSubmit={handleUpdateEvent} className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input type="text" placeholder="Event Title" required value={editEvent.title} onChange={e => setEditEvent({...editEvent, title: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <select value={editEvent.category} onChange={e => setEditEvent({...editEvent, category: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white">
                   <option value="Technical">Technical</option>
@@ -1000,11 +1001,11 @@ export default function AdminDashboard() {
                 onChange={e => setEditEvent({...editEvent, rules: e.target.value})}
                 className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white font-mono"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input type="text" placeholder="Venue" required value={editEvent.venue} onChange={e => setEditEvent({...editEvent, venue: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <input type="date" required value={editEvent.date} onChange={e => setEditEvent({...editEvent, date: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input type="number" placeholder="Max Participants" value={editEvent.maxParticipants} onChange={e => setEditEvent({...editEvent, maxParticipants: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
                 <input type="number" placeholder="Team Limit (0 = solo only)" value={editEvent.teamLimit} onChange={e => setEditEvent({...editEvent, teamLimit: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               </div>
@@ -1046,7 +1047,7 @@ export default function AdminDashboard() {
                     <div key={reg._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <span className="font-bold text-white text-sm block">{s?.user?.name || s?.name || s?.email || 'Unknown'}</span>
+                          <span className="font-bold text-white text-sm block">{getStudentName(s, 'Unknown')}</span>
                           <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
                         </div>
                         <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>

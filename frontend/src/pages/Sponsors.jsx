@@ -23,7 +23,7 @@ export default function Sponsors() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
         {sponsors.map((sp, idx) => (
           <div key={idx} className="glass-card p-8 rounded-3xl border border-slate-800 hover:border-indigo-500/40 transition-all flex flex-col items-center space-y-4">
-            <img src={sp.logo} alt={sp.name} className="w-24 h-24 rounded-2xl object-cover border border-slate-700" />
+            <img src={sp.logo} alt={sp.name} loading="lazy" className="w-24 h-24 rounded-2xl object-cover border border-slate-700" />
             <div>
               <span className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest block">{sp.tier}</span>
               <h3 className="text-xl font-extrabold text-white mt-1">{sp.name}</h3>

@@ -16,7 +16,10 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
     if (scanning) {
       scanner = new Html5QrcodeScanner(
         "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 10,
+          qrbox: { width: Math.min(250, (typeof window !== 'undefined' ? window.innerWidth : 320) - 72), height: Math.min(250, (typeof window !== 'undefined' ? window.innerWidth : 320) - 72) }
+        },
         /* verbose= */ false
       );
 
@@ -156,7 +159,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
           {/* Camera Scanner View */}
           {scanning && !verifiedStudent && (
             <div className="text-center">
-              <div id="reader" className="rounded-xl overflow-hidden border border-indigo-500/30 bg-slate-900"></div>
+              <div id="reader" className="rounded-xl overflow-hidden border border-indigo-500/30 bg-slate-900 max-w-[320px] mx-auto"></div>
               <p className="text-xs text-slate-400 mt-2">Point webcam at student QR code pass</p>
             </div>
           )}

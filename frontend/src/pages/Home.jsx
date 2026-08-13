@@ -75,7 +75,7 @@ export default function Home() {
 
           {/* Main Title & Tagline */}
           <div className="space-y-4">
-            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white leading-none">
+            <h1 className="text-4xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white leading-none">
               DATA<span className="gradient-text">VERSE</span> <span className="text-fuchsia-400">2026</span>
             </h1>
             <p className="text-lg sm:text-2xl font-bold tracking-widest uppercase text-violet-300">
@@ -364,6 +364,7 @@ function CampusSlider() {
             key={src}
             src={src}
             alt={`AAMEC Campus ${idx + 1}`}
+            loading="lazy"
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
               idx === current ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
             }`}
