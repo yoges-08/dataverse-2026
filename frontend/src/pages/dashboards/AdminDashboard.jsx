@@ -970,12 +970,29 @@ export default function AdminDashboard() {
                 {eventDetail.registrations.map((reg, idx) => {
                   const s = reg.student;
                   return (
-                    <div key={reg._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-white text-sm block">{s?.user?.name || s?.name || s?.email || 'Unknown'}</span>
-                        <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
+                    <div key={reg._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="font-bold text-white text-sm block">{s?.user?.name || s?.name || s?.email || 'Unknown'}</span>
+                          <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
+                        </div>
+                        <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
+                      {reg?.teamMembers?.length > 0 ? (
+                        <div className="mt-2 pt-2 border-t border-slate-800">
+                          <p className="text-[10px] uppercase tracking-wide font-bold text-cyan-400 mb-1">
+                            Team ({reg.teamMembers.length} member{reg.teamMembers.length > 1 ? 's' : ''})
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {reg.teamMembers.map((tm, i) => (
+                              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
+                                {tm.name}
+                                <span className="text-slate-500 font-mono">{tm.phone}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

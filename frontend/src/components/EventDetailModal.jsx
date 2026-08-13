@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Upload, Sparkles, Calendar, Clock, MapPin, User, Plus, UserPlus, CheckCircle2, Trash2, Loader } from 'lucide-react';
 import API from '../services/api';
@@ -9,6 +9,8 @@ const formatDate = (d) => {
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return d;
 };
+
+const draftKey = (id) => `teamDraft_${id}`;
 
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
   const { user, student } = useContext(AuthContext);
@@ -28,8 +30,30 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   // 0 (or missing) means solo-only: no teammates for this event.
   const teamLimit = Number.isFinite(event.teamLimit) ? event.teamLimit : 0;
 
+  // Restore a previously saved team draft for this event (survives refresh).
+  useEffect(() => {
+    if (!event) return;
+    try {
+      const raw = localStorage.getItem(draftKey(event._id));
+      const saved = raw ? JSON.parse(raw) : [];
+      setTeamMembers(Array.isArray(saved) ? saved.filter((m) => m && m.name && m.phone) : []);
+    } catch {
+      setTeamMembers([]);
+    }
+  }, [event?._id]);
+
+  const persistTeam = (list) => {
+    try {
+      if (event) localStorage.setItem(draftKey(event._id), JSON.stringify(list));
+    } catch {}
+  };
+
   const removeTeammate = (idx) => {
-    setTeamMembers((prev) => prev.filter((_, i) => i !== idx));
+    setTeamMembers((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      persistTeam(next);
+      return next;
+    });
   };
 
   const handleAddTeammate = async () => {
@@ -58,10 +82,14 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       const res = await API.get(`/events/teammate/${digits}?eventId=${event._id}`);
       if (res.data.success && res.data.found) {
         const t = res.data.student;
-        setTeamMembers((prev) => [
-          ...prev,
-          { name: t.name, phone: digits, collegeName: t.collegeName, department: t.department }
-        ]);
+        setTeamMembers((prev) => {
+          const next = [
+            ...prev,
+            { name: t.name, phone: digits, collegeName: t.collegeName, department: t.department }
+          ];
+          persistTeam(next);
+          return next;
+        });
         setTmName('');
         setTmPhone('');
         setTmMsg({ type: 'success', text: `${t.name} verified — added as a teammate.` });
@@ -110,6 +138,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       });
 
       if (res.data.success) {
+        try { localStorage.removeItem(draftKey(event._id)); } catch {}
+        setTeamMembers([]);
         setMsg({ type: 'success', text: res.data.message });
         if (onRegisterSuccess) onRegisterSuccess(event._id);
       }

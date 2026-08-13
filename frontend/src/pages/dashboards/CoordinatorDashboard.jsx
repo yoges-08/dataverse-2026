@@ -69,11 +69,12 @@ export default function CoordinatorDashboard() {
 
   const exportParticipantCSV = () => {
     if (!selectedEvent) return;
-    const headers = ['Symposium Code,Register No,Student Name,College,Department,Status,Checked In\n'];
+    const headers = ['Symposium Code,Register No,Student Name,College,Department,Team Members,Status,Checked In\n'];
     const rows = registrations.map(r => {
       const s = r.student;
       const uName = s?.user?.name || s?.email || 'Student';
-      return `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
+      const team = (r.teamMembers || []).map(tm => `${tm.name} (${tm.phone})`).join('; ');
+      return `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
 
     const blob = new Blob([headers.concat(rows).join('')], { type: 'text/csv' });
@@ -140,6 +141,7 @@ export default function CoordinatorDashboard() {
                       <th className="p-3">Symposium Code</th>
                       <th className="p-3">Student Name</th>
                       <th className="p-3">College & Dept</th>
+                      <th className="p-3">Team</th>
                       <th className="p-3">Attendance</th>
                     </tr>
                   </thead>
@@ -153,6 +155,19 @@ export default function CoordinatorDashboard() {
                           <td className="p-3 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>
                           <td className="p-3 font-bold text-white">{uName}</td>
                           <td className="p-3 text-slate-300">{s.collegeName} ({s.department})</td>
+                          <td className="p-3">
+                            {r.teamMembers && r.teamMembers.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                {r.teamMembers.map((tm, i) => (
+                                  <span key={i} className="px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
+                                    {tm.name}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-slate-500">Solo</span>
+                            )}
+                          </td>
                           <td className="p-3">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               s.isCheckedIn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
