@@ -93,11 +93,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       return;
     }
 
-    if (teamLimit > 0 && teamMembers.length !== teamLimit) {
-      setMsg({ type: 'error', text: `Please add exactly ${teamLimit} teammates (${teamMembers.length}/${teamLimit} added) to register for this event.` });
-      return;
-    }
-
     try {
       setLoading(true);
       setMsg({ type: '', text: '' });
@@ -259,11 +254,11 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             <div>
               <span className="text-xs font-bold uppercase tracking-wider flex items-center space-x-1.5 text-cyan-300">
                 <UserPlus className="w-4 h-4" />
-                <span>Add Team Members (Required — {teamMembers.length}/{teamLimit})</span>
+                <span>Add Team Members (Optional — up to {teamLimit})</span>
               </span>
               <p className="text-[10px] text-slate-400 mt-1">
-                Please add exactly {teamLimit} classmates who are already registered on DATAVERSE and registered
-                for this event. Registration is blocked until the team is complete.
+                Add classmates already registered on DATAVERSE by their name and mobile number. They must be
+                registered for this event to be added as teammates.
               </p>
             </div>
 
