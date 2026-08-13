@@ -262,6 +262,7 @@
   .certificate-sheet {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    transform: none !important;
     zoom: 0.74;
     border-radius: 0 !important;
   }

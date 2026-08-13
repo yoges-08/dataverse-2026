@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import API from '../services/api';
 import { Award, ShieldCheck, Search, AlertCircle, ArrowLeft } from 'lucide-react';
-import CertificateModal from '../components/CertificateModal';
 
 export default function CertificateVerify() {
   const { certNo } = useParams();
