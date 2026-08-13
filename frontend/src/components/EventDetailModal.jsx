@@ -93,8 +93,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         setTmName('');
         setTmPhone('');
         setTmMsg({ type: 'success', text: `${t.name} verified — added as a teammate.` });
-      } else if (res.data.notRegisteredForEvent) {
-        setTmMsg({ type: 'error', text: res.data.message || 'This classmate must register for this event before they can be added as a teammate.' });
       } else {
         setTmMsg({ type: 'error', text: 'This classmate is not registered on DATAVERSE. Only registered students can be added as teammates.' });
       }
@@ -287,8 +285,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 <span>Add Team Members (Optional — up to {teamLimit})</span>
               </span>
               <p className="text-[10px] text-slate-400 mt-1">
-                Add classmates already registered on DATAVERSE by their name and mobile number. They must be
-                registered for this event to be added as teammates.
+                Add classmates already registered on DATAVERSE by their name and mobile number.
               </p>
             </div>
 

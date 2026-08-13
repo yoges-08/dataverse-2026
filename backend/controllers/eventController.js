@@ -22,18 +22,44 @@ const findByNormalizedPhone = async (phoneDigits) => {
 const getEffectiveTeamLimit = (event) =>
   Number.isFinite(event && event.teamLimit) ? event.teamLimit : 0;
 
-// A teammate must already be individually registered for the same event.
-const isStudentRegisteredForEvent = async (studentId, eventId) => {
-  if (isDbConnected()) {
-    return !!(await Registration.findOne({ student: studentId, event: eventId }));
+// A teammate must be a registered DATAVERSE student (verified by phone). The
+// list is capped at the event's teamLimit (0 = solo only, teammates rejected).
+const validateTeamMembers = async (teamMembers, event, teamLimit) => {
+  const clean = [];
+  const normalized = [];
+  if (teamLimit <= 0 && (teamMembers || []).length > 0) {
+    return { error: `${event.title} does not allow team members. You can register as a solo participant only.`, members: null };
   }
-  return mockStore.registrations.some((r) =>
-    String(r.student) === String(studentId) && String(r.event) === String(eventId)
-  );
+  for (const member of teamMembers || []) {
+    const name = String(member?.name || '').trim();
+    const phoneDigits = normalizePhone(member?.phone || '');
+    if (!name || !phoneDigits) continue;
+    if (normalized.includes(phoneDigits)) continue; // drop duplicates within the list
+    const found = await findByNormalizedPhone(phoneDigits);
+    if (!found) return { error: `${name} (${member?.phone}) is not registered on DATAVERSE. Only classmates who are already registered can be added as teammates.`, members: null };
+    normalized.push(phoneDigits);
+    clean.push({ name, phone: phoneDigits });
+  }
+  if (teamLimit > 0 && clean.length > teamLimit) {
+    return { error: `You can add up to ${teamLimit} teammates for ${event.title}.`, members: null };
+  }
+  return { members: clean };
 };
 
-// Verify a classmate's phone belongs to someone registered on DATAVERSE and -
-// when an eventId is passed - that they are already registered for that event.
+// Parse teamMembers sent as a multipart JSON string or a JSON array.
+const parseTeamMembers = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+// Verify a classmate's phone belongs to someone registered on DATAVERSE, so
+// only real registered students can be added as teammates.
 exports.lookupTeammate = async (req, res) => {
   try {
     const phoneDigits = normalizePhone(req.params.phone || '');
@@ -45,18 +71,6 @@ exports.lookupTeammate = async (req, res) => {
       return res.status(200).json({ success: true, found: false });
     }
     const name = student.user?.name || student.name || student.email || 'Registered Student';
-    const eventId = req.query.eventId;
-    if (eventId) {
-      const registeredForEvent = await isStudentRegisteredForEvent(student._id, eventId);
-      if (!registeredForEvent) {
-        return res.status(200).json({
-          success: true,
-          found: false,
-          notRegisteredForEvent: true,
-          message: 'This classmate must register for the event before they can be added as a teammate.'
-        });
-      }
-    }
     return res.status(200).json({
       success: true,
       found: true,
@@ -72,46 +86,6 @@ exports.lookupTeammate = async (req, res) => {
     console.error('Teammate lookup error:', error);
     res.status(500).json({ success: false, message: 'Error verifying teammate' });
   }
-};
-
-// Parse teamMembers sent as a multipart JSON string or a JSON array.
-const parseTeamMembers = (raw) => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-};
-
-// Validate that every proposed teammate is a registered DATAVERSE student who
-// is ALSO already individually registered for the same event, and cap the list
-// at the event's teamLimit (0 = solo only, teammates rejected server-side).
-const validateTeamMembers = async (teamMembers, event, teamLimit) => {
-  const clean = [];
-  const normalized = [];
-  if (teamLimit <= 0 && (teamMembers || []).length > 0) {
-    return { error: `${event.title} does not allow team members. You can register as a solo participant only.`, members: null };
-  }
-  for (const member of teamMembers || []) {
-    const name = String(member?.name || '').trim();
-    const phoneDigits = normalizePhone(member?.phone || '');
-    if (!name || !phoneDigits) continue;
-    if (normalized.includes(phoneDigits)) continue; // drop duplicates within the list
-    const found = await findByNormalizedPhone(phoneDigits);
-    if (!found) return { error: `${name} (${member?.phone}) is not registered on DATAVERSE. Only classmates who are already registered can be added as teammates.`, members: null };
-    if (!(await isStudentRegisteredForEvent(found._id, event._id))) {
-      return { error: `${name} must register for ${event.title} before they can be added as a teammate.`, members: null };
-    }
-    normalized.push(phoneDigits);
-    clean.push({ name, phone: phoneDigits });
-  }
-  if (teamLimit > 0 && clean.length > teamLimit) {
-    return { error: `You can add up to ${teamLimit} teammates for ${event.title}.`, members: null };
-  }
-  return { members: clean };
 };
 
 // Transactions require a replica set / Atlas dedicated tiers. If they are not
@@ -279,8 +253,8 @@ exports.registerForEvent = async (req, res) => {
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-        // Teammates must be registered DATAVERSE students who are ALSO already
-        // registered for this same event, and the total is capped by teamLimit.
+        // Teammates must be registered DATAVERSE students, and the total is capped by
+        // teamLimit (validated server-side).
         const teamMemberResult = await validateTeamMembers(
           parseTeamMembers(req.body.teamMembers),
           event,
@@ -303,7 +277,7 @@ exports.registerForEvent = async (req, res) => {
         // Notify the student about their new event booking.
         sendEventRegistrationMail({
           to: student.email,
-          name: req.user?.name || student.email.split('@')[0] || 'there',
+          name: req.user?.name || student.email?.split('@')[0] || 'there',
           eventTitle: event.title,
           eventVenue: event.venue,
           eventDate: event.date,
@@ -353,8 +327,8 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      // Teammates must be registered DATAVERSE students who are ALSO already
-      // registered for this same event, and the total is capped by teamLimit.
+      // Teammates must be registered DATAVERSE students, and the total is capped by
+      // teamLimit (validated server-side).
       const teamMemberResult = await validateTeamMembers(
         parseTeamMembers(req.body.teamMembers),
         event,
@@ -371,7 +345,7 @@ exports.registerForEvent = async (req, res) => {
 
       sendEventRegistrationMail({
         to: student.email,
-        name: req.user?.name || student.email.split('@')[0] || 'there',
+        name: req.user?.name || student.email?.split('@')[0] || 'there',
         eventTitle: event.title,
         eventVenue: event.venue,
         eventDate: event.date,
