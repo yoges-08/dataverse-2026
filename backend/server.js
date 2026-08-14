@@ -50,14 +50,14 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // behind Render/Vercel's reverse proxy.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many attempts, please try again later.' }
 });
 const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many registration attempts, please try again later.' }
