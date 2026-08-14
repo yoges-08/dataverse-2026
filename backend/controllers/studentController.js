@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const User = require('../models/User');
 const Registration = require('../models/Registration');
+const Team = require('../models/Team');
 const Event = require('../models/Event');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -76,7 +77,17 @@ exports.getRegisteredEvents = async (req, res) => {
       const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
       const registrations = await Registration.find({ student: student._id }).populate('event');
-      return res.status(200).json({ success: true, count: registrations.length, registrations });
+      const teams = await Team.find({ leader: student._id });
+      const byEvent = {};
+      const fe = process.env.FRONTEND_URL || 'http://localhost:5173';
+      teams.forEach(t => { byEvent[String(t.event)] = { editUrl: `${fe}/team/${t.editCode}`, editCode: t.editCode, teamId: t.teamId || null, status: t.status || null }; });
+      const enriched = registrations.map(reg => {
+        const plain = reg.toObject ? { ...reg.toObject() } : { ...reg };
+        const t = byEvent[String(reg.event && reg.event._id)];
+        plain.team = t || null;
+        return plain;
+      });
+      return res.status(200).json({ success: true, count: enriched.length, registrations: enriched });
     } else {
       const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
@@ -84,11 +95,13 @@ exports.getRegisteredEvents = async (req, res) => {
       const regs = mockStore.registrations.filter(r => r.student === student._id || String(r.student) === String(student._id));
       const populated = regs.map(r => {
         const ev = mockStore.events.find(e => e._id === r.event || String(e._id) === String(r.event));
-        return { ...r, event: ev };
+        const t = mockStore.teams.find(tm => String(tm.leader) === String(student._id) && String(tm.event) === String(r.event));
+        return { ...r, event: ev, team: t ? { editUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/team/${t.editCode}`, teamId: t.teamId, status: t.status } : null };
       });
       return res.status(200).json({ success: true, count: populated.length, registrations: populated });
     }
   } catch (error) {
+    console.error('Failed to fetch registered events with teams:', error);
     res.status(500).json({ success: false, message: 'Error fetching registered events' });
   }
 };
