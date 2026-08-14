@@ -122,6 +122,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/team', require('./routes/teamRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/certificates', require('./routes/certificateRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));

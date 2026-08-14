@@ -109,7 +109,7 @@ const nextTeamId = async (event) => {
 exports.createTeamForRegistration = async ({ event, leaderStudent, declaredTeamSize }) => {
   const limit = getEffectiveTeamLimit(event);
   if (limit <= 0) return null; // solo-only event
-  const teamSize = Math.max(1, Math.min(Number(declaredTeamSize) || 1, limit));
+  const teamSize = Math.max(1, Math.min(Number(declaredTeamSize) || limit, limit));
   const teamId = await nextTeamId(event);
   const editCode = crypto.randomBytes(12).toString('hex');
   const doc = {
@@ -143,6 +143,33 @@ const findRegisteredStudent = async (registerNumber) => {
     return candidates.find(s => norm(s.registerNumber).replace(/[^A-Z0-9]/g, '') === query) || null;
   }
   return mockStore.students.find(s => norm(s.registerNumber).replace(/[^A-Z0-9]/g, '') === query) || null;
+};
+
+const findStudentByNameAndPhone = async (name, phone) => {
+  const qName = norm(name);
+  const qPhone = String(phone || '').replace(/[^0-9]/g, '');
+  const matches = (s) => {
+    if (String(s.phone || '').replace(/[^0-9]/g, '') !== qPhone) return false;
+    const sName = norm(s.user?.name || s.email || '');
+    return Boolean(sName) && (sName === qName || sName.includes(qName) || qName.includes(sName));
+  };
+  if (isDbConnected()) {
+    const candidates = await Student.find({}, 'user registerNumber email phone collegeName department year')
+      .populate('user', 'name')
+      .lean();
+    return candidates.find(matches) || null;
+  }
+  return mockStore.students.find(s => {
+    const u = mockStore.users.find(usr => String(usr._id) === String(s.user));
+    return matches({ ...s, user: u ? { name: u.name } : { name: s.email } });
+  }) || null;
+};
+
+const isStudentRegisteredForEvent = async (studentId, eventId) => {
+  if (isDbConnected()) {
+    return !!(await Registration.findOne({ student: studentId, event: eventId }));
+  }
+  return mockStore.registrations.some(r => String(r.student) === String(studentId) && String(r.event) === String(eventId));
 };
 
 const isStudentInAnyTeamForEvent = async (studentId, eventId, excludeTeamId) => {
@@ -188,9 +215,10 @@ exports.getTeamByCode = async (req, res) => {
 exports.addTeamMember = async (req, res) => {
   try {
     const { editCode } = req.params;
-    const registerNumber = String(req.body.registerNumber || '').trim();
-    if (!registerNumber) {
-      return res.status(400).json({ success: false, message: 'Enter your classmate\'s register number.' });
+    const name = String(req.body.name || '').trim();
+    const phone = String(req.body.phone || '').trim();
+    if (!name || !phone) {
+      return res.status(400).json({ success: false, message: 'Enter your classmate\'s name and phone number.' });
     }
 
     let team;
@@ -217,12 +245,12 @@ exports.addTeamMember = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Registration deadline for this event has passed.' });
     }
 
-    const teammate = await findRegisteredStudent(registerNumber);
+    const teammate = await findStudentByNameAndPhone(name, phone);
     if (!teammate) {
-      return res.status(400).json({ success: false, message: `No registered DATAVERSE student found with register number "${registerNumber}".` });
+      return res.status(400).json({ success: false, message: `No registered DATAVERSE student found matching "${name}" (${phone}).` });
     }
     if (norm(teammate.collegeName) !== norm(leader.collegeName)) {
-      return res.status(400).json({ success: false, message: `"${registerNumber}" belongs to a different college. All team members must be from ${leader.collegeName}.` });
+      return res.status(400).json({ success: false, message: `"${name}" belongs to a different college. All team members must be from ${leader.collegeName}.` });
     }
     if (String(teammate._id) === String(team.leader)) {
       return res.status(400).json({ success: false, message: 'You are already the team leader.' });
@@ -233,18 +261,26 @@ exports.addTeamMember = async (req, res) => {
     if (await isStudentInAnyTeamForEvent(teammate._id, team.event, team._id)) {
       return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
     }
+    const registered = await isStudentRegisteredForEvent(teammate._id, event._id);
+    if (!registered) {
+      return res.status(400).json({ success: false, message: `"${name}" has not registered for this event. Only students registered for ${event.title || 'this event'} can be added as teammates.` });
+    }
 
     if (isDbConnected()) {
       team.members.push({ student: teammate._id, isLeader: false });
       team.status = recomputeStatus(team, event);
       await team.save();
+      team = await Team.findOne({ editCode })
+        .populate('event')
+        .populate({ path: 'leader', select: 'user registerNumber email collegeName department year phone' })
+        .populate({ path: 'members.student', select: 'user registerNumber email collegeName department year phone' });
     } else {
       team.members.push({ student: teammate._id, isLeader: false, addedAt: new Date().toISOString() });
       team.status = recomputeStatus(team, event);
     }
 
     const serialized = serializeTeam(team, event);
-    return res.status(200).json({ success: true, message: `Teammate ${teammate.registerNumber} added.`, team: serialized });
+    return res.status(200).json({ success: true, message: `Teammate added.`, team: serialized });
   } catch (error) {
     console.error('Add team member error:', error);
     res.status(500).json({ success: false, message: 'Error adding teammate' });
