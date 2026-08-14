@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
-const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const seedIfEmpty = require('./config/seedIfEmpty');
 const seedData = require('./seed');
@@ -14,8 +13,8 @@ dotenv.config();
 
 const app = express();
 
-// Render (and most cloud hosts) run behind a reverse proxy. Required so
-// express-rate-limit correctly identifies visitors by their real IP.
+// Render (and most cloud hosts) run behind a reverse proxy, so enable trust
+// proxy to read visitors' real IP addresses.
 app.set('trust proxy', 1);
 
 // Body Parser Middleware
@@ -44,28 +43,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-
-// Brute-force protection for auth endpoints (login, OTP generation, password
-// reset). `trust proxy` is already enabled above so real client IPs are seen
-// behind Render/Vercel's reverse proxy.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many attempts, please try again later.' }
-});
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Too many registration attempts, please try again later.' }
-});
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
-app.use('/api/auth/reset-password', authLimiter);
-app.use('/api/auth/register-student', registerLimiter);
 
 // Static uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
