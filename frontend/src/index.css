@@ -8,6 +8,12 @@
    ============================================================ */
 
 @layer base {
+  /* Shared motion tokens (Emil Kowalski easing curves) */
+  :root {
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+
   body {
     @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300;
     min-height: 100vh;
@@ -31,7 +37,7 @@
       radial-gradient(48% 42% at 20% 16%, rgba(168, 85, 247, 0.55) 0%, transparent 70%),
       radial-gradient(42% 38% at 80% 26%, rgba(236, 72, 153, 0.45) 0%, transparent 70%),
       radial-gradient(52% 44% at 55% 92%, rgba(129, 140, 248, 0.50) 0%, transparent 70%);
-    animation: auroraShift 18s ease-in-out infinite alternate;
+    animation: auroraShift 18s linear infinite alternate;
   }
 
   h1, h2, h3, h4 {
@@ -67,7 +73,7 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 20px 50px -20px rgba(0, 0, 0, 0.55);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out);
     overflow: hidden;
   }
 
@@ -81,20 +87,22 @@
     height: 2px;
     background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.95), rgba(236, 72, 153, 0.95), rgba(34, 211, 238, 0.85), transparent);
     opacity: 0.65;
-    transition: opacity 0.3s ease;
+    transition: opacity 200ms var(--ease-out);
   }
 
-  .glass-card:hover {
-    border-color: rgba(168, 85, 247, 0.65);
-    transform: translateY(-4px);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 28px 70px -22px rgba(124, 58, 237, 0.65),
-      0 0 45px -10px rgba(236, 72, 153, 0.40);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    .glass-card:hover {
+      border-color: rgba(168, 85, 247, 0.65);
+      transform: translateY(-4px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 28px 70px -22px rgba(124, 58, 237, 0.65),
+        0 0 45px -10px rgba(236, 72, 153, 0.40);
+    }
 
-  .glass-card:hover::before {
-    opacity: 1;
+    .glass-card:hover::before {
+      opacity: 1;
+    }
   }
 
   .glass-card-light {
@@ -126,13 +134,36 @@
   .btn-glow {
     background-image: linear-gradient(90deg, #7c3aed, #db2777, #0891b2);
     background-size: 200% 100%;
-    transition: background-position 0.4s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    transition: background-position 200ms ease, transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out);
     box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.65);
   }
-  .btn-glow:hover {
-    background-position: 100% 0;
-    transform: translateY(-1px);
-    box-shadow: 0 14px 36px -10px rgba(168, 85, 247, 0.8);
+  .btn-glow:active {
+    transform: scale(0.97);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-glow:hover {
+      background-position: 100% 0;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 36px -10px rgba(168, 85, 247, 0.8);
+    }
+  }
+}
+
+/* Respect reduced motion: keep ambient color, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  .gradient-text,
+  .animate-floaty {
+    animation: none;
+  }
+  .glass-card {
+    transition: border-color 200ms var(--ease-out);
+  }
+  .btn-glow {
+    transition: background-position 200ms ease, box-shadow 200ms var(--ease-out);
+  }
+  .btn-glow:active {
+    transform: none;
   }
 }
 
@@ -194,9 +225,11 @@
   background: rgba(255, 255, 255, 0.97);
   border-color: rgba(226, 232, 240, 0.9);
 }
-:root:not(.dark) .glass-card:hover {
-  border-color: rgba(168, 85, 247, 0.6);
-  box-shadow: 0 24px 60px -22px rgba(139, 92, 246, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  :root:not(.dark) .glass-card:hover {
+    border-color: rgba(168, 85, 247, 0.6);
+    box-shadow: 0 24px 60px -22px rgba(139, 92, 246, 0.4);
+  }
 }
 
 :root:not(.dark) nav { background-color: rgba(255, 255, 255, 0.85) !important; }
@@ -215,6 +248,19 @@
 
 /* Float animation helper (used for hero elements) */
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
+
+/* Modal entrance: scale from 0.95 + fade, never from scale(0). Modals stay
+   centered (exempt from trigger-origin popovers). */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-card {
+  animation: modalIn 220ms var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-card { animation: none; }
+}
 
 /* Printable Badge & Certificate Media Queries */
 @media print {

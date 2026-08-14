@@ -95,7 +95,7 @@ export default function Navbar() {
               <div className="flex items-center space-x-3">
                 <Link
                   to={getDashboardPath()}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition-colors"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Dashboard</span>

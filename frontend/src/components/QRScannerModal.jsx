@@ -98,7 +98,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card max-w-xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
+      <div className="glass-card modal-card max-w-xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
         
         {/* Header */}
         <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
@@ -241,7 +241,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
                 <button
                   onClick={handlePerformCheckIn}
                   disabled={loading || verifiedStudent.verificationStatus !== 'Approved'}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/30 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/30 transition-[background-color,transform] duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <UserCheck className="w-5 h-5" />
                   <span>Confirm Student Check-In & Grant Entry</span>

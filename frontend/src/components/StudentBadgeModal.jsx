@@ -7,7 +7,7 @@ export default function StudentBadgeModal({ student, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md cert-modal-overlay">
-      <div className="glass-card max-w-md w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative cert-modal-card">
+      <div className="glass-card modal-card max-w-md w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative cert-modal-card">
         
         {/* Header toolbar */}
         <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between cert-modal-header">

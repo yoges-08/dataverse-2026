@@ -60,7 +60,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card max-w-2xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
+      <div className="glass-card modal-card max-w-2xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
         
         {/* Banner Header */}
         <div className="relative h-48 bg-slate-900">
@@ -201,7 +201,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-[opacity,transform] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             <Sparkles className="w-4 h-4" />
             <span>{loading ? 'Processing Registration...' : 'Register For Event'}</span>

@@ -82,7 +82,7 @@ export default function CertificateModal({ certificate, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cert-modal-overlay">
-      <div className="glass-card max-w-[840px] w-full rounded-2xl border border-amber-500/30 shadow-2xl relative cert-modal-card max-h-[94vh] overflow-y-auto">
+      <div className="glass-card modal-card max-w-[840px] w-full rounded-2xl border border-amber-500/30 shadow-2xl relative cert-modal-card max-h-[94vh] overflow-y-auto">
 
         {/* Header */}
         <div className="bg-slate-900 px-4 sm:px-6 py-4 border-b border-slate-800 flex items-center justify-between gap-3 cert-modal-header flex-wrap">

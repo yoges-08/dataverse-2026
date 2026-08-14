@@ -39,7 +39,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Follow DATAVERSE on Instagram"
-                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-800"
+                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
               >
                 <Instagram className="w-4 h-4" />
               </a>
@@ -48,7 +48,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Find DATAVERSE on LinkedIn"
-                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-sky-600 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-800"
+                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-sky-600 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
               >
                 <Linkedin className="w-4 h-4" />
               </a>
