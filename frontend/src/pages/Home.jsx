@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
+import Reveal from '../components/Reveal';
 import {
   Sparkles, Calendar, Users, Award, ShieldCheck,
   ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy,
@@ -151,23 +152,25 @@ export default function Home() {
             { icon: ShieldCheck, title: "Instant QR Check-In", desc: "Digital tickets, QR verification, and automated ID badges." },
             { icon: Award, title: "E-Certificates", desc: "Verified PDF certificates issued to all participants." }
           ].map((item, idx) => (
-            <div key={idx} className="glass-card p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4">
-                <item.icon className="w-6 h-6 text-indigo-400" />
+            <Reveal key={idx} delay={idx * 60}>
+              <div className="glass-card p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mb-4">
+                  <item.icon className="w-6 h-6 text-indigo-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* Event Categories Preview */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-3">
+        <Reveal className="text-center space-y-3">
           <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Featured Symposium Events</span>
           <h2 className="text-3xl sm:text-5xl font-black text-white">Technical & Non-Technical Lineup</h2>
-        </div>
+        </Reveal>
 
         <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
           <Trophy className="w-4 h-4 shrink-0" />
@@ -175,8 +178,9 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {events.slice(0, 6).map((ev) => (
-            <div key={ev._id} className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
+          {events.slice(0, 6).map((ev, idx) => (
+            <Reveal key={ev._id} delay={idx * 60}>
+              <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
               <div className="relative h-48 overflow-hidden">
                 <img
                   src={ev.bannerImage}
@@ -218,13 +222,14 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* About Institution Spotlight */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div className="glass-card rounded-3xl p-8 sm:p-12 border border-violet-500/30">
+<Reveal className="glass-card rounded-3xl p-8 sm:p-12 border border-violet-500/30">
           <div className="space-y-6">
             <span className="text-xs font-extrabold uppercase tracking-widest text-indigo-400">Host Institution</span>
             <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
@@ -252,7 +257,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
 
         {/* Campus Photo Slider */}
         <div className="mt-10">

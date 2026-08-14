@@ -153,8 +153,13 @@
 @media (prefers-reduced-motion: reduce) {
   body::before,
   .gradient-text,
-  .animate-floaty {
+  .animate-floaty,
+  .reveal,
+  .reveal-img {
     animation: none;
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
   .glass-card {
     transition: border-color 200ms var(--ease-out);
@@ -248,6 +253,28 @@
 
 /* Float animation helper (used for hero elements) */
 .animate-floaty { animation: floaty 6s ease-in-out infinite; }
+
+/* Scroll reveal: fade + slide in once, GPU-safe (opacity/transform only).
+   Delay is set inline via transition-delay + `--reveal-y` for stagger. */
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-y, 24px));
+  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
+  will-change: opacity, transform;
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Image reveal on scroll: clip reveals from the bottom (per skill) */
+.reveal-img {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 900ms var(--ease-in-out);
+}
+.reveal-img.is-revealed {
+  clip-path: inset(0 0 0 0);
+}
 
 /* Modal entrance: scale from 0.95 + fade, never from scale(0). Modals stay
    centered (exempt from trigger-origin popovers). */
