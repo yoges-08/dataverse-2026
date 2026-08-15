@@ -21,4 +21,18 @@ const teamSchema = new mongoose.Schema({
 // A student can only be on one team per event (used for leader/creator id).
 teamSchema.index({ event: 1, leader: 1 }, { unique: true });
 
+// Safety net: never persist the same student twice in a team.
+teamSchema.pre('save', function (next) {
+  if (Array.isArray(this.members)) {
+    const seen = new Set();
+    this.members = this.members.filter(m => {
+      const id = String(m.student && (m.student._id || m.student) || '');
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
+  next();
+});
+
 module.exports = mongoose.model('Team', teamSchema);

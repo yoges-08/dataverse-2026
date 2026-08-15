@@ -40,7 +40,16 @@ const recomputeStatus = (team, event) => {
 // ---- Serialization -----------------------------------------------------------
 
 const serializeTeam = (team, event) => {
+  // Dedupe by student id so a garbled/legacy `members` array never shows the
+  // same person twice or inflates the member count.
+  const seen = new Set();
   const members = (team.members || [])
+    .filter(m => {
+      const id = String(m.student && (m.student._id || m.student) || '');
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
     .slice()
     .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))
     .map(m => {
@@ -389,9 +398,15 @@ exports.addTeamMember = async (req, res) => {
     }
 
     if (isDbConnected()) {
-      // Atomic capacity-checked update so two concurrent adds cannot overflow.
+      // Atomic capacity + membership-checked update so two concurrent adds of
+      // the SAME student (or an overflow) can never both succeed.
       const updated = await Team.findOneAndUpdate(
-        { event: eventId, _id: team._id, $expr: { $lt: [{ $size: '$members' }, teamLimit] } },
+        {
+          event: eventId,
+          _id: team._id,
+          'members.student': { $ne: teammate._id },
+          $expr: { $lt: [{ $size: '$members' }, teamLimit] }
+        },
         { $push: { members: { student: teammate._id, addedAt: new Date() } } },
         { new: true }
       );
