@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const crypto = require('crypto');
 const Team = require('../models/Team');
 const Event = require('../models/Event');
 const Registration = require('../models/Registration');
@@ -31,7 +30,8 @@ const resolveEventMock = (id) =>
 
 const recomputeStatus = (team, event) => {
   const current = (team.members || []).length;
-  if (current >= team.teamSize) return 'Complete';
+  const limit = getEffectiveTeamLimit(event);
+  if (limit > 0 && current >= limit) return 'Complete';
   const deadline = event && event.registrationDeadline;
   if (deadline && new Date() > new Date(deadline)) return 'Incomplete';
   return 'Open';
@@ -40,7 +40,6 @@ const recomputeStatus = (team, event) => {
 // ---- Serialization -----------------------------------------------------------
 
 const serializeTeam = (team, event) => {
-  const leader = isDbConnected() ? team.leader : resolveStudentMock(team.leader);
   const members = (team.members || [])
     .slice()
     .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))
@@ -49,13 +48,9 @@ const serializeTeam = (team, event) => {
       return {
         _id: m._id,
         studentId: st ? String(st._id || (st._id && st._id.toString())) : '',
-        isLeader: !!m.isLeader,
         name: st && (st.user?.name || st.name || st.email) || '',
-        registerNumber: st ? (st.registerNumber || 'N/A') : '',
-        email: st ? (st.email || '') : '',
         department: st ? (st.department || '') : '',
         year: st ? (st.year || '') : '',
-        college: st ? (st.collegeName || '') : '',
         addedAt: m.addedAt
       };
     });
@@ -66,18 +61,8 @@ const serializeTeam = (team, event) => {
       ? (event || team.event || null)
       : (event || team.event || resolveEventMock(team.event)),
     college: team.college,
-    teamSize: team.teamSize,
+    teamSize: getEffectiveTeamLimit(event || (isDbConnected() ? team.event : resolveEventMock(team.event))),
     status: recomputeStatus(team, event || (isDbConnected() ? team.event : resolveEventMock(team.event))),
-    leader: leader ? {
-      _id: leader._id,
-      studentId: String(leader._id),
-      name: leader.user?.name || leader.name || leader.email || '',
-      registerNumber: leader.registerNumber || 'N/A',
-      email: leader.email || '',
-      department: leader.department || '',
-      year: leader.year || '',
-      college: leader.collegeName || ''
-    } : null,
     members,
     memberCount: members.length
   };
@@ -104,21 +89,18 @@ const nextTeamId = async (event) => {
 
 // ---- Create team on registration ---------------------------------------------
 
-exports.createTeamForRegistration = async ({ event, leaderStudent, declaredTeamSize }) => {
+exports.createTeamForRegistration = async ({ event, leaderStudent }) => {
   const limit = getEffectiveTeamLimit(event);
   if (limit <= 0) return null; // solo-only event
-  const teamSize = Math.max(1, Math.min(Number(declaredTeamSize) || limit, limit));
   const teamId = await nextTeamId(event);
-  const editCode = crypto.randomBytes(12).toString('hex');
   const doc = {
     teamId,
     event: event._id,
     leader: leaderStudent._id,
     college: leaderStudent.collegeName,
-    teamSize,
+    teamSize: limit,
     status: 'Open',
-    editCode,
-    members: [{ student: leaderStudent._id, isLeader: true, addedAt: new Date() }]
+    members: [{ student: leaderStudent._id, addedAt: new Date() }]
   };
   let team;
   if (isDbConnected()) {
@@ -141,19 +123,17 @@ const assertIsTeamMember = async (team, userId) => {
   if (isDbConnected()) {
     const student = await Student.findOne({ user: userId });
     if (!student) return null;
-    const isMember = String(team.leader) === String(student._id) ||
-      (team.members || []).some(m => String(m.student) === String(student._id));
+    const isMember = (team.members || []).some(m => String(m.student) === String(student._id));
     return isMember ? student : null;
   }
   const student = mockStore.students.find(s => String(s.user) === String(userId));
   if (!student) return null;
-  const isMember = String(team.leader) === String(student._id) ||
-    (team.members || []).some(m => String(m.student) === String(student._id));
+  const isMember = (team.members || []).some(m => String(m.student) === String(student._id));
   return isMember ? student : null;
 };
 
-// Find the team for this event that the logged-in student belongs to (leader
-// or member) — or null. Used to locate a team regardless of leadership.
+// Find the team for this event that the logged-in student belongs to — or null.
+// All members are equal; no member carries a special role.
 const findTeamForStudent = async (eventId, studentId) => {
   if (isDbConnected()) {
     return Team.findOne({
@@ -221,8 +201,7 @@ const fetchTeamForResponse = async (team) => {
   if (isDbConnected()) {
     return Team.findById(team._id)
       .populate('event')
-      .populate({ path: 'leader', select: 'user registerNumber email collegeName department year phone' })
-      .populate({ path: 'members.student', select: 'user registerNumber email collegeName department year phone' });
+      .populate({ path: 'members.student', select: 'user registerNumber email collegeName department year phone', populate: { path: 'user', select: 'name' } });
   }
   return team;
 };
@@ -279,7 +258,7 @@ exports.getMyTeamForEvent = async (req, res) => {
     if (!team) {
       // Safe recovery: an existing (pre-team) registration had no Team created.
       // Auto-place the registrant into a solo team as leader.
-      team = await exports.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: 1 });
+      team = await exports.createTeamForRegistration({ event, leaderStudent: student });
     }
     const full = await fetchTeamForResponse(team);
     return res.status(200).json({ success: true, team: serializeTeam(full, event) });
@@ -382,9 +361,11 @@ exports.addTeamMember = async (req, res) => {
     const authed = await assertIsTeamMember(team, userId);
     if (!authed) return res.status(403).json({ success: false, message: 'You are not a member of this team.' });
 
+    // Team size is fixed by the event's own limit — never student-declared.
+    const teamLimit = getEffectiveTeamLimit(event);
     // Client-side list is pre-filtered, but the API must not trust that.
-    if ((team.members || []).length >= team.teamSize) {
-      return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: `Team is full (${team.teamSize} members).` });
+    if ((team.members || []).length >= teamLimit) {
+      return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: `Team is full (${teamLimit} members).` });
     }
 
     const teammate = isDbConnected()
@@ -410,8 +391,8 @@ exports.addTeamMember = async (req, res) => {
     if (isDbConnected()) {
       // Atomic capacity-checked update so two concurrent adds cannot overflow.
       const updated = await Team.findOneAndUpdate(
-        { event: eventId, _id: team._id, $expr: { $lt: [{ $size: '$members' }, '$teamSize'] } },
-        { $push: { members: { student: teammate._id, isLeader: false, addedAt: new Date() } } },
+        { event: eventId, _id: team._id, $expr: { $lt: [{ $size: '$members' }, teamLimit] } },
+        { $push: { members: { student: teammate._id, addedAt: new Date() } } },
         { new: true }
       );
       if (!updated) {
@@ -421,10 +402,10 @@ exports.addTeamMember = async (req, res) => {
       team.status = recomputeStatus(team, event);
       await team.save();
     } else {
-      if ((team.members || []).length >= team.teamSize) {
+      if ((team.members || []).length >= teamLimit) {
         return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
       }
-      team.members.push({ student: teammate._id, isLeader: false, addedAt: new Date().toISOString() });
+      team.members.push({ student: teammate._id, addedAt: new Date().toISOString() });
       team.status = recomputeStatus(team, event);
     }
 
@@ -464,26 +445,19 @@ exports.removeTeamMember = async (req, res) => {
     const targetMember = members.find(m => String(m.student) === String(studentId));
     if (!targetMember) return res.status(404).json({ success: false, message: 'That member is not in this team.' });
 
-    const isRemovingLeader = String(team.leader) === String(studentId);
-
-    // Block removing the last member so a team is never left leaderless/empty.
+    // A team must always keep at least one member.
     if (members.length <= 1) {
       return res.status(400).json({ success: false, message: 'A team must always have at least one member.' });
     }
 
-    if (isRemovingLeader) {
-      // Promote the oldest remaining member to leader.
-      const others = members
-        .filter(m => String(m.student) !== String(studentId))
-        .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0));
-      const newLeader = others[0];
+    team.members = members.filter(m => String(m.student) !== String(studentId));
 
-      team.leader = newLeader.student;
-      team.members = members
-        .filter(m => String(m.student) !== String(studentId))
-        .map(m => ({ ...m, isLeader: String(m.student) === String(newLeader.student) }));
-    } else {
-      team.members = members.filter(m => String(m.student) !== String(studentId));
+    // The `leader` field is just the tracked creator id (used for the unique
+    // index); if the created left, re-point it at the oldest remaining member.
+    if (String(team.leader) === String(studentId)) {
+      const oldest = [...team.members]
+        .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0];
+      team.leader = oldest.student;
     }
 
     team.status = recomputeStatus(team, event);
@@ -494,50 +468,6 @@ exports.removeTeamMember = async (req, res) => {
   } catch (error) {
     console.error('Remove team member error:', error);
     res.status(500).json({ success: false, message: 'Error removing teammate' });
-  }
-};
-
-// ---- Update declared team size ------------------------------------------------
-
-exports.updateTeamSize = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const userId = req.user.id || req.user._id;
-
-    const requester = isDbConnected()
-      ? await Student.findOne({ user: userId })
-      : mockStore.students.find(s => String(s.user) === String(userId));
-    if (!requester) return res.status(404).json({ success: false, message: 'Student profile not found' });
-
-    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
-    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
-
-    let team = await findTeamForStudent(eventId, requester._id);
-    if (!team) return res.status(403).json({ success: false, message: 'You are not part of a team for this event.' });
-    const authed = await assertIsTeamMember(team, userId);
-    if (!authed) return res.status(403).json({ success: false, message: 'You are not a member of this team.' });
-
-    const limit = getEffectiveTeamLimit(event);
-    const requested = Number(req.body.teamSize);
-    if (!Number.isFinite(requested) || requested < 1) {
-      return res.status(400).json({ success: false, message: 'Enter a valid team size.' });
-    }
-    if (limit > 0 && requested > limit) {
-      return res.status(400).json({ success: false, message: `Team size cannot exceed ${limit} members for this event.` });
-    }
-    if (requested < (team.members || []).length) {
-      return res.status(400).json({ success: false, message: `You already have ${team.members.length} member(s). Team size must be at least that.` });
-    }
-
-    team.teamSize = requested;
-    team.status = recomputeStatus(team, event);
-    if (isDbConnected()) await team.save();
-
-    const full = await fetchTeamForResponse(team);
-    return res.status(200).json({ success: true, message: 'Team size updated.', team: serializeTeam(full, event) });
-  } catch (error) {
-    console.error('Update team size error:', error);
-    res.status(500).json({ success: false, message: 'Error updating team size' });
   }
 };
 

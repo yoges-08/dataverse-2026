@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Users, UserPlus, UserMinus, AlertCircle, CheckCircle2, Loader, Trophy,
-  ShieldCheck, Crown, ArrowLeft, Settings2, Group, RefreshCw
+  Users, UserPlus, UserMinus, AlertCircle, CheckCircle2, Loader,
+  ShieldCheck, ArrowLeft, Group, RefreshCw
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -16,9 +16,7 @@ export default function TeamManagementTab() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
-  // Team size editor
-  const [sizeInput, setSizeInput] = useState('');
-  const [savingSize, setSavingSize] = useState(false);
+  // Mutations
   const [adding, setAdding] = useState(null);
   const [removing, setRemoving] = useState(null);
 
@@ -49,7 +47,6 @@ export default function TeamManagementTab() {
       ]);
       if (teamRes.data.success) {
         setTeam(teamRes.data.team);
-        setSizeInput(String(teamRes.data.team.teamSize));
       } else {
         setMsg({ type: 'error', text: teamRes.data.message });
       }
@@ -84,7 +81,6 @@ export default function TeamManagementTab() {
       if (res.data.success) {
         setMsg({ type: 'success', text: res.data.message });
         setTeam(res.data.team);
-        setSizeInput(String(res.data.team.teamSize));
         loadDetail(selectedEvent._id || selectedEvent.id);
       } else {
         setMsg({ type: 'error', text: res.data.message });
@@ -99,7 +95,6 @@ export default function TeamManagementTab() {
   const handleRemove = async (member) => {
     setMsg({ type: '', text: '' });
     if (!selectedEvent) return;
-    const noun = member.isLeader ? 'the leader' : member.name;
     if (!window.confirm(`Remove ${member.name || 'this member'} from the team?`)) return;
     try {
       setRemoving(member.studentId);
@@ -107,7 +102,6 @@ export default function TeamManagementTab() {
       if (res.data.success) {
         setMsg({ type: 'success', text: res.data.message });
         setTeam(res.data.team);
-        setSizeInput(String(res.data.team.teamSize));
         loadDetail(selectedEvent._id || selectedEvent.id);
       } else {
         setMsg({ type: 'error', text: res.data.message });
@@ -116,31 +110,6 @@ export default function TeamManagementTab() {
       setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to remove member.' });
     } finally {
       setRemoving(null);
-    }
-  };
-
-  const handleSize = async () => {
-    setMsg({ type: '', text: '' });
-    if (!selectedEvent) return;
-    const value = Number(sizeInput);
-    if (!Number.isFinite(value) || value < 1) {
-      setMsg({ type: 'error', text: 'Enter a valid team size.' });
-      return;
-    }
-    try {
-      setSavingSize(true);
-      const res = await API.put(`/teams/event/${selectedEvent._id || selectedEvent.id}/team-size`, { teamSize: value });
-      if (res.data.success) {
-        setMsg({ type: 'success', text: res.data.message });
-        setTeam(res.data.team);
-        setSizeInput(String(res.data.team.teamSize));
-      } else {
-        setMsg({ type: 'error', text: res.data.message });
-      }
-    } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to update team size.' });
-    } finally {
-      setSavingSize(false);
     }
   };
 
@@ -302,20 +271,13 @@ export default function TeamManagementTab() {
                 {team.members.map((member) => (
                   <div key={member._id || member.studentId} className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-4">
                     <div className="flex items-center space-x-3 min-w-0">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        member.isLeader ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-indigo-600/20 border border-indigo-500/40'
-                      }`}>
-                        {member.isLeader ? <Crown className="w-5 h-5 text-amber-400" /> : <UserPlus className="w-5 h-5 text-indigo-400" />}
+                      <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center shrink-0">
+                        <UserPlus className="w-5 h-5 text-indigo-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-white flex items-center space-x-2">
-                          <span className="truncate">{member.name || 'Unnamed'}</span>
-                          {member.isLeader && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/40">Leader</span>
-                          )}
-                        </p>
-                        <p className="text-[11px] text-slate-400 font-mono truncate">
-                          {member.registerNumber} {member.college ? `• ${member.college}` : ''}
+                        <p className="text-sm font-bold text-white truncate">{member.name || 'Unnamed'}</p>
+                        <p className="text-[11px] text-slate-400">
+                          {member.department || '—'}{member.year ? ` • Year ${member.year}` : ''}
                         </p>
                       </div>
                     </div>
@@ -359,8 +321,8 @@ export default function TeamManagementTab() {
                   <div key={st.studentId} className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-white truncate">{st.name || 'Unnamed Student'}</p>
-                      <p className="text-[11px] text-slate-400 font-mono truncate">
-                        {st.registerNumber} • {st.department} • Year {st.year}
+                      <p className="text-[11px] text-slate-400">
+                        {st.department || '—'}{st.year ? ` • Year ${st.year}` : ''}
                       </p>
                     </div>
                     <button
@@ -377,76 +339,15 @@ export default function TeamManagementTab() {
             )}
           </div>
 
-          {/* Team size editor */}
-          <div className="glass-card p-6 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Settings2 className="w-5 h-5 text-indigo-400 shrink-0" />
-              <div>
-                <h4 className="text-sm font-bold text-white">Declared Team Size</h4>
-                <p className="text-[11px] text-slate-400">
-                  Maximum total members (leader included) for this event: <span className="text-white font-bold">{ev.teamLimit || team.teamSize}</span>
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                min="1"
-                max={ev.teamLimit || team.teamSize}
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                className="w-24 p-3 bg-slate-900 rounded-xl border border-slate-700 text-white text-sm text-center focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                onClick={handleSize}
-                disabled={savingSize}
-                className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-bold transition-all flex items-center space-x-2"
-              >
-                {savingSize ? <Loader className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                <span>Save</span>
-              </button>
-            </div>
-          </div>
-
           {/* Rules note */}
           <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-[11px] text-slate-400 flex items-start space-x-2.5">
             <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400" />
             <span>
               Only students registered for this event from the same college, department and year can be added.
-              Any member can remove any other member — if the leader is removed, the most senior remaining
-              member is promoted. A team always keeps at least one member.
+              Any member can add or remove any teammate — everyone has the same access. This event allows up to
+              <span className="text-white font-bold"> {ev.teamLimit || team.teamSize} </span> members. A team always keeps at least one member.
             </span>
           </div>
-
-          {/* Prizes */}
-          {ev.prizes && (ev.prizes.first || ev.prizes.second || ev.prizes.third) && (
-            <div className="glass-card p-6 rounded-2xl border border-amber-500/30">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2 mb-4">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <span>Prizes</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                {ev.prizes.first && (
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                    <span className="text-amber-400 font-black block mb-1">First Prize</span>
-                    <span className="text-slate-200">{ev.prizes.first}</span>
-                  </div>
-                )}
-                {ev.prizes.second && (
-                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                    <span className="text-slate-300 font-black block mb-1">Second Prize</span>
-                    <span className="text-slate-200">{ev.prizes.second}</span>
-                  </div>
-                )}
-                {ev.prizes.third && (
-                  <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/30">
-                    <span className="text-orange-400 font-black block mb-1">Third Prize</span>
-                    <span className="text-slate-200">{ev.prizes.third}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </>
       ) : (
         <div className="glass-card p-8 rounded-2xl text-center text-xs text-slate-400">

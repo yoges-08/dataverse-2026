@@ -7,6 +7,7 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Attendance = require('../models/Attendance');
 const Certificate = require('../models/Certificate');
+const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const { sendApprovalMail } = require('../utils/mailer');
 
@@ -29,18 +30,32 @@ exports.getAnalytics = async (req, res) => {
         {
           $group: {
             _id: '$event',
-            total: { $sum: 1 },
-            teams: {
-              $sum: {
-                $cond: [{ $gt: [{ $size: { $ifNull: ['$teamMembers', []] } }, 0] }, 1, 0]
-              }
-            }
+            total: { $sum: 1 }
           }
         }
       ]);
+      // Real team data — a registration counts as a team if the student is on
+      // a team (2+ members) for the event. Solo seats (leader alone) are solo.
+      const teams = await Team.find().select('event members').lean();
+      const teamStudentsByEvent = {};
+      teams.forEach(t => {
+        const members = t.members || [];
+        if (members.length < 2) return;
+        const key = String(t.event);
+        if (!teamStudentsByEvent[key]) teamStudentsByEvent[key] = new Set();
+        members.forEach(m => { if (m.student) teamStudentsByEvent[key].add(String(m.student)); });
+      });
+      const regEvents = await Registration.find().select('event student');
+      const teamCountByEvent = {};
+      regEvents.forEach(r => {
+        const key = String(r.event);
+        if (teamStudentsByEvent[key] && teamStudentsByEvent[key].has(String(r.student))) {
+          teamCountByEvent[key] = (teamCountByEvent[key] || 0) + 1;
+        }
+      });
       const regCountMap = {};
       regCounts.forEach(r => {
-        regCountMap[String(r._id)] = { total: r.total, teams: r.teams, solo: r.total - r.teams };
+        regCountMap[String(r._id)] = { total: r.total, teams: teamCountByEvent[String(r._id)] || 0 };
       });
       const eventWiseRegistrations = events.map(e => ({
         _id: e._id,
@@ -48,7 +63,7 @@ exports.getAnalytics = async (req, res) => {
         category: e.category,
         registrations: e.currentRegistrations,
         capacity: e.maxParticipants,
-        ...(regCountMap[String(e._id)] || { total: 0, teams: 0, solo: 0 })
+        ...(regCountMap[String(e._id)] ? { total: regCountMap[String(e._id)].total, teams: regCountMap[String(e._id)].teams, solo: regCountMap[String(e._id)].total - regCountMap[String(e._id)].teams } : { total: 0, teams: 0, solo: 0 })
       }));
 
       const collegeWiseStats = await Student.aggregate([{ $group: { _id: '$collegeName', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]);
@@ -69,12 +84,20 @@ exports.getAnalytics = async (req, res) => {
       const technicalEvents = mockStore.events.filter(e => e.category === 'Technical').length;
       const nonTechnicalEvents = mockStore.events.filter(e => e.category === 'Non-Technical').length;
 
+      const teamStudentsByEvent = {};
+      mockStore.teams.forEach(t => {
+        const members = t.members || [];
+        if (members.length < 2) return;
+        const key = String(t.event);
+        if (!teamStudentsByEvent[key]) teamStudentsByEvent[key] = new Set();
+        members.forEach(m => { if (m.student) teamStudentsByEvent[key].add(String(m.student)); });
+      });
       const teamCountMap = {};
       mockStore.registrations.forEach(r => {
         const key = String(r.event);
         if (!teamCountMap[key]) teamCountMap[key] = { total: 0, teams: 0 };
         teamCountMap[key].total += 1;
-        if ((r.teamMembers || []).length > 0) teamCountMap[key].teams += 1;
+        if (teamStudentsByEvent[key] && teamStudentsByEvent[key].has(String(r.student))) teamCountMap[key].teams += 1;
       });
       const eventWiseRegistrations = mockStore.events.map(e => {
         const c = teamCountMap[String(e._id)] || { total: 0, teams: 0 };

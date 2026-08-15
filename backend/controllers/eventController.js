@@ -6,6 +6,8 @@ const mockStore = require('../utils/mockStore');
 const { sendEventRegistrationMail } = require('../utils/mailer');
 const teamController = require('./teamController');
 
+const getEffectiveTeamLimit = teamController.getEffectiveTeamLimit;
+
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Transactions require a replica set / Atlas dedicated tiers. If they are not
@@ -37,22 +39,78 @@ exports.getEventById = async (req, res) => {
     if (isDbConnected()) {
       const event = await Event.findById(req.params.id);
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
-      const registrations = await Registration.find({ event: event._id }).populate({
-        path: 'student',
-        select: 'symposiumCode registerNumber collegeName department year email phone verificationStatus isCheckedIn',
-        populate: { path: 'user', select: 'name' }
+      const [registrations, teams] = await Promise.all([
+        Registration.find({ event: event._id }).populate({
+          path: 'student',
+          select: 'symposiumCode registerNumber collegeName department year email phone verificationStatus isCheckedIn',
+          populate: { path: 'user', select: 'name' }
+        }),
+        Team.find({ event: event._id })
+          .populate({ path: 'members.student', select: 'symposiumCode registerNumber collegeName department year email phone', populate: { path: 'user', select: 'name' } })
+      ]);
+      // Map each student (by ObjectId) to their team so registrations carry
+      // live team info — the admin/coordinator dashboards read from here.
+      const teamByStudent = new Map();
+      teams.forEach(t => {
+        const members = t.members || [];
+        members.forEach(m => {
+          if (m.student) teamByStudent.set(String(m.student._id || m.student), t);
+        });
       });
-      return res.status(200).json({ success: true, event, registrations });
+      const enriched = registrations.map(r => {
+        const t = r.student ? teamByStudent.get(String(r.student._id)) : undefined;
+        return {
+          ...r.toObject(),
+          team: t ? {
+            teamId: t.teamId,
+            teamSize: getEffectiveTeamLimit(event),
+            memberCount: (t.members || []).length,
+            members: (t.members || []).map(m => {
+              const s = m.student || {};
+              return {
+                studentId: String(s._id || ''),
+                name: (s.user && s.user.name) || s.name || s.email || '',
+                registerNumber: s.registerNumber || 'N/A',
+                department: s.department || '',
+                year: s.year || ''
+              };
+            })
+          } : null
+        };
+      });
+      return res.status(200).json({ success: true, event, registrations: enriched });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
       const regs = mockStore.registrations.filter(r => r.event === event._id || String(r.event) === String(event._id));
+      const teams = mockStore.teams.filter(t => String(t.event) === String(event._id));
+      const teamByStudent = new Map();
+      teams.forEach(t => {
+        (t.members || []).forEach(m => { if (m.student) teamByStudent.set(String(m.student), t); });
+      });
       const populated = regs.map(r => {
         const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
         const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
+        const t = teamByStudent.get(String(r.student));
         return {
           ...r,
-          student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null
+          student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null,
+          team: t ? {
+            teamId: t.teamId,
+            teamSize: getEffectiveTeamLimit(event),
+            memberCount: (t.members || []).length,
+            members: (t.members || []).map(m => {
+              const ms = mockStore.students.find(st => st._id === m.student || String(st._id) === String(m.student));
+              const mu = ms ? mockStore.users.find(usr => usr._id === ms.user || String(usr._id) === String(ms.user)) : null;
+              return {
+                studentId: String(m.student),
+                name: (mu && mu.name) || (ms && ms.name) || (ms && ms.email) || '',
+                registerNumber: ms ? (ms.registerNumber || 'N/A') : 'N/A',
+                department: ms ? (ms.department || '') : '',
+                year: ms ? (ms.year || '') : ''
+              };
+            })
+          } : null
         };
       });
       return res.status(200).json({ success: true, event, registrations: populated });

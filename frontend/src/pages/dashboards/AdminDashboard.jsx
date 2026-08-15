@@ -1059,17 +1059,16 @@ const loadContactMessages = async () => {
                         </div>
                         <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
                       </div>
-                      {reg?.teamMembers?.length > 0 ? (
+                      {reg?.team?.members?.length > 1 ? (
                         <div className="mt-2 pt-2 border-t border-slate-800">
                           <p className="text-[10px] uppercase tracking-wide font-bold text-cyan-400 mb-1">
-                            Team ({reg.teamMembers.length} member{reg.teamMembers.length > 1 ? 's' : ''})
+                            Team ({reg.team.members.length} member{reg.team.members.length > 1 ? 's' : ''})
                           </p>
                           <div className="flex flex-wrap gap-1.5">
-                            {reg.teamMembers.map((tm, i) => (
+                            {reg.team.members.map((tm, i) => (
                               <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
                                 {tm.name}
-                                {tm.registerNumber && <span className="text-cyan-300/70 font-mono">({tm.registerNumber})</span>}
-                                <span className="text-slate-500 font-mono">{tm.phone}</span>
+                                {tm.year && <span className="text-cyan-300/70">{tm.department ? `${tm.department} • Yr ${tm.year}` : `Yr ${tm.year}`}</span>}
                               </span>
                             ))}
                           </div>

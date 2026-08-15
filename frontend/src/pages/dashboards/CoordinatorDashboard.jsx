@@ -73,7 +73,7 @@ export default function CoordinatorDashboard() {
     const rows = registrations.map(r => {
       const s = r.student;
       const uName = getStudentName(s, 'Student');
-      const team = (r.teamMembers || []).map(tm => `${tm.name} (${tm.phone})`).join('; ');
+      const team = (r.team?.members || []).map(tm => `${tm.name}`).filter(n => n).join('; ');
       return `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
 
@@ -156,9 +156,9 @@ export default function CoordinatorDashboard() {
                           <td className="p-3 font-bold text-white">{uName}</td>
                           <td className="p-3 text-slate-300">{s.collegeName} ({s.department})</td>
                           <td className="p-3">
-                            {r.teamMembers && r.teamMembers.length > 0 ? (
+                            {r.team && r.team.members.length > 1 ? (
                               <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                {r.teamMembers.map((tm, i) => (
+                                {r.team.members.map((tm, i) => (
                                   <span key={i} className="px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
                                     {tm.name}
                                   </span>
