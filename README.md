@@ -8,9 +8,6 @@
 
 **Tech Stack:** React (Vite) · Node.js · Express · MongoDB
 
-**Prize Pool: ₹1,00,000+ &nbsp;|&nbsp; Event Date: 12th September 2026**
-
-[View Demo](https://dataverse-2026-qhyb.vercel.app/) · [Report Bug](https://github.com/yoges-08/dataverse-2026/issues) · [Request Feature](https://github.com/yoges-08/dataverse-2026/issues)
 
 </div>
 
