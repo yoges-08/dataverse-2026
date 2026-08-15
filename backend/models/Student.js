@@ -12,8 +12,6 @@ const studentSchema = new mongoose.Schema({
   gender: { type: String, default: 'Male' },
   dateOfBirth: { type: String, default: '' },
   address: { type: String, default: '' },
-  profilePhoto: { type: String, default: 'N/A' },
-  collegeIdCard: { type: String, default: 'N/A' },
   emergencyContact: { type: String, default: '' },
   foodPreference: { type: String, default: 'N/A' },
   accommodationRequired: { type: String, default: 'N/A' },

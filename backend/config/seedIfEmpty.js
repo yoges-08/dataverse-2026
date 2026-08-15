@@ -6,7 +6,7 @@ module.exports = async function seedIfEmpty() {
   console.log('Checking if database needs initial seeding...');
   const eventCount = await Event.countDocuments();
   if (eventCount === 0) {
-    console.log('Database is empty — running auto-seed (recreates events, announcements, gallery, staff accounts).');
+    console.log('Database is empty — running auto-seed (recreates events, announcements, staff accounts).');
     const seedData = require('./../seed');
     await seedData();
   } else {

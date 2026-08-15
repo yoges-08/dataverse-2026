@@ -12,7 +12,6 @@ class MockStore {
     this.attendance = [];
     this.certificates = [];
     this.announcements = [];
-    this.gallery = [];
     this.dataFile = path.join(__dirname, '..', 'data', 'db.json');
     // Restore previously saved data (survives server restarts)
     this.restored = this.loadFromFile();
@@ -30,7 +29,6 @@ class MockStore {
       this.attendance = raw.attendance || [];
       this.certificates = raw.certificates || [];
       this.announcements = raw.announcements || [];
-      this.gallery = raw.gallery || [];
       console.log('💾 Restored DATAVERSE data from local storage (backend/data/db.json).');
       return true;
     } catch (e) {
@@ -50,8 +48,7 @@ class MockStore {
         registrations: this.registrations,
         attendance: this.attendance,
         certificates: this.certificates,
-        announcements: this.announcements,
-        gallery: this.gallery
+        announcements: this.announcements
       };
       fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
     } catch (e) {
@@ -277,34 +274,6 @@ class MockStore {
         priority: 'Normal',
         author: 'Prof. S. Meenakshi',
         createdAt: new Date(Date.now() - 86400000).toISOString()
-      }
-    ];
-
-    // Gallery
-    this.gallery = [
-      {
-        _id: 'g1',
-        title: 'DATAVERSE 2025 Inaugural Ceremony',
-        category: 'Inauguration',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
-        description: 'Chief guest addressing the grand inaugural ceremony at AAMEC Auditorium.'
-      },
-      {
-        _id: 'g2',
-        title: 'AI Agentic Coding Arena',
-        category: 'Technical',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
-        description: 'Students constructing autonomous AI agents.'
-      },
-      {
-        _id: 'g3',
-        title: 'Luminas Fest Musical Night',
-        category: 'Cultural',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80',
-        description: 'Stage performance & trophy presentation.'
       }
     ];
 

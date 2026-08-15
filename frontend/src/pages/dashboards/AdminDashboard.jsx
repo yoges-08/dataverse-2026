@@ -91,10 +91,6 @@ export default function AdminDashboard() {
   // New Announcement Form State
   const [newAnn, setNewAnn] = useState({ title: '', content: '', category: 'General', priority: 'Normal' });
 
-  // Gallery management state
-  const [galleryItems, setGalleryItems] = useState([]);
-  const [galleryDeleting, setGalleryDeleting] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -104,14 +100,13 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const [analyticsRes, studentRes, eventRes, staffRes, annRes, certRes, galleryRes] = await Promise.all([
+      const [analyticsRes, studentRes, eventRes, staffRes, annRes, certRes] = await Promise.all([
         API.get('/admin/analytics'),
         API.get('/admin/students'),
         API.get('/events'),
         API.get('/admin/staff'),
         API.get('/announcements'),
-        API.get('/certificates/all'),
-        API.get('/gallery')
+        API.get('/certificates/all')
       ]);
 
       if (analyticsRes.data.success) {
@@ -123,7 +118,6 @@ export default function AdminDashboard() {
       if (staffRes.data.success) setStaffList(staffRes.data.staff);
       if (annRes.data.success) setAnnouncements(annRes.data.announcements);
       if (certRes.data.success) setCertificates(certRes.data.certificates);
-      if (galleryRes.data.success) setGalleryItems(galleryRes.data.items || []);
     } catch (err) {
       console.error('Error loading admin dashboard:', err);
     } finally {
@@ -224,22 +218,6 @@ const loadContactMessages = async () => {
       }
     } catch (err) {
       console.error('Error deleting announcement:', err);
-    }
-  };
-
-  const handleDeleteGalleryItem = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this gallery item?')) return;
-    setGalleryDeleting(id);
-    try {
-      const res = await API.delete(`/gallery/${id}`);
-      if (res.data.success) {
-        setGalleryItems(prev => prev.filter(item => item._id !== id));
-      }
-    } catch (err) {
-      console.error('Error deleting gallery item:', err);
-      alert('Could not delete gallery item. Please try again.');
-    } finally {
-      setGalleryDeleting(null);
     }
   };
 
@@ -437,7 +415,6 @@ const loadContactMessages = async () => {
           { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
           { id: 'announcements', label: `Announcements (${announcements.length})` },
-          { id: 'gallery', label: `Gallery (${galleryItems.length})` },
           { id: 'messages', label: `Contact Messages (${contactMessages.length})` }
         ].map(tab => (
           <button
@@ -877,51 +854,6 @@ const loadContactMessages = async () => {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* GALLERY MANAGEMENT */}
-      {activeTab === 'gallery' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-white">Gallery Management</h3>
-          </div>
-
-          {galleryItems.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/50 rounded-xl border border-slate-800">
-              No gallery items yet. Add items via the gallery API before they appear here.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {galleryItems.map((item) => (
-                <div key={item._id} className="glass-card rounded-2xl border border-slate-800 overflow-hidden">
-                  <div className="aspect-video w-full bg-slate-900 overflow-hidden">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title || 'Gallery item'}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  </div>
-                  <div className="p-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-bold text-white truncate">{item.title || 'Untitled'}</h4>
-                      <span className="text-[10px] font-bold text-indigo-400 uppercase">{item.category || 'Gallery'} • {item.year || '2026'}</span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteGalleryItem(item._id)}
-                      disabled={galleryDeleting === item._id}
-                      className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors shrink-0 disabled:opacity-50"
-                      title="Delete gallery item"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

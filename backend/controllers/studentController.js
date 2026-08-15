@@ -48,7 +48,6 @@ exports.updateProfile = async (req, res) => {
       student.emergencyContact = emergencyContact || student.emergencyContact;
       student.foodPreference = foodPreference || student.foodPreference;
       student.accommodationRequired = accommodationRequired || student.accommodationRequired;
-      if (req.files && req.files.profilePhoto) student.profilePhoto = `/uploads/${req.files.profilePhoto[0].filename}`;
 
       await student.save();
       return res.status(200).json({ success: true, student, message: 'Profile updated successfully' });
@@ -232,8 +231,6 @@ exports.spotRegistration = async (req, res) => {
           email: cleanEmail,
           phone: phone || '9999999999',
           gender: gender || 'Male',
-          profilePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-          collegeIdCard: 'https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=600&q=80',
           verificationStatus: 'Approved',
           isCheckedIn: true,
           checkInTime: new Date().toISOString(),

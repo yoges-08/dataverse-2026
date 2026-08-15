@@ -7,7 +7,6 @@ const Registration = require('./models/Registration');
 const Attendance = require('./models/Attendance');
 const Certificate = require('./models/Certificate');
 const Announcement = require('./models/Announcement');
-const Gallery = require('./models/Gallery');
 require('dotenv').config();
 
 const getRequiredPassword = (envKey, label) => {
@@ -94,7 +93,6 @@ const seedData = async () => {
     await Attendance.deleteMany({});
     await Certificate.deleteMany({});
     await Announcement.deleteMany({});
-    await Gallery.deleteMany({});
 
     console.log('Cleared old database records.');
 
@@ -304,31 +302,6 @@ const seedData = async () => {
         content: 'Spot registration counters will open at Main Block Admin Reception on Day 1 from 8:00 AM onwards.',
         category: 'Venue Change',
         priority: 'Urgent'
-      }
-    ]);
-
-    // 5. Create Gallery Items
-    await Gallery.create([
-      {
-        title: 'DATAVERSE 2025 Inaugural Function',
-        category: 'Inauguration',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80',
-        description: 'Chief guest addressing the grand inaugural ceremony at AAMEC Auditorium.'
-      },
-      {
-        title: 'AI Hackathon & Coding Arena',
-        category: 'Technical',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
-        description: 'Students building intelligent algorithms during the 24-hour coding challenge.'
-      },
-      {
-        title: 'Cultural Evening & Stage Performance',
-        category: 'Cultural',
-        year: '2025',
-        imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80',
-        description: 'Luminas Fest musical performance & trophy distribution.'
       }
     ]);
 
