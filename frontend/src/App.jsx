@@ -20,7 +20,6 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const CertificateVerify = lazy(() => import('./pages/CertificateVerify'));
 const MyCertificates = lazy(() => import('./pages/MyCertificates'));
-const TeamPage = lazy(() => import('./pages/TeamPage'));
 
 // Dashboards (heavy — loaded on demand only)
 const StudentDashboard = lazy(() => import('./pages/dashboards/StudentDashboard'));
@@ -117,7 +116,6 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify/:certNo?" element={<CertificateVerify />} />
             <Route path="/certificates" element={<RoleRoute role="student"><MyCertificates /></RoleRoute>} />
-            <Route path="/team/:editCode" element={<TeamPage />} />
 
             {/* Role Dashboards (protected) */}
             <Route path="/dashboard" element={<DashboardRedirect />} />

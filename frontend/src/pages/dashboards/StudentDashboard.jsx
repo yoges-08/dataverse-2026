@@ -5,7 +5,7 @@ import StudentBadgeModal from '../../components/StudentBadgeModal';
 import CertificateModal from '../../components/CertificateModal';
 import {
   User, QrCode, CheckCircle2, Clock, AlertCircle, Award,
-  Calendar, MapPin, Bell, Download, ShieldCheck, Edit3, Sparkles, Home, UserPlus
+  Calendar, MapPin, Bell, Download, ShieldCheck, Edit3, Sparkles, Home
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -187,26 +187,12 @@ export default function StudentDashboard() {
                       <div>
                         <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>
                         <h4 className="text-base font-bold text-white">{ev.title}</h4>
-                        {reg.team && (
-                          <span className="text-[11px] text-cyan-300 font-mono">{reg.team.teamId} • {reg.team.status}</span>
-                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-3 self-start sm:self-auto">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        {reg.status}
-                      </span>
-                      {reg.team && (
-                        <Link
-                          to={reg.team.editCode ? `/team/${reg.team.editCode}` : '#'}
-                          className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-1.5"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          <span>Manage Teammates</span>
-                        </Link>
-                      )}
-                    </div>
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
+                      {reg.status}
+                    </span>
                   </div>
                 );
               })}

@@ -3,14 +3,9 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
-const teamController = require('./teamController');
 const { sendEventRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
-
-// 0 (or missing) means the event is solo-only - no teams allowed.
-const getEffectiveTeamLimit = (event) =>
-  Number.isFinite(event && event.teamLimit) ? event.teamLimit : 0;
 
 // Transactions require a replica set / Atlas dedicated tiers. If they are not
 // available we fall back to the unique {student, event} index (which still
@@ -46,8 +41,7 @@ exports.getEventById = async (req, res) => {
         select: 'symposiumCode registerNumber collegeName department year email phone verificationStatus isCheckedIn',
         populate: { path: 'user', select: 'name' }
       });
-      const enriched = await teamController.attachTeamsToRegistrations(registrations, event._id);
-      return res.status(200).json({ success: true, event, registrations: enriched });
+      return res.status(200).json({ success: true, event, registrations });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
@@ -60,8 +54,7 @@ exports.getEventById = async (req, res) => {
           student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null
         };
       });
-      const enriched = await teamController.attachTeamsToRegistrations(populated, event._id);
-      return res.status(200).json({ success: true, event, registrations: enriched });
+      return res.status(200).json({ success: true, event, registrations: populated });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching event details' });
@@ -178,7 +171,6 @@ exports.registerForEvent = async (req, res) => {
         }
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
-        const teamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
 
         const registration = useTx
           ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl }], { session }))[0]
@@ -188,14 +180,6 @@ exports.registerForEvent = async (req, res) => {
         else await event.save();
 
         if (session) await session.commitTransaction();
-
-        // Non-solo event: create the Team (leader = creator) and email the
-        // private team-management link. If team creation fails the registration
-        // still stands; organizers can recover via the admin Teams panel.
-        let team = null;
-        if (getEffectiveTeamLimit(event) > 0) {
-          team = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: teamSize });
-        }
 
         // Notify the student about their new event booking.
         sendEventRegistrationMail({
@@ -207,15 +191,10 @@ exports.registerForEvent = async (req, res) => {
           eventTime: event.time
         }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
-        if (team) {
-          teamController.sendTeamLinkEmail({ student, event, team, userName: req.user?.name || student.email?.split('@')[0] || 'there' });
-        }
-
         return res.status(201).json({
           success: true,
           message: `Registered for ${event.title}!`,
-          registration,
-          team: team ? await teamController.serializeTeam(team, event) : null
+          registration
         });
       } catch (err) {
         if (session) { try { await session.abortTransaction(); } catch (e) {} }
@@ -259,18 +238,9 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      // Non-solo event: create the Team (leader = creator) and email the
-      // private team-management link.
-      const teamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
-
       const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
-
-      let team = null;
-      if (getEffectiveTeamLimit(event) > 0) {
-        team = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: teamSize });
-      }
 
       sendEventRegistrationMail({
         to: student.email,
@@ -281,15 +251,10 @@ exports.registerForEvent = async (req, res) => {
         eventTime: event.time
       }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
-      if (team) {
-        teamController.sendTeamLinkEmail({ student, event, team, userName: req.user?.name || student.email?.split('@')[0] || 'there' });
-      }
-
       return res.status(201).json({
         success: true,
         message: `Registered for ${event.title}!`,
-        registration,
-        team: team ? await teamController.serializeTeam(team, event) : null
+        registration
       });
     }
   } catch (error) {

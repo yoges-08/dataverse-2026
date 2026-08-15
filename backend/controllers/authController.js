@@ -7,7 +7,7 @@ const Student = require('../models/Student');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
 const sendEmail = require('../utils/sendEmail');
-const { sendRegistrationMail, sendLoginMail } = require('../utils/mailer');
+const { sendRegistrationMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -281,7 +281,6 @@ exports.login = async (req, res) => {
 
       if (user.role === 'student') {
         // Fire-and-forget so a slow email provider never delays login.
-        sendLoginMail({ to: user.email, name: user.name }).catch(() => {});
       }
 
       return res.status(200).json({
@@ -306,7 +305,6 @@ exports.login = async (req, res) => {
 
       if (user.role === 'student') {
         // Fire-and-forget so a slow email provider never delays login.
-        sendLoginMail({ to: user.email, name: user.name }).catch(() => {});
       }
 
       return res.status(200).json({

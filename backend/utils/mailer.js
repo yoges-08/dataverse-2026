@@ -238,4 +238,4 @@ const sendLoginMail = async ({ to, name }) => {
   `);
   return sendMail({ to, subject: 'DATAVERSE 2026 - New Sign-in Alert', html });
 };
-module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail, sendLoginMail, sendTeamLinkMail };
+module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail, sendTeamLinkMail };
