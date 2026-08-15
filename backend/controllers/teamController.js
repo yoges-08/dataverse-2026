@@ -177,19 +177,44 @@ const isStudentRegisteredForEvent = async (studentId, eventId) => {
 };
 
 const isStudentInAnyTeamForEvent = async (studentId, eventId, excludeTeamId) => {
+  // A solo team (just the leader, auto-created at registration) is a seat, not
+  // a commitment — only teams with more than one member count as "taken".
   if (isDbConnected()) {
     const found = await Team.findOne({
       event: eventId,
       _id: { $ne: excludeTeamId },
-      'members.student': studentId
+      'members.student': studentId,
+      $expr: { $gt: [{ $size: '$members' }, 1] }
     });
     return !!found;
   }
   return mockStore.teams.some(t =>
     String(t.event) === String(eventId) &&
     String(t._id) !== String(excludeTeamId) &&
+    (t.members || []).some(m => String(m.student) === String(studentId)) &&
+    (t.members || []).length > 1
+  );
+};
+
+// When a student joins another team, their own auto-created solo team is no
+// longer needed — dissolve it so nobody is tracked in two teams for one event.
+const dissolveAbandonedSoloTeam = async (studentId, eventId, keepTeamId) => {
+  if (isDbConnected()) {
+    await Team.deleteMany({
+      event: eventId,
+      _id: { $ne: keepTeamId },
+      'members.student': studentId,
+      $expr: { $lte: [{ $size: '$members' }, 1] }
+    });
+    return;
+  }
+  const idx = mockStore.teams.findIndex(t =>
+    String(t.event) === String(eventId) &&
+    String(t._id) !== String(keepTeamId) &&
+    (t.members || []).length <= 1 &&
     (t.members || []).some(m => String(m.student) === String(studentId))
   );
+  if (idx !== -1) mockStore.teams.splice(idx, 1);
 };
 
 const fetchTeamForResponse = async (team) => {
@@ -283,7 +308,9 @@ exports.getAvailableTeammates = async (req, res) => {
     const qDept = norm(student.department || '');
     const qYear = norm(student.year || '');
 
-    // Students already committed to any team for this event are excluded.
+    // Students already committed to ANY OTHER team for this event are excluded.
+    // A solo team (the auto-created seat with only the leader) still counts as
+    // available — those leaders can be recruited to join another squad.
     const takenIds = new Set();
     let allTeams = [];
     if (isDbConnected()) {
@@ -292,8 +319,10 @@ exports.getAvailableTeammates = async (req, res) => {
       allTeams = mockStore.teams.filter(t => String(t.event) === String(eventId));
     }
     allTeams.forEach(t => {
+      const members = t.members || [];
+      if (members.length <= 1) return; // solo seat — leader is still available
       if (t.leader) takenIds.add(String(t.leader));
-      (t.members || []).forEach(m => takenIds.add(String(m.student)));
+      members.forEach(m => takenIds.add(String(m.student)));
     });
 
     let candidates = [];
@@ -398,6 +427,10 @@ exports.addTeamMember = async (req, res) => {
       team.members.push({ student: teammate._id, isLeader: false, addedAt: new Date().toISOString() });
       team.status = recomputeStatus(team, event);
     }
+
+    // The newcomer was auto-holding their own solo seat from registration;
+    // dissolve it so they are tracked by exactly one team for this event.
+    await dissolveAbandonedSoloTeam(teammate._id, eventId, team._id);
 
     const full = await fetchTeamForResponse(team);
     return res.status(200).json({ success: true, message: 'Teammate added.', team: serializeTeam(full, event) });
