@@ -7,7 +7,7 @@ const teamSchema = new mongoose.Schema({
   college: { type: String, required: true },
   teamSize: { type: Number, required: true },
   status: { type: String, enum: ['Open', 'Complete', 'Incomplete'], default: 'Open' },
-  editCode: { type: String, required: true, unique: true },
+  editCode: { type: String },
   members: [
     {
       student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },

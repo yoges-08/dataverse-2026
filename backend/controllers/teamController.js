@@ -1,0 +1,516 @@
+const mongoose = require('mongoose');
+const crypto = require('crypto');
+const Team = require('../models/Team');
+const Event = require('../models/Event');
+const Registration = require('../models/Registration');
+const Student = require('../models/Student');
+const mockStore = require('../utils/mockStore');
+
+const isDbConnected = () => mongoose.connection.readyState === 1;
+
+// 0 (or missing) means solo-only. When positive it is the maximum TOTAL team
+// size (leader included), e.g. 4 = leader + up to 3 teammates.
+const getEffectiveTeamLimit = (event) =>
+  Number.isFinite(event && event.teamLimit) ? event.teamLimit : 0;
+
+const norm = (s) => String(s || '').trim().toUpperCase();
+
+// ---- Mock branch helpers ---------------------------------------------------
+
+const resolveStudentMock = (id) => {
+  const s = mockStore.students.find(st => String(st._id) === String(id));
+  if (!s) return null;
+  const u = mockStore.users.find(usr => String(usr._id) === String(s.user));
+  return { ...s, user: u ? { name: u.name } : { name: s.email } };
+};
+
+const resolveEventMock = (id) =>
+  mockStore.events.find(e => String(e._id) === String(id)) || null;
+
+// ---- Status -----------------------------------------------------------------
+
+const recomputeStatus = (team, event) => {
+  const current = (team.members || []).length;
+  if (current >= team.teamSize) return 'Complete';
+  const deadline = event && event.registrationDeadline;
+  if (deadline && new Date() > new Date(deadline)) return 'Incomplete';
+  return 'Open';
+};
+
+// ---- Serialization -----------------------------------------------------------
+
+const serializeTeam = (team, event) => {
+  const leader = isDbConnected() ? team.leader : resolveStudentMock(team.leader);
+  const members = (team.members || [])
+    .slice()
+    .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))
+    .map(m => {
+      const st = isDbConnected() ? m.student : resolveStudentMock(m.student);
+      return {
+        _id: m._id,
+        studentId: st ? String(st._id || (st._id && st._id.toString())) : '',
+        isLeader: !!m.isLeader,
+        name: st && (st.user?.name || st.name || st.email) || '',
+        registerNumber: st ? (st.registerNumber || 'N/A') : '',
+        email: st ? (st.email || '') : '',
+        department: st ? (st.department || '') : '',
+        year: st ? (st.year || '') : '',
+        college: st ? (st.collegeName || '') : '',
+        addedAt: m.addedAt
+      };
+    });
+  return {
+    _id: team._id,
+    teamId: team.teamId,
+    event: isDbConnected()
+      ? (event || team.event || null)
+      : (event || team.event || resolveEventMock(team.event)),
+    college: team.college,
+    teamSize: team.teamSize,
+    status: recomputeStatus(team, event || (isDbConnected() ? team.event : resolveEventMock(team.event))),
+    leader: leader ? {
+      _id: leader._id,
+      studentId: String(leader._id),
+      name: leader.user?.name || leader.name || leader.email || '',
+      registerNumber: leader.registerNumber || 'N/A',
+      email: leader.email || '',
+      department: leader.department || '',
+      year: leader.year || '',
+      college: leader.collegeName || ''
+    } : null,
+    members,
+    memberCount: members.length
+  };
+};
+
+exports.serializeTeam = serializeTeam;
+
+// ---- Team ID generation ------------------------------------------------------
+
+const nextTeamId = async (event) => {
+  let n;
+  if (isDbConnected()) {
+    n = await Team.countDocuments({ event: event._id });
+  } else {
+    n = mockStore.teams.filter(t => String(t.event) === String(event._id)).length;
+  }
+  let teamId = `DV26-T${String(n + 1).padStart(3, '0')}`;
+  while (isDbConnected() ? await Team.exists({ teamId }) : mockStore.teams.some(t => t.teamId === teamId)) {
+    n += 1;
+    teamId = `DV26-T${String(n + 1).padStart(3, '0')}`;
+  }
+  return teamId;
+};
+
+// ---- Create team on registration ---------------------------------------------
+
+exports.createTeamForRegistration = async ({ event, leaderStudent, declaredTeamSize }) => {
+  const limit = getEffectiveTeamLimit(event);
+  if (limit <= 0) return null; // solo-only event
+  const teamSize = Math.max(1, Math.min(Number(declaredTeamSize) || limit, limit));
+  const teamId = await nextTeamId(event);
+  const editCode = crypto.randomBytes(12).toString('hex');
+  const doc = {
+    teamId,
+    event: event._id,
+    leader: leaderStudent._id,
+    college: leaderStudent.collegeName,
+    teamSize,
+    status: 'Open',
+    editCode,
+    members: [{ student: leaderStudent._id, isLeader: true, addedAt: new Date() }]
+  };
+  let team;
+  if (isDbConnected()) {
+    team = await Team.create(doc);
+  } else {
+    team = { _id: 't' + (mockStore.teams.length + 1), ...doc };
+    mockStore.teams.push(team);
+  }
+  team.status = recomputeStatus(team, event);
+  if (isDbConnected()) await team.save();
+  return team;
+};
+
+// ---- Session-based authorization ---------------------------------------------
+// Every team-management action requires a logged-in student who is either the
+// leader or a member of the specific team being acted on. Possession of an
+// internal team ID is NOT sufficient — the edit-code backdoor is gone.
+
+const assertIsTeamMember = async (team, userId) => {
+  if (isDbConnected()) {
+    const student = await Student.findOne({ user: userId });
+    if (!student) return null;
+    const isMember = String(team.leader) === String(student._id) ||
+      (team.members || []).some(m => String(m.student) === String(student._id));
+    return isMember ? student : null;
+  }
+  const student = mockStore.students.find(s => String(s.user) === String(userId));
+  if (!student) return null;
+  const isMember = String(team.leader) === String(student._id) ||
+    (team.members || []).some(m => String(m.student) === String(student._id));
+  return isMember ? student : null;
+};
+
+// Find the team for this event that the logged-in student belongs to (leader
+// or member) — or null. Used to locate a team regardless of leadership.
+const findTeamForStudent = async (eventId, studentId) => {
+  if (isDbConnected()) {
+    return Team.findOne({
+      event: eventId,
+      $or: [{ leader: studentId }, { 'members.student': studentId }]
+    }).populate('event');
+  }
+  return mockStore.teams.find(t =>
+    String(t.event) === String(eventId) &&
+    (String(t.leader) === String(studentId) || (t.members || []).some(m => String(m.student) === String(studentId)))
+  ) || null;
+};
+
+// ---- Registration helpers ------------------------------------------------------
+
+const isStudentRegisteredForEvent = async (studentId, eventId) => {
+  if (isDbConnected()) {
+    return !!(await Registration.findOne({ student: studentId, event: eventId }));
+  }
+  return mockStore.registrations.some(r => String(r.student) === String(studentId) && String(r.event) === String(eventId));
+};
+
+const isStudentInAnyTeamForEvent = async (studentId, eventId, excludeTeamId) => {
+  if (isDbConnected()) {
+    const found = await Team.findOne({
+      event: eventId,
+      _id: { $ne: excludeTeamId },
+      'members.student': studentId
+    });
+    return !!found;
+  }
+  return mockStore.teams.some(t =>
+    String(t.event) === String(eventId) &&
+    String(t._id) !== String(excludeTeamId) &&
+    (t.members || []).some(m => String(m.student) === String(studentId))
+  );
+};
+
+const fetchTeamForResponse = async (team) => {
+  if (isDbConnected()) {
+    return Team.findById(team._id)
+      .populate('event')
+      .populate({ path: 'leader', select: 'user registerNumber email collegeName department year phone' })
+      .populate({ path: 'members.student', select: 'user registerNumber email collegeName department year phone' });
+  }
+  return team;
+};
+
+// ---- My team-enabled events ----------------------------------------------------
+
+exports.getMyTeamEvents = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    if (isDbConnected()) {
+      const student = await Student.findOne({ user: userId });
+      if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+      const regs = await Registration.find({ student: student._id, status: { $ne: 'Cancelled' } })
+        .populate({ path: 'event', select: 'title category venue date time teamLimit description' });
+      const events = regs
+        .map(r => r.event)
+        .filter(ev => ev && getEffectiveTeamLimit(ev) > 0);
+      return res.status(200).json({ success: true, count: events.length, events });
+    }
+    const student = mockStore.students.find(s => String(s.user) === String(userId));
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+    const events = mockStore.registrations
+      .filter(r => String(r.student) === String(student._id) && r.status !== 'Cancelled')
+      .map(r => resolveEventMock(r.event))
+      .filter(ev => ev && getEffectiveTeamLimit(ev) > 0);
+    return res.status(200).json({ success: true, count: events.length, events });
+  } catch (error) {
+    console.error('My team events error:', error);
+    res.status(500).json({ success: false, message: 'Error loading your team events' });
+  }
+};
+
+// ---- My team for an event --------------------------------------------------------
+
+exports.getMyTeamForEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.id || req.user._id;
+    const student = isDbConnected()
+      ? await Student.findOne({ user: userId })
+      : mockStore.students.find(s => String(s.user) === String(userId));
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+    if (getEffectiveTeamLimit(event) <= 0) {
+      return res.status(400).json({ success: false, message: 'This event is solo-only — no teams allowed.' });
+    }
+
+    const registered = await isStudentRegisteredForEvent(student._id, eventId);
+    if (!registered) return res.status(403).json({ success: false, message: 'You must register for this event before managing a team.' });
+
+    let team = await findTeamForStudent(eventId, student._id);
+    if (!team) {
+      // Safe recovery: an existing (pre-team) registration had no Team created.
+      // Auto-place the registrant into a solo team as leader.
+      team = await exports.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize: 1 });
+    }
+    const full = await fetchTeamForResponse(team);
+    return res.status(200).json({ success: true, team: serializeTeam(full, event) });
+  } catch (error) {
+    console.error('My team error:', error);
+    res.status(500).json({ success: false, message: 'Error loading your team' });
+  }
+};
+
+// ---- Available teammates ---------------------------------------------------------
+
+exports.getAvailableTeammates = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const student = isDbConnected()
+      ? await Student.findOne({ user: userId })
+      : mockStore.students.find(s => String(s.user) === String(userId));
+    if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+    const registered = await isStudentRegisteredForEvent(student._id, eventId);
+    if (!registered) return res.status(403).json({ success: false, message: 'You must register for this event before browsing teammates.' });
+
+    const qCollege = norm(student.collegeName || '');
+    const qDept = norm(student.department || '');
+    const qYear = norm(student.year || '');
+
+    // Students already committed to any team for this event are excluded.
+    const takenIds = new Set();
+    let allTeams = [];
+    if (isDbConnected()) {
+      allTeams = await Team.find({ event: eventId }).select('leader members').lean();
+    } else {
+      allTeams = mockStore.teams.filter(t => String(t.event) === String(eventId));
+    }
+    allTeams.forEach(t => {
+      if (t.leader) takenIds.add(String(t.leader));
+      (t.members || []).forEach(m => takenIds.add(String(m.student)));
+    });
+
+    let candidates = [];
+    if (isDbConnected()) {
+      const regs = await Registration.find({ event: eventId, status: { $ne: 'Cancelled' } })
+        .populate({ path: 'student', populate: { path: 'user', select: 'name' } });
+      candidates = regs.map(r => r.student).filter(Boolean);
+    } else {
+      candidates = mockStore.registrations
+        .filter(r => String(r.event) === String(eventId) && r.status !== 'Cancelled')
+        .map(r => resolveStudentMock(r.student))
+        .filter(Boolean);
+    }
+
+    const result = candidates
+      .filter(c => String(c._id) !== String(student._id))
+      .filter(c => !takenIds.has(String(c._id)))
+      .filter(c => !qCollege || norm(c.collegeName || '') === qCollege)
+      .filter(c => !qDept || norm(c.department || '') === qDept)
+      .filter(c => !qYear || norm(c.year || '') === qYear)
+      .map(c => ({
+        studentId: String(c._id),
+        name: c.user?.name || c.name || c.email || '',
+        collegeName: c.collegeName || '',
+        department: c.department || '',
+        year: c.year || '',
+        registerNumber: c.registerNumber || 'N/A'
+      }));
+
+    return res.status(200).json({ success: true, count: result.length, students: result });
+  } catch (error) {
+    console.error('Available teammates error:', error);
+    res.status(500).json({ success: false, message: 'Error loading available teammates' });
+  }
+};
+
+// ---- Add a teammate ----------------------------------------------------------
+
+exports.addTeamMember = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const studentId = String(req.body.studentId || '');
+    const userId = req.user.id || req.user._id;
+
+    if (!studentId) return res.status(400).json({ success: false, message: 'Select a student to add as a teammate.' });
+
+    const requester = isDbConnected()
+      ? await Student.findOne({ user: userId })
+      : mockStore.students.find(s => String(s.user) === String(userId));
+    if (!requester) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+    let team = await findTeamForStudent(eventId, requester._id);
+    if (!team) return res.status(403).json({ success: false, message: 'You are not part of a team for this event.' });
+    const authed = await assertIsTeamMember(team, userId);
+    if (!authed) return res.status(403).json({ success: false, message: 'You are not a member of this team.' });
+
+    // Client-side list is pre-filtered, but the API must not trust that.
+    if ((team.members || []).length >= team.teamSize) {
+      return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: `Team is full (${team.teamSize} members).` });
+    }
+
+    const teammate = isDbConnected()
+      ? await Student.findById(studentId)
+      : resolveStudentMock(studentId);
+    if (!teammate) return res.status(400).json({ success: false, message: 'Selected student was not found.' });
+    if (norm(teammate.collegeName || '') !== norm(requester.collegeName || '')) {
+      return res.status(400).json({ success: false, message: `Only students from ${requester.collegeName} can join this team.` });
+    }
+    if (String(teammate._id) === String(requester._id)) {
+      return res.status(400).json({ success: false, message: 'You cannot add yourself.' });
+    }
+    if ((team.members || []).some(m => String(m.student) === String(teammate._id))) {
+      return res.status(400).json({ success: false, message: 'This student is already in the team.' });
+    }
+    if (await isStudentInAnyTeamForEvent(teammate._id, eventId, team._id)) {
+      return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
+    }
+    if (!await isStudentRegisteredForEvent(teammate._id, eventId)) {
+      return res.status(400).json({ success: false, message: 'This student has not registered for this event.' });
+    }
+
+    if (isDbConnected()) {
+      // Atomic capacity-checked update so two concurrent adds cannot overflow.
+      const updated = await Team.findOneAndUpdate(
+        { event: eventId, _id: team._id, $expr: { $lt: [{ $size: '$members' }, '$teamSize'] } },
+        { $push: { members: { student: teammate._id, isLeader: false, addedAt: new Date() } } },
+        { new: true }
+      );
+      if (!updated) {
+        return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
+      }
+      team = updated;
+      team.status = recomputeStatus(team, event);
+      await team.save();
+    } else {
+      if ((team.members || []).length >= team.teamSize) {
+        return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
+      }
+      team.members.push({ student: teammate._id, isLeader: false, addedAt: new Date().toISOString() });
+      team.status = recomputeStatus(team, event);
+    }
+
+    const full = await fetchTeamForResponse(team);
+    return res.status(200).json({ success: true, message: 'Teammate added.', team: serializeTeam(full, event) });
+  } catch (error) {
+    console.error('Add team member error:', error);
+    res.status(500).json({ success: false, message: 'Error adding teammate' });
+  }
+};
+
+// ---- Remove a teammate -------------------------------------------------------
+
+exports.removeTeamMember = async (req, res) => {
+  try {
+    const { eventId, studentId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const requester = isDbConnected()
+      ? await Student.findOne({ user: userId })
+      : mockStore.students.find(s => String(s.user) === String(userId));
+    if (!requester) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+    let team = await findTeamForStudent(eventId, requester._id);
+    if (!team) return res.status(403).json({ success: false, message: 'You are not part of a team for this event.' });
+    const authed = await assertIsTeamMember(team, userId);
+    if (!authed) return res.status(403).json({ success: false, message: 'You are not a member of this team.' });
+
+    const members = (team.members || []).slice();
+    const targetMember = members.find(m => String(m.student) === String(studentId));
+    if (!targetMember) return res.status(404).json({ success: false, message: 'That member is not in this team.' });
+
+    const isRemovingLeader = String(team.leader) === String(studentId);
+
+    // Block removing the last member so a team is never left leaderless/empty.
+    if (members.length <= 1) {
+      return res.status(400).json({ success: false, message: 'A team must always have at least one member.' });
+    }
+
+    if (isRemovingLeader) {
+      // Promote the oldest remaining member to leader.
+      const others = members
+        .filter(m => String(m.student) !== String(studentId))
+        .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0));
+      const newLeader = others[0];
+
+      team.leader = newLeader.student;
+      team.members = members
+        .filter(m => String(m.student) !== String(studentId))
+        .map(m => ({ ...m, isLeader: String(m.student) === String(newLeader.student) }));
+    } else {
+      team.members = members.filter(m => String(m.student) !== String(studentId));
+    }
+
+    team.status = recomputeStatus(team, event);
+    if (isDbConnected()) await team.save();
+
+    const full = await fetchTeamForResponse(team);
+    return res.status(200).json({ success: true, message: 'Member removed.', team: serializeTeam(full, event) });
+  } catch (error) {
+    console.error('Remove team member error:', error);
+    res.status(500).json({ success: false, message: 'Error removing teammate' });
+  }
+};
+
+// ---- Update declared team size ------------------------------------------------
+
+exports.updateTeamSize = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.id || req.user._id;
+
+    const requester = isDbConnected()
+      ? await Student.findOne({ user: userId })
+      : mockStore.students.find(s => String(s.user) === String(userId));
+    if (!requester) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+    let team = await findTeamForStudent(eventId, requester._id);
+    if (!team) return res.status(403).json({ success: false, message: 'You are not part of a team for this event.' });
+    const authed = await assertIsTeamMember(team, userId);
+    if (!authed) return res.status(403).json({ success: false, message: 'You are not a member of this team.' });
+
+    const limit = getEffectiveTeamLimit(event);
+    const requested = Number(req.body.teamSize);
+    if (!Number.isFinite(requested) || requested < 1) {
+      return res.status(400).json({ success: false, message: 'Enter a valid team size.' });
+    }
+    if (limit > 0 && requested > limit) {
+      return res.status(400).json({ success: false, message: `Team size cannot exceed ${limit} members for this event.` });
+    }
+    if (requested < (team.members || []).length) {
+      return res.status(400).json({ success: false, message: `You already have ${team.members.length} member(s). Team size must be at least that.` });
+    }
+
+    team.teamSize = requested;
+    team.status = recomputeStatus(team, event);
+    if (isDbConnected()) await team.save();
+
+    const full = await fetchTeamForResponse(team);
+    return res.status(200).json({ success: true, message: 'Team size updated.', team: serializeTeam(full, event) });
+  } catch (error) {
+    console.error('Update team size error:', error);
+    res.status(500).json({ success: false, message: 'Error updating team size' });
+  }
+};
+
+// ---- Shared helpers for event registration --------------------------------------
+
+exports.getEffectiveTeamLimit = getEffectiveTeamLimit;
+exports.recomputeStatus = recomputeStatus;
+exports.isStudentRegisteredForEvent = isStudentRegisteredForEvent;
+exports.isStudentInAnyTeamForEvent = isStudentInAnyTeamForEvent;

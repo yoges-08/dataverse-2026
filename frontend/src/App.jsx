@@ -125,6 +125,10 @@ export default function App() {
             <Route path="/dashboard/coordinator" element={<RoleRoute role="coordinator"><CoordinatorDashboard /></RoleRoute>} />
             <Route path="/dashboard/volunteer" element={<RoleRoute role="volunteer"><VolunteerDashboard /></RoleRoute>} />
 
+            {/* Legacy team edit-code links now redirect to login (team management
+                moved in-app to the student dashboard; there is no link-based UI). */}
+            <Route path="/team/:editCode" element={<Navigate to="/login" replace />} />
+
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
             </Routes>

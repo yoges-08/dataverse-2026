@@ -154,7 +154,7 @@ const sendApprovalMail = async ({ to, name, registerNumber, symposiumCode, qrCod
   return sendMail({ to, subject: 'DATAVERSE 2026 - Your Registration is Approved!', html });
 };
 
-const sendEventRegistrationMail = async ({ to, name, eventTitle, eventVenue, eventDate, eventTime }) => {
+const sendEventRegistrationMail = async ({ to, name, eventTitle, eventVenue, eventDate, eventTime, teamEnabled }) => {
   const html = mailShell(`
     <div style="padding:20px 8px 4px;">
       <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">You're registered for an event! 🎟️ ${name}</h2>
@@ -172,6 +172,15 @@ const sendEventRegistrationMail = async ({ to, name, eventTitle, eventVenue, eve
         </div>
       </div>
 
+      ${teamEnabled ? `
+      <div style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+        <div style="color:#d1fae5;font-size:12px;line-height:1.7;">
+          <div><span style="color:#34d399;">👥 Team event:</span> This event supports team participation.</div>
+          <div>Manage your team anytime from your <span style="color:#ffffff;font-weight:700;">student dashboard under Team Management</span> — add or invite teammates from the same college.</div>
+        </div>
+      </div>
+      ` : ''}
+
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;">
         Carry your symposium QR ticket to the venue. You can see all your bookings from your
         <strong style="color:#ffffff;">student dashboard</strong> after logging in.
@@ -179,39 +188,6 @@ const sendEventRegistrationMail = async ({ to, name, eventTitle, eventVenue, eve
     </div>
   `);
   return sendMail({ to, subject: `DATAVERSE 2026 - Registered for ${eventTitle}`, html });
-};
-
-const sendTeamLinkMail = async ({ to, name, eventTitle, teamId, teamSize, maxSize, editUrl }) => {
-  const html = mailShell(`
-    <div style="padding:20px 8px 4px;">
-      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">You're a Team Leader! 🎯 ${name}</h2>
-      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
-        Your team for <strong style="color:#ffffff;">${eventTitle}</strong> has been created on
-        <strong style="color:#ffffff;">DATAVERSE 2026</strong>. Share this private link with your classmates to
-        add them as teammates — only you (the leader) can manage the team.
-      </p>
-
-      <div style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.4);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
-        <div style="color:#ede9fe;font-size:12px;line-height:1.8;">
-          <div><span style="color:#a78bfa;">Team ID:</span> <span style="color:#ffffff;font-weight:800;letter-spacing:1px;">${teamId}</span></div>
-          <div><span style="color:#a78bfa;">Declared size:</span> ${teamSize} member(s) ${maxSize ? `(max ${maxSize})` : ''}</div>
-        </div>
-      </div>
-
-      <div style="text-align:center;margin:18px 0;">
-        <a href="${editUrl}" target="_blank" rel="noopener"
-          style="display:inline-block;background:linear-gradient(135deg,#6366f1,#a855f7);color:#ffffff;font-weight:800;font-size:13px;text-decoration:none;padding:13px 26px;border-radius:12px;">
-          Manage My Team ➔
-        </a>
-      </div>
-
-      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;">
-        New members will be confirmed if they are <strong style="color:#ffffff;">registered DATAVERSE students from
-        the same college</strong> as you. Once your member count reaches the declared size, the team is marked Complete.
-      </p>
-    </div>
-  `);
-  return sendMail({ to, subject: `DATAVERSE 2026 - Manage your ${eventTitle} team`, html });
 };
 
 const sendLoginMail = async ({ to, name }) => {
@@ -238,4 +214,4 @@ const sendLoginMail = async ({ to, name }) => {
   `);
   return sendMail({ to, subject: 'DATAVERSE 2026 - New Sign-in Alert', html });
 };
-module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail, sendTeamLinkMail };
+module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail };

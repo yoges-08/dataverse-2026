@@ -4,6 +4,7 @@ const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
 const { sendEventRegistrationMail } = require('../utils/mailer');
+const teamController = require('./teamController');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -181,6 +182,18 @@ exports.registerForEvent = async (req, res) => {
 
         if (session) await session.commitTransaction();
 
+        // Non-solo event: auto-place the registrant in a team as leader.
+        // If team creation fails the registration still stands; students can
+        // recover via auto-creation on first visit to Team Management.
+        const declaredTeamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
+        let teamCreated = false;
+        try {
+          const createdTeam = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize });
+          teamCreated = !!createdTeam;
+        } catch (teamErr) {
+          console.error('Team auto-creation failed (registration still saved):', teamErr.message);
+        }
+
         // Notify the student about their new event booking.
         sendEventRegistrationMail({
           to: student.email,
@@ -188,7 +201,8 @@ exports.registerForEvent = async (req, res) => {
           eventTitle: event.title,
           eventVenue: event.venue,
           eventDate: event.date,
-          eventTime: event.time
+          eventTime: event.time,
+          teamEnabled: teamCreated
         }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
         return res.status(201).json({
@@ -242,13 +256,23 @@ exports.registerForEvent = async (req, res) => {
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
 
+      const declaredTeamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
+      let teamCreated = false;
+      try {
+        const createdTeam = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize });
+        teamCreated = !!createdTeam;
+      } catch (teamErr) {
+        console.error('Team auto-creation failed (registration still saved):', teamErr.message);
+      }
+
       sendEventRegistrationMail({
         to: student.email,
         name: req.user?.name || student.email?.split('@')[0] || 'there',
         eventTitle: event.title,
         eventVenue: event.venue,
         eventDate: event.date,
-        eventTime: event.time
+        eventTime: event.time,
+        teamEnabled: teamCreated
       }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
       return res.status(201).json({

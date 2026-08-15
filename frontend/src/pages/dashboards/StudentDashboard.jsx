@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import CertificateModal from '../../components/CertificateModal';
+import TeamManagementTab from './TeamManagementTab';
 import {
   User, QrCode, CheckCircle2, Clock, AlertCircle, Award,
-  Calendar, MapPin, Bell, Download, ShieldCheck, Edit3, Sparkles, Home
+  Calendar, MapPin, Bell, Download, ShieldCheck, Edit3, Sparkles, Home, Users
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -17,6 +18,7 @@ export default function StudentDashboard() {
   const [showBadge, setShowBadge] = useState(false);
   const [selectedCert, setSelectedCert] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState('overview');
 
   useEffect(() => {
     loadDashboardData();
@@ -90,6 +92,36 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      {/* View switcher */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800 w-fit">
+        <button
+          onClick={() => setActiveView('overview')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+            activeView === 'overview'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Home className="w-4 h-4" />
+          <span>Overview</span>
+        </button>
+        <button
+          onClick={() => setActiveView('teams')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+            activeView === 'teams'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Team Management</span>
+        </button>
+      </div>
+
+      {activeView === 'teams' ? (
+        <TeamManagementTab />
+      ) : (
+      <>
       {/* Dashboard Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
@@ -266,6 +298,9 @@ export default function StudentDashboard() {
           certificate={selectedCert}
           onClose={() => setSelectedCert(null)}
         />
+      )}
+
+      </>
       )}
 
     </div>

@@ -124,6 +124,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/certificates', require('./routes/certificateRoutes'));
+app.use('/api/teams', require('./routes/teamRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 
