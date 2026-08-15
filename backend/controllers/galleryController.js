@@ -43,3 +43,21 @@ exports.addGalleryItem = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error adding gallery item' });
   }
 };
+
+exports.deleteGalleryItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isDbConnected()) {
+      const item = await Gallery.findByIdAndDelete(id);
+      if (!item) return res.status(404).json({ success: false, message: 'Gallery item not found' });
+      return res.status(200).json({ success: true, message: 'Gallery item deleted successfully' });
+    } else {
+      const index = mockStore.gallery.findIndex(g => g._id === id || String(g._id) === String(id));
+      if (index === -1) return res.status(404).json({ success: false, message: 'Gallery item not found' });
+      mockStore.gallery.splice(index, 1);
+      return res.status(200).json({ success: true, message: 'Gallery item deleted successfully' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting gallery item' });
+  }
+};

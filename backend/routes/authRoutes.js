@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/upload');
 const { protect } = require('../middleware/auth');
 const {
   registerStudent,
@@ -10,10 +9,7 @@ const {
   resetPassword
 } = require('../controllers/authController');
 
-router.post('/register-student', upload.fields([
-  { name: 'profilePhoto', maxCount: 1 },
-  { name: 'collegeIdCard', maxCount: 1 }
-]), registerStudent);
+router.post('/register-student', registerStudent);
 
 router.post('/login', login);
 router.get('/me', protect, getMe);
