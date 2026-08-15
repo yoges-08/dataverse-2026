@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import CertificateModal from '../../components/CertificateModal';
@@ -12,13 +12,17 @@ import API from '../../services/api';
 
 export default function StudentDashboard() {
   const { student, user, fetchMe } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [showBadge, setShowBadge] = useState(false);
   const [selectedCert, setSelectedCert] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('overview');
+  const [activeView, setActiveView] = useState(() => {
+    // Honor ?view=teams from the main-nav "Team Management" link.
+    return searchParams.get('view') === 'teams' ? 'teams' : 'overview';
+  });
 
   useEffect(() => {
     loadDashboardData();

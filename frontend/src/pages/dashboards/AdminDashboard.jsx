@@ -594,7 +594,7 @@ const loadContactMessages = async () => {
                   <p className="text-xs text-slate-400">{ev.venue} • {ev.date}</p>
                   {t ? (
                     <p className="text-[11px] text-slate-300 flex items-center space-x-2">
-                      <span className="font-bold text-white">{t.registrations || 0} registered</span>
+                      <span className="font-bold text-white">{t.total || 0} registered</span>
                       <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-[10px] font-bold text-cyan-300">{t.teams || 0} team{(t.teams || 0) !== 1 ? 's' : ''}</span>
                       <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400">{t.solo || 0} solo</span>
                     </p>

@@ -34,13 +34,20 @@ export default function Navbar() {
     { to: '/contact', label: 'Contact', end: false },
   ];
 
-  // Certificates tab is only shown to logged-in students (their own certificates).
+  // Certificates/Team Management tabs are only shown to logged-in students.
   const studentNavItems = user?.role === 'student'
-    ? [...navItems, { to: '/certificates', label: 'Certificates', end: false }]
+    ? [...navItems, { to: '/certificates', label: 'Certificates', end: false }, { to: '/dashboard/student?view=teams', label: 'Team Management', end: false }]
     : navItems;
 
   const isActive = (item) => {
     if (item.end) return location.pathname === item.to;
+    // Nav links may carry a query string (e.g. ?view=teams) to open a specific
+    // dashboard tab; match on both pathname and the query string.
+    const [path, query] = item.to.split(/[?]/);
+    if (query) {
+      return location.pathname === path &&
+        new URLSearchParams(location.search).get('view') === new URLSearchParams(query).get('view');
+    }
     return location.pathname.startsWith(item.to);
   };
 

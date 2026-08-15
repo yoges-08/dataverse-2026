@@ -26,14 +26,17 @@ exports.getAnalytics = async (req, res) => {
       const nonTechnicalEvents = await Event.countDocuments({ category: 'Non-Technical' });
 
       const events = await Event.find().select('title category currentRegistrations maxParticipants');
-      const regCounts = await Registration.aggregate([
-        {
-          $group: {
-            _id: '$event',
-            total: { $sum: 1 }
-          }
-        }
-      ]);
+      // Count unique, live registrations (a student may only ever be on one row
+      // per event). Orphaned rows (deleted students) are excluded so admin
+      // counts match what the registrants list actually shows.
+      const regEvents = await Registration.find().select('event student').lean();
+      const studentCountMap = {};
+      regEvents.forEach(r => {
+        if (!r.student) return;
+        const key = String(r.event);
+        if (!studentCountMap[key]) studentCountMap[key] = new Set();
+        studentCountMap[key].add(String(r.student));
+      });
       // Real team data — a registration counts as a team if the student is on
       // a team (2+ members) for the event. Solo seats (leader alone) are solo.
       const teams = await Team.find().select('event members').lean();
@@ -45,26 +48,30 @@ exports.getAnalytics = async (req, res) => {
         if (!teamStudentsByEvent[key]) teamStudentsByEvent[key] = new Set();
         members.forEach(m => { if (m.student) teamStudentsByEvent[key].add(String(m.student)); });
       });
-      const regEvents = await Registration.find().select('event student');
       const teamCountByEvent = {};
       regEvents.forEach(r => {
+        if (!r.student) return;
         const key = String(r.event);
-        if (teamStudentsByEvent[key] && teamStudentsByEvent[key].has(String(r.student))) {
-          teamCountByEvent[key] = (teamCountByEvent[key] || 0) + 1;
-        }
+        if (!teamStudentsByEvent[key] || !teamStudentsByEvent[key].has(String(r.student))) return;
+        // Track by Set so duplicate/orphan rows can never push teams > total.
+        if (!teamCountByEvent[key]) teamCountByEvent[key] = new Set();
+        teamCountByEvent[key].add(String(r.student));
       });
-      const regCountMap = {};
-      regCounts.forEach(r => {
-        regCountMap[String(r._id)] = { total: r.total, teams: teamCountByEvent[String(r._id)] || 0 };
+      const eventWiseRegistrations = events.map(e => {
+        const teamsCount = teamCountByEvent[String(e._id)] ? teamCountByEvent[String(e._id)].size : 0;
+        return {
+          _id: e._id,
+          title: e.title,
+          category: e.category,
+          registrations: e.currentRegistrations,
+          capacity: e.maxParticipants,
+          ...(studentCountMap[String(e._id)] ? {
+            total: studentCountMap[String(e._id)].size,
+            teams: teamsCount,
+            solo: studentCountMap[String(e._id)].size - teamsCount
+          } : { total: 0, teams: 0, solo: 0 })
+        };
       });
-      const eventWiseRegistrations = events.map(e => ({
-        _id: e._id,
-        title: e.title,
-        category: e.category,
-        registrations: e.currentRegistrations,
-        capacity: e.maxParticipants,
-        ...(regCountMap[String(e._id)] ? { total: regCountMap[String(e._id)].total, teams: regCountMap[String(e._id)].teams, solo: regCountMap[String(e._id)].total - regCountMap[String(e._id)].teams } : { total: 0, teams: 0, solo: 0 })
-      }));
 
       const collegeWiseStats = await Student.aggregate([{ $group: { _id: '$collegeName', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }]);
       const deptWiseStats = await Student.aggregate([{ $group: { _id: '$department', count: { $sum: 1 } } }, { $sort: { count: -1 } }]);
@@ -92,12 +99,31 @@ exports.getAnalytics = async (req, res) => {
         if (!teamStudentsByEvent[key]) teamStudentsByEvent[key] = new Set();
         members.forEach(m => { if (m.student) teamStudentsByEvent[key].add(String(m.student)); });
       });
+      // Count unique, live students per event — orphaned registration rows
+      // (deleted students) and duplicates are excluded so counts match the
+      // registrants list.
+      const studentSetByEvent = {};
+      mockStore.registrations.forEach(r => {
+        const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
+        if (!s) return;
+        const key = String(r.event);
+        if (!studentSetByEvent[key]) studentSetByEvent[key] = new Set();
+        studentSetByEvent[key].add(String(s._id));
+      });
       const teamCountMap = {};
+      Object.keys(studentSetByEvent).forEach(key => {
+        teamCountMap[key] = { total: studentSetByEvent[key].size, teams: 0, teamSet: null };
+      });
       mockStore.registrations.forEach(r => {
         const key = String(r.event);
-        if (!teamCountMap[key]) teamCountMap[key] = { total: 0, teams: 0 };
-        teamCountMap[key].total += 1;
-        if (teamStudentsByEvent[key] && teamStudentsByEvent[key].has(String(r.student))) teamCountMap[key].teams += 1;
+        const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
+        if (!s || !teamStudentsByEvent[key] || !teamStudentsByEvent[key].has(String(s._id))) return;
+        if (!teamCountMap[key].teamSet) teamCountMap[key].teamSet = new Set();
+        teamCountMap[key].teamSet.add(String(s._id));
+      });
+      Object.keys(teamCountMap).forEach(key => {
+        teamCountMap[key].teams = teamCountMap[key].teamSet ? teamCountMap[key].teamSet.size : 0;
+        delete teamCountMap[key].teamSet;
       });
       const eventWiseRegistrations = mockStore.events.map(e => {
         const c = teamCountMap[String(e._id)] || { total: 0, teams: 0 };
@@ -238,13 +264,28 @@ exports.deleteStudent = async (req, res) => {
     if (isDbConnected()) {
       const student = await Student.findById(req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+      // Decrement each affected event's live counter so admin counts stay real.
+      const regs = await Registration.find({ student: student._id });
       await Registration.deleteMany({ student: student._id });
+      for (const reg of regs) {
+        await Event.updateOne(
+          { _id: reg.event, currentRegistrations: { $gt: 0 } },
+          { $inc: { currentRegistrations: -1 } }
+        );
+      }
       await User.findByIdAndDelete(student.user);
       await Student.findByIdAndDelete(student._id);
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     } else {
       const student = mockStore.students.find(s => s._id === req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+      // Decrement the affected events' counters before removing their registrations.
+      mockStore.registrations
+        .filter(r => String(r.student) === String(req.params.id))
+        .forEach(r => {
+          const ev = mockStore.events.find(e => e._id === r.event || String(e._id) === String(r.event));
+          if (ev && ev.currentRegistrations > 0) ev.currentRegistrations -= 1;
+        });
       mockStore.students = mockStore.students.filter(s => s._id !== req.params.id);
       mockStore.registrations = mockStore.registrations.filter(r => String(r.student) !== String(req.params.id));
       if (student.user) {

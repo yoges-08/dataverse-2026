@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
+const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const { sendEventRegistrationMail } = require('../utils/mailer');
 const teamController = require('./teamController');
@@ -57,27 +58,34 @@ exports.getEventById = async (req, res) => {
           if (m.student) teamByStudent.set(String(m.student._id || m.student), t);
         });
       });
-      const enriched = registrations.map(r => {
-        const t = r.student ? teamByStudent.get(String(r.student._id)) : undefined;
-        return {
-          ...r.toObject(),
-          team: t ? {
-            teamId: t.teamId,
-            teamSize: getEffectiveTeamLimit(event),
-            memberCount: (t.members || []).length,
-            members: (t.members || []).map(m => {
-              const s = m.student || {};
-              return {
-                studentId: String(s._id || ''),
-                name: (s.user && s.user.name) || s.name || s.email || '',
-                registerNumber: s.registerNumber || 'N/A',
-                department: s.department || '',
-                year: s.year || ''
-              };
-            })
-          } : null
-        };
-      });
+      // Drop registrations whose linked student could not be populated
+      // (deleted accounts / orphaned rows) or that appear more than once for
+      // the same student, so counts and rows always match real students.
+      const seenStudents = new Set();
+      const enriched = registrations
+        .filter(r => r.student && !seenStudents.has(String(r.student._id)))
+        .map(r => {
+          seenStudents.add(String(r.student._id));
+          const t = teamByStudent.get(String(r.student._id));
+          return {
+            ...r.toObject(),
+            team: t ? {
+              teamId: t.teamId,
+              teamSize: getEffectiveTeamLimit(event),
+              memberCount: (t.members || []).length,
+              members: (t.members || []).map(m => {
+                const s = m.student || {};
+                return {
+                  studentId: String(s._id || ''),
+                  name: (s.user && s.user.name) || s.name || s.email || '',
+                  registerNumber: s.registerNumber || 'N/A',
+                  department: s.department || '',
+                  year: s.year || ''
+                };
+              })
+            } : null
+          };
+        });
       return res.status(200).json({ success: true, event, registrations: enriched });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
@@ -88,13 +96,17 @@ exports.getEventById = async (req, res) => {
       teams.forEach(t => {
         (t.members || []).forEach(m => { if (m.student) teamByStudent.set(String(m.student), t); });
       });
-      const populated = regs.map(r => {
+      const populated = [];
+      const seenStudents = new Set();
+      regs.forEach(r => {
         const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
-        const u = s ? mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user)) : null;
+        if (!s || seenStudents.has(String(s._id))) return; // skip orphaned/duplicate rows
+        seenStudents.add(String(s._id));
+        const u = mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user));
         const t = teamByStudent.get(String(r.student));
-        return {
+        populated.push({
           ...r,
-          student: s ? { ...s, user: u ? { name: u.name } : { name: s.email } } : null,
+          student: { ...s, user: u ? { name: u.name } : { name: s.email } },
           team: t ? {
             teamId: t.teamId,
             teamSize: getEffectiveTeamLimit(event),
@@ -111,7 +123,7 @@ exports.getEventById = async (req, res) => {
               };
             })
           } : null
-        };
+        });
       });
       return res.status(200).json({ success: true, event, registrations: populated });
     }
