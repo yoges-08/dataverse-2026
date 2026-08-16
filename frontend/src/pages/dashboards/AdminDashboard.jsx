@@ -1054,57 +1054,70 @@ const loadContactMessages = async () => {
                 <p>{detailError}</p>
                 <p className="text-[10px] text-slate-500">If this keeps happening, check the server logs — the registrations endpoint returned an error.</p>
               </div>
-            ) : eventDetail.registrations.length === 0 ? (
+            ) : ((eventDetail.groups || eventDetail.registrations).length) === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/50 rounded-xl border border-slate-800">
                 No students have registered for this event yet.
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs font-bold text-white">{eventDetail.registrations.length} student(s) registered</p>
                 {(() => {
-                  const shownTeams = new Set();
-                  return eventDetail.registrations.map((reg, idx) => {
-                    const s = reg.student;
-                    const team = reg?.team;
-                    const hasTeam = team && team.members && team.members.length > 1;
-                    const isFirstForTeam = hasTeam && !shownTeams.has(team.teamId);
-                    if (hasTeam) shownTeams.add(team.teamId);
+                  const grouped = eventDetail.groups || eventDetail.registrations;
+                  const studentCount = grouped.reduce((n, g) => n + (g.kind === 'team' ? (g.registrations?.length || 1) : 1), 0);
+                  return (
+                    <>
+                <p className="text-xs font-bold text-white">{studentCount} student(s) registered</p>
+                {grouped.map((g, idx) => {
+                  if (g.kind === 'team') {
+                    const team = g.team;
                     return (
-                      <div key={reg._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                      <div key={g._id || idx} className="p-3 bg-cyan-950/40 rounded-xl border border-cyan-800/60">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <span className="font-bold text-white text-sm block">{getStudentName(s, 'Unknown')}</span>
-                            <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
-                          </div>
-                          <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
-                        </div>
-                        {hasTeam && !isFirstForTeam ? (
-                          <div className="mt-2 pt-2 border-t border-slate-800">
-                            <p className="text-[10px] text-cyan-400/70">Member of team shown above ({team.teamId})</p>
-                          </div>
-                        ) : hasTeam ? (
-                          <div className="mt-2 pt-2 border-t border-slate-800">
-                            <p className="text-[10px] uppercase tracking-wide font-bold text-cyan-400 mb-1">
-                              Team ({team.members.length} member{team.members.length > 1 ? 's' : ''})
+                            <p className="text-[10px] uppercase tracking-wide font-bold text-cyan-400">
+                              Team ({team.memberCount} member{team.memberCount > 1 ? 's' : ''})
                             </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {team.members.map((tm, i) => (
-                                <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
-                                  {tm.name}
-                                  {tm.year && <span className="text-cyan-300/70">{tm.department ? `${tm.department} • Yr ${tm.year}` : `Yr ${tm.year}`}</span>}
-                                </span>
-                              ))}
+                            <span className="text-[10px] text-cyan-300/60 font-mono">{team.teamId}</span>
+                          </div>
+                          <span className="shrink-0 text-[10px] font-bold text-cyan-300">{g.registrations?.length || 0} registered</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {team.members.map((tm, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
+                              {tm.name}
+                              {tm.year && <span className="text-cyan-300/70">{tm.department ? `${tm.department} • Yr ${tm.year}` : `Yr ${tm.year}`}</span>}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-cyan-800/50 space-y-1">
+                          {(g.registrations || []).map(r => (
+                            <div key={r._id || idx} className="flex items-center justify-between gap-3 text-[10px]">
+                              <span className="font-bold text-white">{getStudentName(r.student, 'Unknown')}</span>
+                              <span className="font-mono text-indigo-300 shrink-0">{r.student?.symposiumCode || r.student?.registerNumber}</span>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
-                            <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">No teammates added</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400">Solo</span>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                       </div>
                     );
-                  });
+                  }
+                  const s = g.student;
+                  return (
+                    <div key={g._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="font-bold text-white text-sm block">{getStudentName(s, 'Unknown')}</span>
+                          <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
+                        </div>
+                        <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">No teammates added</span>
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-400">Solo</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                    </>
+                  );
                 })()}
               </div>
             )}

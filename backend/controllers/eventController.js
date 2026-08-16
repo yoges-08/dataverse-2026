@@ -105,7 +105,25 @@ exports.getEventById = async (req, res) => {
             } : null
           };
         });
-      return res.status(200).json({ success: true, event, registrations: enriched });
+      // Grouped rows for the admin Registrants modal: every distinct team is
+      // emitted exactly ONCE (with all its members), plus one row per solo
+      // student. With teams keyed by teamId here, a shared team physically
+      // cannot render twice no matter what the client does.
+      const teamGroups = new Map();
+      const groups = [];
+      enriched.forEach(row => {
+        const t = row.team;
+        if (t && t.memberCount > 1) {
+          if (!teamGroups.has(t.teamId)) {
+            teamGroups.set(t.teamId, { _id: t.teamId, kind: 'team', team: t, registrations: [] });
+          }
+          teamGroups.get(t.teamId).registrations.push(row);
+        } else {
+          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null });
+        }
+      });
+      teamGroups.forEach((g, teamId) => groups.push(g));
+      return res.status(200).json({ success: true, event, registrations: enriched, groups });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
@@ -161,7 +179,24 @@ exports.getEventById = async (req, res) => {
           } : null
         });
       });
-      return res.status(200).json({ success: true, event, registrations: populated });
+      // Grouped rows for the admin Registrants modal: every distinct team is
+      // emitted exactly ONCE (with all its members), plus one row per solo
+      // student — a shared team physically cannot render twice.
+      const teamGroups = new Map();
+      const groups = [];
+      populated.forEach(row => {
+        const t = row.team;
+        if (t && t.memberCount > 1) {
+          if (!teamGroups.has(t.teamId)) {
+            teamGroups.set(t.teamId, { _id: t.teamId, kind: 'team', team: t, registrations: [] });
+          }
+          teamGroups.get(t.teamId).registrations.push(row);
+        } else {
+          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null });
+        }
+      });
+      teamGroups.forEach((g) => groups.push(g));
+      return res.status(200).json({ success: true, event, registrations: populated, groups });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching event details' });
