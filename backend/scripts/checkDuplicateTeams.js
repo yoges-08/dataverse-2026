@@ -8,7 +8,27 @@
 // the data is clean and the issue is elsewhere (stale cache / fresh duplicate).
 const mongoose = require('mongoose');
 const Team = require('../models/Team');
+const dns = require('dns');
 require('dotenv').config();
+
+// Some LAN/corporate DNS servers refuse Node's SRV lookups (ECONNREFUSED) that
+// mongodb+srv:// URIs need, while the OS resolver still works. Detect that and
+// fall back to public resolvers so the script can connect.
+function ensureSrvDns() {
+  return new Promise(resolve => {
+    const host = (process.env.MONGODB_URI || '').match(/@([^/]+)/)?.[1];
+    if (!host) return resolve();
+    dns.resolveSrv('_mongodb._tcp.' + host, err => {
+      if (err && (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND')) {
+        try {
+          dns.setServers(['1.1.1.1', '8.8.8.8']);
+          console.warn('[dns] system resolver refused SRV lookup; using public resolvers');
+        } catch (e) { /* ignore */ }
+      }
+      resolve();
+    });
+  });
+}
 
 async function run() {
   const uri = process.env.MONGODB_URI;
@@ -16,6 +36,7 @@ async function run() {
     console.error('MONGODB_URI is not set. Copy backend/.env.example to backend/.env and fill it in first.');
     process.exit(1);
   }
+  await ensureSrvDns();
   await mongoose.connect(uri);
 
   const teams = await Team.find().lean();
