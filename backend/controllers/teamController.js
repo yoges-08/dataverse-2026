@@ -107,6 +107,14 @@ const nextTeamId = async (event) => {
 exports.createTeamForRegistration = async ({ event, leaderStudent, session }) => {
   const limit = getEffectiveTeamLimit(event);
   if (limit <= 0) return null; // solo-only event
+
+  // Idempotency: if the student already has a team for this event, return it
+  // instead of creating a second one. This closes the auto-create-during-
+  // registration vs auto-create-on-page-load race at the course-grained level;
+  // the unique (event + member) DB index is the fine-grained backstop below.
+  const existing = await findTeamForStudent(event._id, leaderStudent._id);
+  if (existing) return existing;
+
   const teamId = await nextTeamId(event);
   const doc = {
     teamId,
@@ -118,11 +126,34 @@ exports.createTeamForRegistration = async ({ event, leaderStudent, session }) =>
     members: [{ student: leaderStudent._id, addedAt: new Date() }]
   };
   let team;
-  if (isDbConnected()) {
-    team = await Team.create(doc, session ? { session } : undefined);
-  } else {
-    team = { _id: 't' + (mockStore.teams.length + 1), ...doc };
-    mockStore.teams.push(team);
+  try {
+    if (isDbConnected()) {
+      team = await Team.create(doc, session ? { session } : undefined);
+    } else {
+      // Mirror the DB's unique (event, member) constraint in the mock so the
+      // two stores can't diverge: a student already on ANY team for this event
+      // (including two simultaneous creates of the same student) is rejected.
+      const collides = mockStore.teams.some(t =>
+        String(t.event) === String(event._id) &&
+        (t.members || []).some(m => String(m.student) === String(leaderStudent._id))
+      );
+      if (collides) {
+        const simErr = new Error('E11000 duplicate key');
+        simErr.code = 11000;
+        throw simErr;
+      }
+      team = { _id: 't' + (mockStore.teams.length + 1), ...doc };
+      mockStore.teams.push(team);
+    }
+  } catch (createErr) {
+    // Two requests created the same team at the same instant; the DB's
+    // unique (event, members.student) index rejected the loser. Return the
+    // team that already won instead of failing the whole request.
+    if (createErr.code === 11000) {
+      const winner = await findTeamForStudent(event._id, leaderStudent._id);
+      if (winner) return winner;
+    }
+    throw createErr;
   }
   team.status = recomputeStatus(team, event);
   if (isDbConnected()) await (session ? team.save({ session }) : team.save());
@@ -193,14 +224,15 @@ const isStudentInAnyTeamForEvent = async (studentId, eventId, excludeTeamId) => 
 
 // When a student joins another team, their own auto-created solo team is no
 // longer needed — dissolve it so nobody is tracked in two teams for one event.
-const dissolveAbandonedSoloTeam = async (studentId, eventId, keepTeamId) => {
+// Must run BEFORE the member-push rides the unique (event, member) index.
+const dissolveAbandonedSoloTeam = async (studentId, eventId, keepTeamId, session) => {
   if (isDbConnected()) {
     await Team.deleteMany({
       event: eventId,
       _id: { $ne: keepTeamId },
       'members.student': studentId,
       $expr: { $lte: [{ $size: '$members' }, 1] }
-    });
+    }, session ? { session } : undefined);
     return;
   }
   const idx = mockStore.teams.findIndex(t =>
@@ -492,16 +524,31 @@ exports.addTeamMember = async (req, res) => {
             return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
           }
 
-          const updated = await Team.findOneAndUpdate(
-            {
-              event: eventId,
-              _id: team._id,
-              'members.student': { $ne: teammate._id },
-              $expr: { $lt: [{ $size: '$members' }, teamLimit] }
-            },
-            { $push: { members: { student: teammate._id, addedAt: new Date() } } },
-            { new: true, session }
-          );
+          // Drop the newcomer's auto-created solo seat FIRST, inside the txn,
+          // so the unique (event + member) index accepts the push below.
+          await dissolveAbandonedSoloTeam(teammate._id, eventId, team._id, session);
+
+          let updated;
+          try {
+            updated = await Team.findOneAndUpdate(
+              {
+                event: eventId,
+                _id: team._id,
+                'members.student': { $ne: teammate._id },
+                $expr: { $lt: [{ $size: '$members' }, teamLimit] }
+              },
+              { $push: { members: { student: teammate._id, addedAt: new Date() } } },
+              { new: true, session }
+            );
+          } catch (pushErr) {
+            // The DB-level unique (event, member) index rejected the push: a
+            // concurrent request already placed this student elsewhere.
+            await session.abortTransaction();
+            if (pushErr.code === 11000) {
+              return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
+            }
+            throw pushErr;
+          }
           if (!updated) {
             await session.abortTransaction();
             return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
@@ -522,6 +569,10 @@ exports.addTeamMember = async (req, res) => {
 
           for (const stale of staleTeams) {
             const otherMembers = (stale.members || []).filter(m => String(m.student) !== String(teammate._id));
+            // Delete the stale team FIRST so its (event + member) index entries
+            // are freed before its leftover members are merged into our team —
+            // otherwise the unique index would reject the merge.
+            await Team.deleteOne({ _id: stale._id }).session(session);
             if (otherMembers.length > 0 && (team.members.length + otherMembers.length) <= teamLimit) {
               for (const m of otherMembers) {
                 if (!team.members.some(tm => String(tm.student) === String(m.student))) {
@@ -531,7 +582,6 @@ exports.addTeamMember = async (req, res) => {
               team.status = recomputeStatus(team, event);
               await team.save({ session });
             }
-            await Team.deleteOne({ _id: stale._id }).session(session);
           }
 
           await session.commitTransaction();
@@ -558,17 +608,31 @@ exports.addTeamMember = async (req, res) => {
       // No transactions available. Use an atomic claim + broad sweep instead of
       // check-then-act, so a concurrent mutual-add still can't leave duplicates.
 
+      // Step 0: drop the newcomer's auto-created solo seat first, so the unique
+      // (event + member) index accepts the atomic claim below.
+      await dissolveAbandonedSoloTeam(teammate._id, eventId, team._id);
+
       // Step 1: atomically add the teammate to THIS team (single atomic write).
-      const updated = await Team.findOneAndUpdate(
-        {
-          event: eventId,
-          _id: team._id,
-          'members.student': { $ne: teammate._id },
-          $expr: { $lt: [{ $size: '$members' }, teamLimit] }
-        },
-        { $push: { members: { student: teammate._id, addedAt: new Date() } } },
-        { new: true }
-      );
+      let updated;
+      try {
+        updated = await Team.findOneAndUpdate(
+          {
+            event: eventId,
+            _id: team._id,
+            'members.student': { $ne: teammate._id },
+            $expr: { $lt: [{ $size: '$members' }, teamLimit] }
+          },
+          { $push: { members: { student: teammate._id, addedAt: new Date() } } },
+          { new: true }
+        );
+      } catch (pushErr) {
+        // Unique (event + member) index rejected the claim: the student was
+        // concurrently placed on another team for this event.
+        if (pushErr.code === 11000) {
+          return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
+        }
+        throw pushErr;
+      }
       if (!updated) {
         return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
       }

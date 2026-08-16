@@ -21,6 +21,12 @@ const teamSchema = new mongoose.Schema({
 // A student can only be on one team per event (used for leader/creator id).
 teamSchema.index({ event: 1, leader: 1 }, { unique: true });
 
+// DB-level backstop for the creation race: the SAME student can never appear
+// as a member of two teams for the same event, no matter how many requests
+// pass their existence check before either insert commits. The second insert
+// fails with E11000 and callers return the already-existing team instead.
+teamSchema.index({ event: 1, 'members.student': 1 }, { unique: true });
+
 // Safety net: never persist the same student twice in a team.
 teamSchema.pre('save', function (next) {
   if (Array.isArray(this.members)) {

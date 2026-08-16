@@ -75,6 +75,12 @@ async function run() {
   }
 
   console.log('Done.');
+  // Build the unique (event + member) index NOW that duplicates are gone.
+  // A unique index cannot be created while violate rows still exist, so this
+  // must run against a live DB before/with the new model — callers rely on it
+  // as the final backstop against the simultaneous-create race.
+  await Team.syncIndexes();
+  console.log('Synced indexes (unique event+member constraint active).');
   await mongoose.disconnect();
 }
 
