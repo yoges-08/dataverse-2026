@@ -104,7 +104,7 @@ const nextTeamId = async (event) => {
 
 // ---- Create team on registration ---------------------------------------------
 
-exports.createTeamForRegistration = async ({ event, leaderStudent }) => {
+exports.createTeamForRegistration = async ({ event, leaderStudent, session }) => {
   const limit = getEffectiveTeamLimit(event);
   if (limit <= 0) return null; // solo-only event
   const teamId = await nextTeamId(event);
@@ -119,13 +119,13 @@ exports.createTeamForRegistration = async ({ event, leaderStudent }) => {
   };
   let team;
   if (isDbConnected()) {
-    team = await Team.create(doc);
+    team = await Team.create(doc, session ? { session } : undefined);
   } else {
     team = { _id: 't' + (mockStore.teams.length + 1), ...doc };
     mockStore.teams.push(team);
   }
   team.status = recomputeStatus(team, event);
-  if (isDbConnected()) await team.save();
+  if (isDbConnected()) await (session ? team.save({ session }) : team.save());
   return team;
 };
 
@@ -272,8 +272,76 @@ exports.getMyTeamForEvent = async (req, res) => {
     let team = await findTeamForStudent(eventId, student._id);
     if (!team) {
       // Safe recovery: an existing (pre-team) registration had no Team created.
-      // Auto-place the registrant into a solo team as leader.
-      team = await exports.createTeamForRegistration({ event, leaderStudent: student });
+      // Auto-place the registrant into a solo team as leader. Re-check after
+      // (re)creation so a concurrent addTeamMember cannot leave a stray
+      // duplicate solo team behind.
+      if (isDbConnected() && txSupported) {
+        const session = await mongoose.startSession();
+        try {
+          session.startTransaction();
+
+          // Re-check INSIDE the transaction — closes the race against a
+          // concurrent addTeamMember that might be committing right now.
+          team = await Team.findOne({
+            event: eventId,
+            $or: [{ leader: student._id }, { 'members.student': student._id }]
+          }).session(session);
+
+          if (!team) {
+            team = await exports.createTeamForRegistration({ event, leaderStudent: student, session });
+          }
+
+          await session.commitTransaction();
+        } catch (txErr) {
+          await session.abortTransaction();
+
+          // Probe once: transactions may be unsupported on shared Atlas tiers.
+          if (!txProbeDone && /transaction|replica set|not supported|no such command|Transaction numbers/i.test(txErr.message || '')) {
+            txSupported = false;
+            txProbeDone = true;
+            console.warn('MongoDB transactions not available for team recovery; using best-effort path.');
+          }
+          if (txSupported) throw txErr;
+          // Fall through to the best-effort recovery below.
+        } finally {
+          session.endSession();
+        }
+      }
+
+      if (!team) {
+        // Fallback (no transactions): re-check right before creating, then
+        // AGAIN right after, and prefer whichever team actually has the
+        // student as a real (2+) member if both exist.
+        team = await findTeamForStudent(eventId, student._id);
+        if (!team) {
+          team = await exports.createTeamForRegistration({ event, leaderStudent: student });
+          // A real team may have formed concurrently while we created — if so,
+          // discard the stray solo team we just made and use the real one.
+          const maybeTeams = isDbConnected()
+            ? await Team.find({
+                event: eventId,
+                _id: { $ne: team._id },
+                'members.student': student._id,
+                $expr: { $gt: [{ $size: '$members' }, 1] }
+              })
+            : mockStore.teams.filter(t =>
+                String(t.event) === String(eventId) &&
+                String(t._id) !== String(team._id) &&
+                (t.members || []).some(m => String(m.student) === String(student._id)) &&
+                (t.members || []).length > 1
+              );
+          const maybeReal = (Array.isArray(maybeTeams) ? maybeTeams[0] : null);
+          if (maybeReal) {
+            if (isDbConnected()) {
+              await Team.deleteOne({ _id: team._id });
+            } else {
+              const idx = mockStore.teams.findIndex(t => String(t._id) === String(team._id));
+              if (idx !== -1) mockStore.teams.splice(idx, 1);
+            }
+            team = maybeReal;
+          }
+        }
+      }
     }
     const full = await fetchTeamForResponse(team);
     return res.status(200).json({ success: true, team: serializeTeam(full, event) });
@@ -478,6 +546,7 @@ exports.addTeamMember = async (req, res) => {
         // Downgrade to the best-effort path below instead of failing.
         if (!txProbeDone && /transaction|replica set|not supported|no such command|Transaction numbers/i.test(txErr.message || '')) {
           txSupported = false;
+          txProbeDone = true;
           console.warn('MongoDB transactions not available for team adds; using best-effort path.');
         }
         if (txSupported) throw txErr;
@@ -486,9 +555,10 @@ exports.addTeamMember = async (req, res) => {
     }
 
     if (isDbConnected() && !txSupported) {
-      // Best-effort atomic update (no transactions): adds the teammate only if
-      // they are not already a member and there is capacity. Desired duplicate
-      // protection on clusters without transactions is best-effort.
+      // No transactions available. Use an atomic claim + broad sweep instead of
+      // check-then-act, so a concurrent mutual-add still can't leave duplicates.
+
+      // Step 1: atomically add the teammate to THIS team (single atomic write).
       const updated = await Team.findOneAndUpdate(
         {
           event: eventId,
@@ -505,6 +575,39 @@ exports.addTeamMember = async (req, res) => {
       team = updated;
       team.status = recomputeStatus(team, event);
       await team.save();
+
+      // Step 2: sweep for ANY other team (not just size <= 1) that now also
+      // contains the teammate, and resolve the conflict deterministically:
+      // the team with the LOWER _id (i.e. created first) wins and keeps the
+      // student; every later team gets the student pulled back out.
+      const staleTeams = await Team.find({
+        event: eventId,
+        _id: { $ne: team._id },
+        'members.student': teammate._id
+      });
+
+      for (const stale of staleTeams) {
+        const teamIsOlder = String(team._id) < String(stale._id) ||
+          (team.createdAt && stale.createdAt && new Date(team.createdAt) < new Date(stale.createdAt));
+
+        if (teamIsOlder || (stale.members || []).length <= 1) {
+          // Our team keeps the student; remove them from (or delete) the stale one.
+          const remaining = (stale.members || []).filter(m => String(m.student) !== String(teammate._id));
+          if (remaining.length === 0) {
+            await Team.deleteOne({ _id: stale._id });
+          } else {
+            await Team.updateOne({ _id: stale._id }, { $set: { members: remaining } });
+          }
+        } else {
+          // The other team is older and has other members — it wins the race.
+          // Pull the teammate back out of OUR team instead, so they end up in
+          // exactly one place (the older team), and re-fetch it as the result.
+          team.members = team.members.filter(m => String(m.student) !== String(teammate._id));
+          team.status = recomputeStatus(team, event);
+          await team.save();
+          team = stale;
+        }
+      }
     }
 
     if (!isDbConnected()) {

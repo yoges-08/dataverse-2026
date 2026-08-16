@@ -310,6 +310,7 @@ exports.registerForEvent = async (req, res) => {
         // index-based path so shared Atlas tiers keep working.
         if (!txProbeDone && /transaction|replica set|not supported/i.test(err.message || '')) {
           txSupported = false;
+          txProbeDone = true;
           console.warn('MongoDB transactions not available; using index-based registration fallback.');
         }
         throw err;
