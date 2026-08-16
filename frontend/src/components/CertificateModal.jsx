@@ -157,14 +157,18 @@ export default function CertificateModal({ certificate, onClose }) {
                     {theme.ribbon}
                   </div>
 
-                  {/* College header */}
-                  <div className="space-y-1 mb-4">
-                    <span className="text-[11px] uppercase font-bold tracking-[0.22em]" style={{ color: theme.accent }}>
-                      Anjalai Ammal Mahalingam Engineering College, Kovilvenni
-                    </span>
-                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
-                      Department of Artificial Intelligence & Data Science
-                    </p>
+                  {/* College header with flanking emblems */}
+                  <div className="flex items-center justify-center gap-6 mb-4">
+                    <img src="/cert-left.png" alt="" className="h-14 w-14 object-contain shrink-0" />
+                    <div className="space-y-1">
+                      <span className="text-[11px] uppercase font-bold tracking-[0.22em]" style={{ color: theme.accent }}>
+                        Anjalai Ammal Mahalingam Engineering College, Kovilvenni
+                      </span>
+                      <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+                        Department of Artificial Intelligence & Data Science
+                      </p>
+                    </div>
+                    <img src="/cert-right.png" alt="" className="h-14 w-14 object-contain shrink-0" />
                   </div>
 
                   {/* Title */}

@@ -314,11 +314,9 @@ export default function Home() {
                 <span className="text-slate-200 font-bold text-base block">Organizer Members</span>
                 <ul className="space-y-2 text-sm text-slate-400">
                   <li>
-                    <span className="font-semibold text-slate-300">B. Yogeswaran:</span>{' '}
                     <a href="tel:+919791656236" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9791656236</a>
                   </li>
                   <li>
-                    <span className="font-semibold text-slate-300">Kaleeswaran A:</span>{' '}
                     <a href="tel:+919489038346" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9489038346</a>
                   </li>
                 </ul>

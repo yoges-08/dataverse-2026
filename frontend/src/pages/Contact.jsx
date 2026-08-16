@@ -146,8 +146,7 @@ export default function Contact() {
                   <span className="font-bold text-white block">Symposium Coordinator</span>
                   <span className="text-slate-400">Dr. K. Jayanthi</span>
                   <span className="text-slate-400 block">9994718221</span>
-                  <span className="font-bold text-white block mt-1">Organizer Members</span>
-                  <span className="text-slate-400">9791656236 / 9489038346</span>
+                  <span className="text-slate-400 block">9791656236 / 9489038346</span>
                 </div>
               </div>
             </div>
