@@ -198,6 +198,28 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             </div>
           )}
 
+          {/* NovaSpeak paper submission notice */}
+          {event.title === 'NovaSpeak' && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2">
+              <FileText className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                <span className="font-bold">Paper Submission:</span> After registering, send your paper presentation to{' '}
+                <a href="mailto:novaspeak.aamec26@gmail.com" className="font-bold underline hover:text-rose-200">novaspeak.aamec26@gmail.com</a>
+              </span>
+            </div>
+          )}
+
+          {/* Viral Vision reel submission notice */}
+          {event.title === 'Viral Vision' && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2">
+              <FileText className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                <span className="font-bold">Reel Submission:</span> After registering, send your reels to this number{' '}
+                <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>
+              </span>
+            </div>
+          )}
+
           {/* Team Management notice */}
           <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-start space-x-2">
             <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
