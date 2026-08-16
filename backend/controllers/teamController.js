@@ -791,6 +791,52 @@ exports.removeTeamMember = async (req, res) => {
   }
 };
 
+// ---- Cleanup on student deletion ---------------------------------------------
+// When a Student record is deleted (admin action), any Team referencing that
+// student must be cleaned up too -- otherwise a permanently-deleted student's
+// id is left stuck inside team.members / team.leader forever, with no way to
+// remove it through the normal (session-authorized) team routes since the
+// student it would authenticate as no longer exists.
+exports.removeStudentFromAllTeams = async (studentId, session) => {
+  if (isDbConnected()) {
+    const resTeams = await Team.find({ 'members.student': studentId }, null, session ? { session } : undefined);
+    for (const resTeam of resTeams) {
+      resTeam.members = (resTeam.members || []).filter(m => String(m.student) !== String(studentId));
+
+      if (resTeam.members.length === 0) {
+        // No members left at all -- nothing meaningful to keep.
+        await Team.deleteOne({ _id: resTeam._id }, session ? { session } : undefined);
+        continue;
+      }
+
+      if (String(resTeam.leader) === String(studentId)) {
+        // Re-point the internal leader/creator reference at the oldest
+        // remaining member, same rule used in removeTeamMember.
+        const oldestRes = [...resTeam.members].sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0];
+        resTeam.leader = oldestRes.student;
+      }
+
+      const event = await Event.findById(resTeam.event).session(session || null);
+      resTeam.status = recomputeStatus(resTeam, event);
+      await (session ? resTeam.save({ session }) : resTeam.save());
+    }
+  } else {
+    const remaining = [];
+    for (const team of mockStore.teams) {
+      team.members = (team.members || []).filter(m => String(m.student) !== String(studentId));
+      if (team.members.length === 0) continue; // drop empty teams
+      if (String(team.leader) === String(studentId)) {
+        const oldest = [...team.members].sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0];
+        team.leader = oldest.student;
+      }
+      const event = resolveEventMock(team.event);
+      team.status = recomputeStatus(team, event);
+      remaining.push(team);
+    }
+    mockStore.teams = remaining;
+  }
+};
+
 // ---- Shared helpers for event registration --------------------------------------
 
 exports.getEffectiveTeamLimit = getEffectiveTeamLimit;

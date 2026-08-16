@@ -9,6 +9,7 @@ const Attendance = require('../models/Attendance');
 const Certificate = require('../models/Certificate');
 const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
+const teamController = require('./teamController');
 const { sendApprovalMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
@@ -273,6 +274,7 @@ exports.deleteStudent = async (req, res) => {
           { $inc: { currentRegistrations: -1 } }
         );
       }
+      await teamController.removeStudentFromAllTeams(student._id);
       await User.findByIdAndDelete(student.user);
       await Student.findByIdAndDelete(student._id);
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
@@ -288,6 +290,7 @@ exports.deleteStudent = async (req, res) => {
         });
       mockStore.students = mockStore.students.filter(s => s._id !== req.params.id);
       mockStore.registrations = mockStore.registrations.filter(r => String(r.student) !== String(req.params.id));
+      await teamController.removeStudentFromAllTeams(req.params.id);
       if (student.user) {
         mockStore.users = mockStore.users.filter(u => String(u._id) !== String(student.user));
       }
