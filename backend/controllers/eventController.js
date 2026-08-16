@@ -6,6 +6,7 @@ const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const { sendEventRegistrationMail } = require('../utils/mailer');
 const teamController = require('./teamController');
+const classifyTxError = teamController.classifyTxError;
 
 const getEffectiveTeamLimit = teamController.getEffectiveTeamLimit;
 
@@ -306,9 +307,14 @@ exports.registerForEvent = async (req, res) => {
         if (err && err.code === 11000) {
           return res.status(400).json({ success: false, message: 'Already registered for this event' });
         }
-        // Probe once: if transactions are unsupported, fall back to the
-        // index-based path so shared Atlas tiers keep working.
-        if (!txProbeDone && /transaction|replica set|not supported/i.test(err.message || '')) {
+        // Probe once: only a genuine "no replica set" error disables
+        // transactions — a transient write conflict means they ARE working,
+        // so the loser should retry rather than downgrade the whole process.
+        const txKind = classifyTxError(err);
+        if (txKind === 'transient') {
+          return res.status(409).json({ success: false, message: 'Please try again — a concurrent update was in progress.' });
+        }
+        if (!txProbeDone && txKind === 'unsupported') {
           txSupported = false;
           txProbeDone = true;
           console.warn('MongoDB transactions not available; using index-based registration fallback.');

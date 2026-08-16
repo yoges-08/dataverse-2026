@@ -13,6 +13,29 @@ const isDbConnected = () => mongoose.connection.readyState === 1;
 let txSupported = true;
 let txProbeDone = false;
 
+// Classify an error thrown by startTransaction/commitTransaction. The old
+// regex-based probe misread normal concurrent write conflicts (whose message
+// contains the word "transaction") as "transactions unsupported" and then
+// permanently downgraded every add for the life of the process. Instead:
+//  - 'transient'    -> TransientTransactionError write conflict. This is the
+//                      NORMAL result of two adds racing; transactions are in
+//                      fact working. Never downgrade, and let the request
+//                      recover/retry instead of dying.
+//  - 'unsupported'  -> genuine no-replica-set deployment (IllegalOperation /
+//                      specific code-20 text). Only this downgrades the probe.
+//  - 'other'        -> real unexpected error, rethrow.
+const classifyTxError = (err) => {
+  if (!err) return 'other';
+  if (Array.isArray(err.errorLabels) && err.errorLabels.includes('TransientTransactionError')) {
+    return 'transient';
+  }
+  if (err.code === 20 || /Transaction numbers are only allowed on a replica set member or mongos/i.test(err.message || '')) {
+    return 'unsupported';
+  }
+  return 'other';
+};
+exports.classifyTxError = classifyTxError;
+
 // 0 (or missing) means solo-only. When positive it is the maximum TOTAL team
 // size (leader included), e.g. 4 = leader + up to 3 teammates.
 const getEffectiveTeamLimit = (event) =>
@@ -327,13 +350,24 @@ exports.getMyTeamForEvent = async (req, res) => {
         } catch (txErr) {
           await session.abortTransaction();
 
-          // Probe once: transactions may be unsupported on shared Atlas tiers.
-          if (!txProbeDone && /transaction|replica set|not supported|no such command|Transaction numbers/i.test(txErr.message || '')) {
-            txSupported = false;
-            txProbeDone = true;
-            console.warn('MongoDB transactions not available for team recovery; using best-effort path.');
+          // A transient write conflict is NORMAL under concurrent recovery —
+          // it means a racing addTeamMember committed first, which is fine.
+          // Only a genuine "no replica set" error may disable transactions.
+          const txKind = classifyTxError(txErr);
+          if (txKind === 'transient') {
+            // Don't downgrade; fall through to the best-effort recovery below,
+            // which re-checks and prefers a real (2+) team over a stray solo.
+            // Drop any in-memory team that was created-but-not-committed so the
+            // fallback re-queries and starts from a clean slate.
+            team = null;
+          } else {
+            if (!txProbeDone && txKind === 'unsupported') {
+              txSupported = false;
+              txProbeDone = true;
+              console.warn('MongoDB transactions not available for team recovery; using best-effort path.');
+            }
+            if (txSupported) throw txErr;
           }
-          if (txSupported) throw txErr;
           // Fall through to the best-effort recovery below.
         } finally {
           session.endSession();
@@ -503,6 +537,10 @@ exports.addTeamMember = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This student has not registered for this event.' });
     }
 
+    // True only when THIS request hit a transient write conflict, so it can
+    // continue on the atomic fallback path without permanently disabling txns.
+    let hitTransient = false;
+
     if (isDbConnected() && txSupported) {
       // Transactional add so a concurrent mutual-add can never leave two live
       // teams carrying the same pair of students (TOCTOU race fix).
@@ -592,21 +630,31 @@ exports.addTeamMember = async (req, res) => {
           session.endSession();
         }
       } catch (txErr) {
-        // Probe once: on shared Atlas tiers transactions are unsupported.
-        // Downgrade to the best-effort path below instead of failing.
-        if (!txProbeDone && /transaction|replica set|not supported|no such command|Transaction numbers/i.test(txErr.message || '')) {
-          txSupported = false;
-          txProbeDone = true;
-          console.warn('MongoDB transactions not available for team adds; using best-effort path.');
+        // A transient write conflict is NORMAL when two teams try to add the
+        // same student at the same instant — transactions ARE working and one
+        // side loses a race. Never treat that as "transactions unsupported";
+        // fall through to this request's best-effort atomic+ sweep instead.
+        const txKind = classifyTxError(txErr);
+        if (txKind === 'transient') {
+          // Don't permanently downgrade — but this request DID just lose a
+          // race, so run the atomic claim + sweep below to complete the add.
+          hitTransient = true;
+        } else {
+          if (!txProbeDone && txKind === 'unsupported') {
+            txSupported = false;
+            txProbeDone = true;
+            console.warn('MongoDB transactions not available for team adds; using best-effort path.');
+          }
+          if (txSupported) throw txErr;
         }
-        if (txSupported) throw txErr;
         // Fall through to the best-effort branch below.
       }
     }
 
-    if (isDbConnected() && !txSupported) {
-      // No transactions available. Use an atomic claim + broad sweep instead of
-      // check-then-act, so a concurrent mutual-add still can't leave duplicates.
+    if (isDbConnected() && (!txSupported || hitTransient)) {
+      // No transactions available (or this request just hit a transient write
+      // conflict). Use an atomic claim + broad sweep instead of check-then-act,
+      // so a concurrent mutual-add still can't leave duplicates.
 
       // Step 0: drop the newcomer's auto-created solo seat first, so the unique
       // (event + member) index accepts the atomic claim below.
