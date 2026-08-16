@@ -318,16 +318,8 @@ export default function Home() {
                     <a href="tel:+919791656236" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9791656236</a>
                   </li>
                   <li>
-                    <span className="font-semibold text-slate-300">Suluckshanya S M:</span>{' '}
-                    <a href="tel:+918122310171" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">8122310171</a>
-                  </li>
-                  <li>
                     <span className="font-semibold text-slate-300">Kaleeswaran A:</span>{' '}
-                    <a href="tel:+919489034836" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9489038346</a>
-                  </li>
-                  <li>
-                    <span className="font-semibold text-slate-300">Atchaya S:</span>{' '}
-                    <a href="tel:+918838999607" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">8838999607</a>
+                    <a href="tel:+919489038346" className="text-indigo-300 hover:text-indigo-200 font-semibold transition-colors">9489038346</a>
                   </li>
                 </ul>
               </div>

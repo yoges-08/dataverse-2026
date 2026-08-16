@@ -9,10 +9,7 @@ const studentSchema = new mongoose.Schema({
   year: { type: String, required: true },
   email: { type: String, required: true },
   phone: { type: String, required: true },
-  gender: { type: String, default: 'Male' },
-  dateOfBirth: { type: String, default: '' },
   address: { type: String, default: '' },
-  emergencyContact: { type: String, default: '' },
   foodPreference: { type: String, default: 'N/A' },
   accommodationRequired: { type: String, default: 'N/A' },
   verificationStatus: { 

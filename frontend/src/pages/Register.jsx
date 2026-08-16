@@ -21,10 +21,7 @@ export default function Register() {
     collegeName: '', // Blank by default as requested
     department: 'Computer Science & Engineering',
     year: 'III',
-    gender: 'Male',
-    dateOfBirth: '',
-    address: '',
-    emergencyContact: ''
+    address: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -73,16 +70,6 @@ export default function Register() {
 
     if (formData.department === 'Other' && !customDepartment.trim()) {
       errors.department = 'Please enter your Department';
-    }
-
-    if (!formData.dateOfBirth) {
-      errors.dateOfBirth = 'Please enter your Date of Birth';
-    } else if (new Date(formData.dateOfBirth) >= new Date()) {
-      errors.dateOfBirth = 'Date of Birth must be in the past';
-    }
-
-    if (formData.emergencyContact && !/^\d{10}$/.test(formData.emergencyContact.trim())) {
-      errors.emergencyContact = 'Enter a valid 10-digit emergency number';
     }
 
     setFieldErrors(errors);
@@ -310,65 +297,6 @@ export default function Register() {
                   <option value="III">III Year</option>
                   <option value="IV">IV Year</option>
                 </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Additional Details */}
-          <div className="space-y-4 pt-4">
-            <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-              3. Additional Contact Details
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Gender *</label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Date of Birth *</label>
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  required
-                  max={new Date().toISOString().split('T')[0]}
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.dateOfBirth ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.dateOfBirth && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.dateOfBirth}</span>
-                )}
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-slate-300 font-semibold block mb-1">Parent/Guardian Emergency Contact Number</label>
-                <input
-                  type="tel"
-                  name="emergencyContact"
-                  maxLength="10"
-                  value={formData.emergencyContact}
-                  onChange={handleChange}
-                  placeholder="Parent / Guardian 10-digit mobile number"
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.emergencyContact ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.emergencyContact && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.emergencyContact}</span>
-                )}
               </div>
             </div>
           </div>

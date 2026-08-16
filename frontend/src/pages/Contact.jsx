@@ -147,7 +147,7 @@ export default function Contact() {
                   <span className="text-slate-400">Dr. K. Jayanthi</span>
                   <span className="text-slate-400 block">9994718221</span>
                   <span className="font-bold text-white block mt-1">Organizer Members</span>
-                  <span className="text-slate-400">9791656236 / 8122310171 / 9489038346 / 8838999607</span>
+                  <span className="text-slate-400">9791656236 / 9489038346</span>
                 </div>
               </div>
             </div>

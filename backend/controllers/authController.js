@@ -41,7 +41,7 @@ exports.registerStudent = async (req, res) => {
   try {
     const {
       name, email, password, collegeName, department, year,
-      phone, gender, dateOfBirth, address, emergencyContact
+      phone, address
     } = req.body;
 
     const cleanEmail = (email || '').toLowerCase().trim();
@@ -128,10 +128,7 @@ exports.registerStudent = async (req, res) => {
         year: year || 'III',
         email: cleanEmail,
         phone: phoneDigits || 'N/A',
-        gender: gender || 'Male',
-        dateOfBirth: dateOfBirth || '',
         address: address || '',
-        emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
         verificationStatus: 'Pending',
@@ -212,10 +209,7 @@ exports.registerStudent = async (req, res) => {
         year: year || 'III',
         email: cleanEmail,
         phone: phoneDigits || 'N/A',
-        gender: gender || 'Male',
-        dateOfBirth: dateOfBirth || '',
         address: address || '',
-        emergencyContact: emergencyContact || '',
         foodPreference: 'N/A',
         accommodationRequired: 'N/A',
         verificationStatus: 'Pending',

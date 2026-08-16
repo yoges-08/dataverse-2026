@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, MapPin, Mail, Heart, Globe, Award, Shield, Instagram, Linkedin, Navigation } from 'lucide-react';
+import { Sparkles, MapPin, Mail, Award, Shield, Instagram, Navigation } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -42,15 +42,6 @@ export default function Footer() {
                 className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
               >
                 <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://www.linkedin.com/search/results/all/?keywords=DATAVERSE%20AAMEC"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Find DATAVERSE on LinkedIn"
-                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-sky-600 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
-              >
-                <Linkedin className="w-4 h-4" />
               </a>
             </div>
           </div>

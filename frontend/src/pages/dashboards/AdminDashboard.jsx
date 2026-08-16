@@ -477,7 +477,6 @@ const loadContactMessages = async () => {
                     <th className="p-4">Student</th>
                     <th className="p-4">Symposium Code</th>
                     <th className="p-4">Phone</th>
-                    <th className="p-4">DOB</th>
                     <th className="p-4">College & Dept</th>
                     <th className="p-4">Status</th>
                     <th className="p-4">Checked In</th>
@@ -501,9 +500,8 @@ const loadContactMessages = async () => {
 
                         <td className="p-4 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>
                         <td className="p-4 text-slate-300 whitespace-nowrap">{s.phone || '—'}</td>
-                        <td className="p-4 text-slate-300 whitespace-nowrap">{s.dateOfBirth || '—'}</td>
                         <td className="p-4">
-                          <span className="text-slate-200 block font-medium max-w-[220px] truncate">{s.collegeName}</span>
+                          <span className="text-slate-200 block font-medium max-w-[220px] whitespace-normal break-words">{s.collegeName}</span>
                           <span className="text-[10px] text-indigo-300">{s.department} ({s.year})</span>
                         </td>
 

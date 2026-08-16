@@ -38,14 +38,13 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
-    const { phone, address, emergencyContact, foodPreference, accommodationRequired } = req.body;
+    const { phone, address, foodPreference, accommodationRequired } = req.body;
     if (isDbConnected()) {
       let student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
       student.phone = phone || student.phone;
       student.address = address || student.address;
-      student.emergencyContact = emergencyContact || student.emergencyContact;
       student.foodPreference = foodPreference || student.foodPreference;
       student.accommodationRequired = accommodationRequired || student.accommodationRequired;
 
@@ -57,7 +56,6 @@ exports.updateProfile = async (req, res) => {
 
       student.phone = phone || student.phone;
       student.address = address || student.address;
-      student.emergencyContact = emergencyContact || student.emergencyContact;
       student.foodPreference = foodPreference || student.foodPreference;
       student.accommodationRequired = accommodationRequired || student.accommodationRequired;
 
@@ -97,7 +95,7 @@ exports.spotRegistration = async (req, res) => {
   try {
     const {
       name, email, registerNumber, collegeName, department, year, phone,
-      gender, eventIds, foodPreference, accommodationRequired
+      eventIds, foodPreference, accommodationRequired
     } = req.body;
 
     const cleanEmail = (email || '').toLowerCase().trim();
@@ -147,7 +145,6 @@ exports.spotRegistration = async (req, res) => {
           year: year || 'III',
           email: cleanEmail,
           phone: phone || '9999999999',
-          gender: gender || 'Other',
           verificationStatus: 'Approved',
           isCheckedIn: true,
           checkInTime: new Date(),
@@ -230,7 +227,6 @@ exports.spotRegistration = async (req, res) => {
           year: year || 'III',
           email: cleanEmail,
           phone: phone || '9999999999',
-          gender: gender || 'Male',
           verificationStatus: 'Approved',
           isCheckedIn: true,
           checkInTime: new Date().toISOString(),

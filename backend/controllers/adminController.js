@@ -353,7 +353,7 @@ exports.exportStudentsExcel = async (req, res) => {
       });
     }
 
-    const headers = ['Symposium Code', 'Name', 'Email', 'Phone', 'Date of Birth', 'College', 'Department', 'Year', 'Register Number', 'Status', 'Checked In', 'Registered At'];
+    const headers = ['Symposium Code', 'Name', 'Email', 'Phone', 'College', 'Department', 'Year', 'Register Number', 'Status', 'Checked In', 'Registered At'];
     const rows = students.map(s => {
       const rawName = String((s.user && s.user.name) || '').trim();
       const name = rawName && rawName !== '.' ? rawName : String(s.email || '');
@@ -363,7 +363,6 @@ exports.exportStudentsExcel = async (req, res) => {
         name,
         s.email || '',
         s.phone || '',
-        s.dateOfBirth ? new Date(s.dateOfBirth).toISOString().slice(0, 10) : '',
         s.collegeName || '',
         s.department || '',
         s.year || '',
