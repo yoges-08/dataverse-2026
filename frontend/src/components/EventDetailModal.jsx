@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
 import API from '../services/api';
@@ -14,6 +15,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   const { user } = useContext(AuthContext);
   const [paperFile, setPaperFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
   if (!event) return null;
@@ -49,6 +51,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
       if (res.data.success) {
         setMsg({ type: 'success', text: res.data.message });
+        setRegistered(true);
         if (onRegisterSuccess) onRegisterSuccess(event._id);
       }
     } catch (err) {
@@ -194,6 +197,17 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             }`}>
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{msg.text}</span>
+            </div>
+          )}
+
+          {/* Team Management notice after successful registration */}
+          {registered && (
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-start space-x-2">
+              <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                <span className="font-bold">Team Management:</span> You can now join or create a team for this event with registered classmates from your college in the{' '}
+                <Link to="/team-management" className="font-bold underline hover:text-indigo-200">Team Management</Link> tab.
+              </span>
             </div>
           )}
 

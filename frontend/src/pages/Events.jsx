@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import EventDetailModal from '../components/EventDetailModal';
 import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap } from 'lucide-react';
 import API from '../services/api';
@@ -59,6 +60,15 @@ export default function Events() {
       <div className="max-w-3xl mx-auto -mt-6 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
         <Trophy className="w-4 h-4 shrink-0" />
         <span>Each student can register for a maximum of <span className="font-black">3 events</span> only. Choose wisely!</span>
+      </div>
+
+      {/* Team Management notice */}
+      <div className="max-w-3xl mx-auto mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
+        <Zap className="w-4 h-4 shrink-0" />
+        <span>
+          <span className="font-black">Team Management:</span> After registering, join or create a team from your registered events in the{' '}
+          <Link to="/team-management" className="font-black underline hover:text-indigo-200">Team Management</Link> tab.
+        </span>
       </div>
 
       {/* Filter & Search Bar */}
