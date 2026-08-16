@@ -112,149 +112,161 @@ export default function CertificateModal({ certificate, onClose }) {
         <div className="p-4 sm:p-6 printable-content">
           <div ref={wrapRef} className="w-full">
             <div style={{ position: 'relative', height: Math.round(DESIGN_H * scale) }}>
-              <div
-                ref={sheetRef}
-                className="certificate-sheet relative text-center overflow-hidden"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: DESIGN_W,
-                  height: DESIGN_H,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'top left',
-                  background: 'linear-gradient(155deg, #ffffff 0%, #f8fafc 45%, #eef2ff 100%)',
-                  border: `3px solid ${theme.accentBorder}`,
-                  outline: '1px dashed rgba(100,116,139,0.35)',
-                  outlineOffset: '6px',
-                  borderRadius: 16
-                }}
-              >
+<div
+                  ref={sheetRef}
+                  className="certificate-sheet relative text-center overflow-hidden"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: DESIGN_W,
+                    height: DESIGN_H,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                    background: 'linear-gradient(160deg, #ffffff 0%, #f5f7ff 40%, #eef1fc 100%)',
+                    border: `3px solid ${theme.accentBorder}`,
+                    outline: '1px solid rgba(148,163,184,0.45)',
+                    outlineOffset: '5px',
+                    borderRadius: 12
+                  }}
+                >
+                  {/* Outer decorative frame */}
+                  <div
+                    className="absolute inset-3 pointer-events-none rounded-lg"
+                    style={{ border: `1.5px solid ${theme.accent}` }}
+                  ></div>
+                  {/* Inner hairline frame */}
+                  <div className="absolute inset-4 pointer-events-none rounded-md" style={{ border: '1px solid rgba(148,163,184,0.5)' }}></div>
+                  {/* Top accent band */}
+                  <div className="absolute inset-x-0 top-0 h-2.5 pointer-events-none" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}, transparent)` }}></div>
 
-                {/* Soft radial glow */}
-                <div
-                  className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none"
-                  style={{ background: `radial-gradient(circle, ${theme.accent}, transparent 70%)` }}
-                ></div>
+                  {/* Soft radial glow */}
+                  <div
+                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-3xl opacity-15 pointer-events-none"
+                    style={{ background: `radial-gradient(circle, ${theme.accent}, transparent 70%)` }}
+                  ></div>
 
-                {/* Corner Ornaments */}
-                {[
-                  'top-3 left-3 border-t-[3px] border-l-[3px]',
-                  'top-3 right-3 border-t-[3px] border-r-[3px]',
-                  'bottom-3 left-3 border-b-[3px] border-l-[3px]',
-                  'bottom-3 right-3 border-b-[3px] border-r-[3px]'
-                ].map((pos, i) => (
-                  <div key={i} className={`absolute ${pos} w-9 h-9 pointer-events-none`} style={{ borderColor: theme.accent }}>
-                    <span className="absolute -right-1 -top-1 w-2 h-2" style={{ background: theme.accent, transform: 'rotate(45deg)' }}></span>
-                    <span className="absolute -left-1 -bottom-1 w-2 h-2" style={{ background: 'transparent', border: '1px solid ' + theme.accent, transform: 'rotate(45deg)' }}></span>
-                  </div>
-                ))}
+                  {/* Corner Ornaments */}
+                  {[
+                    'top-5 left-5 border-t-[3px] border-l-[3px] rounded-tl-lg',
+                    'top-5 right-5 border-t-[3px] border-r-[3px] rounded-tr-lg',
+                    'bottom-5 left-5 border-b-[3px] border-l-[3px] rounded-bl-lg',
+                    'bottom-5 right-5 border-b-[3px] border-r-[3px] rounded-br-lg'
+                  ].map((pos, i) => (
+                    <div key={i} className={`absolute ${pos} w-10 h-10 pointer-events-none`} style={{ borderColor: theme.accent }}>
+                      <span className="absolute -right-1 -top-1 w-2 h-2" style={{ background: theme.accent }}></span>
+                      <span className="absolute -left-1 -bottom-1 w-2 h-2" style={{ background: 'transparent', border: '1px solid ' + theme.accent }}></span>
+                    </div>
+                  ))}
 
-                <div className="p-8 relative">
-                  {/* Type ribbon */}
-                  <div className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-gradient-to-r ${theme.bar} text-[10px] font-extrabold uppercase tracking-widest shadow-lg mb-3`} style={{ color: '#ffffff' }}>
-                    {isWinner ? <Crown className="w-3.5 h-3.5" /> : isRunnerUp ? <Medal className="w-3.5 h-3.5" /> : isThird ? <Star className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
-                    {theme.ribbon}
-                  </div>
+                  <div className="p-7 relative">
+                    {/* Type ribbon */}
+                    <div className={`inline-flex items-center gap-1.5 px-5 py-1.5 rounded-full bg-gradient-to-r ${theme.bar} text-[10px] font-extrabold uppercase tracking-widest shadow-lg mb-4`} style={{ color: '#ffffff' }}>
+                      {isWinner ? <Crown className="w-3.5 h-3.5" /> : isRunnerUp ? <Medal className="w-3.5 h-3.5" /> : isThird ? <Star className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      {theme.ribbon}
+                    </div>
 
-                  {/* College header with flanking emblems */}
-                  <div className="flex items-center justify-center gap-6 mb-4">
-                    <img src="/cert-left.png" alt="" className="h-14 w-14 object-contain shrink-0" />
-                    <div className="space-y-1">
-                      <span className="text-[11px] uppercase font-bold tracking-[0.22em]" style={{ color: theme.accent }}>
-                        Anjalai Ammal Mahalingam Engineering College, Kovilvenni
-                      </span>
-                      <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
-                        Department of Artificial Intelligence & Data Science
+                    {/* College header with flanking emblems */}
+                    <div className="flex items-center justify-center gap-7 mb-3">
+                      <img src="/cert-left.png" alt="AAMEC" className="h-16 w-16 object-contain shrink-0 drop-shadow-sm" />
+                      <div className="space-y-1">
+                        <span className="text-[11px] uppercase font-bold tracking-[0.2em]" style={{ color: theme.accent }}>
+                          Anjalai Ammal Mahalingam Engineering College, Kovilvenni
+                        </span>
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
+                          Department of Artificial Intelligence & Data Science
+                        </p>
+                      </div>
+                      <img src="/cert-right.png" alt="AI&DS" className="h-16 w-16 object-contain shrink-0 drop-shadow-sm" />
+                    </div>
+
+                    {/* Title */}
+                    <h2
+                      className="text-[34px] font-black italic tracking-tight leading-none px-2 break-words mb-2"
+                      style={{
+                        background: `linear-gradient(90deg, ${theme.accent} 0%, #0f172a 50%, ${theme.accent} 100%)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      {theme.title}
+                    </h2>
+
+                    {/* Decorative divider */}
+                    <div className="flex items-center justify-center gap-3 my-2.5">
+                      <span className="h-px w-20" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent})` }}></span>
+                      <div className="w-2.5 h-2.5 rotate-45" style={{ border: `1.5px solid ${theme.accent}` }}></div>
+                      <Sparkles className="w-4 h-4" style={{ color: theme.accent }} />
+                      <div className="w-2.5 h-2.5 rotate-45" style={{ border: `1.5px solid ${theme.accent}` }}></div>
+                      <span className="h-px w-20" style={{ background: `linear-gradient(90deg, ${theme.accent}, transparent)` }}></span>
+                    </div>
+
+                    <p className="text-[10px] italic text-slate-500 mt-1 tracking-wide">DATAVERSE 2026 • Innovate • Inspire • Create</p>
+
+                    {/* Body */}
+                    <div className="space-y-2.5 my-3.5 text-sm text-slate-700">
+                      <p>This is to proudly certify that</p>
+                      <h3 className="text-[26px] font-black italic text-slate-900 break-words leading-snug px-2 pb-1 inline-block border-b-2" style={{ borderColor: theme.accentSoft }}>
+                        {studentName}
+                      </h3>
+
+                      {/* Department & College */}
+                      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-semibold pt-1">
+                        {department && (
+                          <span className="px-3 py-1 rounded-full border" style={{ borderColor: theme.accentBorder, color: theme.accent }}>
+                            {department}
+                          </span>
+                        )}
+                        {collegeName && (
+                          <span className="text-slate-600 flex items-center gap-1">
+                            <ShieldCheck className="w-3.5 h-3.5" style={{ color: theme.accent }} />
+                            {collegeName}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed mt-1.5">
+                        {achievementLine} the event <strong className="text-slate-900">{eventTitle}</strong> ({eventCategory}) conducted by
+                        the Department of Artificial Intelligence &amp; Data Science at{' '}
+                        <strong className="text-slate-900">DATAVERSE 2026 — National Symposium</strong> with {perfWord} dedication
+                        and enthusiasm.
                       </p>
                     </div>
-                    <img src="/cert-right.png" alt="" className="h-14 w-14 object-contain shrink-0" />
-                  </div>
 
-                  {/* Title */}
-                  <h2
-                    className="text-2xl font-black tracking-wider leading-tight px-2 break-words"
-                    style={{
-                      background: `linear-gradient(90deg, ${theme.accentSoft}, ${theme.accent}, ${theme.accentSoft})`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text'
-                    }}
-                  >
-                    {theme.title}
-                  </h2>
-
-                  <div className="flex items-center justify-center gap-3 my-3">
-                    <span className="h-px w-16" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent})` }}></span>
-                    <Sparkles className="w-4 h-4" style={{ color: theme.accent }} />
-                    <span className="h-px w-16" style={{ background: `linear-gradient(90deg, ${theme.accent}, transparent)` }}></span>
-                  </div>
-
-                  <p className="text-xs italic text-slate-600">DATAVERSE 2026 • Innovate • Inspire • Create</p>
-
-                  {/* Body */}
-                  <div className="space-y-3 my-4 text-sm text-slate-700">
-                    <p>This is to proudly certify that</p>
-                    <h3 className="text-2xl font-black italic text-slate-900 break-words leading-snug px-2">
-                      {studentName}
-                    </h3>
-
-                    {/* Department & College */}
-                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-semibold">
-                      {department && (
-                        <span className="px-3 py-1 rounded-full border" style={{ borderColor: theme.accentBorder, color: theme.accent }}>
-                          {department}
+                    {/* Bottom: Cert No, QR, Signature */}
+                    <div className="flex items-end justify-between gap-6 pt-3.5 border-t border-slate-200 mt-3">
+                      <div className="text-left space-y-1">
+                        <span className="text-[9px] uppercase text-slate-500 font-bold tracking-wider">Certificate No</span>
+                        <span className="text-[11px] font-mono font-bold block" style={{ color: theme.accent }}>
+                          {certificate.certificateNo}
                         </span>
-                      )}
-                      {collegeName && (
-                        <span className="text-slate-600 flex items-center gap-1">
-                          <ShieldCheck className="w-3.5 h-3.5" style={{ color: theme.accent }} />
-                          {collegeName}
+                        <span className="text-[9px] text-slate-500 block">
+                          Issued on {new Date(certificate.issuedAt || Date.now()).toLocaleDateString()}
                         </span>
-                      )}
-                    </div>
-
-                    <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed mt-2">
-                      {achievementLine} the event <strong className="text-slate-900">{eventTitle}</strong> ({eventCategory}) conducted by
-                      the Department of Artificial Intelligence &amp; Data Science at{' '}
-                      <strong className="text-slate-900">DATAVERSE 2026 — National Symposium</strong> with {perfWord} dedication
-                      and enthusiasm.
-                    </p>
-                  </div>
-
-                  {/* Bottom: Cert No, QR, Signature */}
-                  <div className="flex items-end justify-between gap-6 pt-4 border-t border-slate-200 mt-4">
-                    <div className="text-left space-y-1">
-                      <span className="text-[9px] uppercase text-slate-500 font-bold">Certificate No</span>
-                      <span className="text-[11px] font-mono font-bold block" style={{ color: theme.accent }}>
-                        {certificate.certificateNo}
-                      </span>
-                      <span className="text-[9px] text-slate-500 block">
-                        Issued on {new Date(certificate.issuedAt || Date.now()).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <div className="bg-white p-1.5 rounded-lg shadow-md border border-slate-200">
-                      <QRCodeSVG
-                        value={certificate.certificateNo}
-                        size={58}
-                        fgColor="#0f172a"
-                      />
-                    </div>
-
-                    <div className="text-right">
-                      <div className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.accent }}>
-                        <ShieldCheck className="w-3 h-3" /> Verified &amp; Authentic
                       </div>
-                      <div className="w-28 h-0.5 mb-1 ml-auto" style={{ background: theme.accent }}></div>
-                      <span className="text-xs font-bold text-slate-900 block">Dr. G. Nanthakumar</span>
-                      <span className="text-[9px] text-slate-600 block">Convener — DATAVERSE</span>
-                      <span className="text-[9px] text-slate-500 block">Anjalai Ammal Mahalingam Engineering College</span>
+
+                      <div className="bg-white p-1.5 rounded-lg shadow-md border border-slate-200">
+                        <QRCodeSVG
+                          value={certificate.certificateNo}
+                          size={56}
+                          fgColor="#0f172a"
+                        />
+                      </div>
+
+                      <div className="text-right">
+                        <div className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.accent }}>
+                          <ShieldCheck className="w-3 h-3" /> Verified &amp; Authentic
+                        </div>
+                        <div className="w-28 h-0.5 mb-1 ml-auto" style={{ background: theme.accent }}></div>
+                        <span className="text-xs font-bold text-slate-900 block">Dr. G. Nanthakumar</span>
+                        <span className="text-[9px] text-slate-600 block">Convener — DATAVERSE</span>
+                        <span className="text-[9px] text-slate-500 block">Anjalai Ammal Mahalingam Engineering College</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-              </div>
+                </div>
             </div>
           </div>
         </div>
