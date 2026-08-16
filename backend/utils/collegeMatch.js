@@ -44,6 +44,20 @@ const normCore = (s) => {
 // Token set for the containment check below.
 const coreTokens = (s) => new Set(normCore(s).split(' ').filter(Boolean));
 
+// Small connector words that real-world acronyms typically skip (e.g. "Madras
+// Institute of Technology" -> MIT, not MIOT). Distinct from FILLER_WORDS, which
+// ARE meant to contribute a letter (e.g. the "C" in AAMEC comes from "College").
+const ACRONYM_SKIP_WORDS = new Set(['OF', 'AND', 'THE', 'FOR']);
+
+// Builds the acronym a real institution would actually go by, from its full
+// spelled-out name — e.g. "Anjalai Ammal Mahalingam Engineering College" -> "AAMEC".
+const acronymOf = (s) => normStrict(s)
+  .split(' ')
+  .filter(Boolean)
+  .filter(w => !ACRONYM_SKIP_WORDS.has(w))
+  .map(w => w[0])
+  .join('');
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -53,6 +67,16 @@ const collegesMatch = (a, b) => {
   const strictA = normStrict(a);
   const strictB = normStrict(b);
   if (strictA === strictB) return true;
+
+  // Acronym tier: one side may be typed as a short-form acronym of the
+  // other's full spelled-out name (e.g. "AAMEC" vs "Anjalai Ammal
+  // Mahalingam Engineering College"). Guarded to 3-8 letters so a short,
+  // generic string can't coincidentally match an unrelated long name.
+  const acrA = acronymOf(a);
+  const acrB = acronymOf(b);
+  const looksLikeAcronym = (s) => s.length >= 3 && s.length <= 8;
+  if (looksLikeAcronym(strictA) && strictA === acrB) return true;
+  if (looksLikeAcronym(strictB) && strictB === acrA) return true;
 
   const coreA = normCore(a);
   const coreB = normCore(b);
