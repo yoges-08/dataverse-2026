@@ -52,13 +52,21 @@ exports.getEventById = async (req, res) => {
       ]);
       // Map each student (by ObjectId) to their team so registrations carry
       // live team info — the admin/coordinator dashboards read from here.
+      // If duplicate Team documents exist for an event (pre-fix leftovers),
+      // deterministically keep the OLDEST one so the panel is stable and
+      // matches fixDuplicateTeams' "keep earliest-created" rule. Phrased as a
+      // "first fill wins" so the sort order actually takes precedence.
       const teamByStudent = new Map();
-      teams.forEach(t => {
-        const members = t.members || [];
-        members.forEach(m => {
-          if (m.student) teamByStudent.set(String(m.student._id || m.student), t);
+      teams
+        .slice()
+        .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+        .forEach(t => {
+          (t.members || []).forEach(m => {
+            if (!m.student) return;
+            const key = String(m.student._id || m.student);
+            if (!teamByStudent.has(key)) teamByStudent.set(key, t);
+          });
         });
-      });
       // Drop registrations whose linked student could not be populated
       // (deleted accounts / orphaned rows) or that appear more than once for
       // the same student, so counts and rows always match real students.
@@ -104,9 +112,16 @@ exports.getEventById = async (req, res) => {
       const regs = mockStore.registrations.filter(r => r.event === event._id || String(r.event) === String(event._id));
       const teams = mockStore.teams.filter(t => String(t.event) === String(event._id));
       const teamByStudent = new Map();
-      teams.forEach(t => {
-        (t.members || []).forEach(m => { if (m.student) teamByStudent.set(String(m.student), t); });
-      });
+      teams
+        .slice()
+        .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+        .forEach(t => {
+          (t.members || []).forEach(m => {
+            if (!m.student) return;
+            const key = String(m.student);
+            if (!teamByStudent.has(key)) teamByStudent.set(key, t);
+          });
+        });
       const populated = [];
       const seenStudents = new Set();
       regs.forEach(r => {

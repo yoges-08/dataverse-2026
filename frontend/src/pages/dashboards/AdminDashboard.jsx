@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showAnnModal, setShowAnnModal] = useState(false);
   const [eventDetail, setEventDetail] = useState(null);
+  const [detailError, setDetailError] = useState('');
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -304,13 +305,19 @@ const loadContactMessages = async () => {
   const handleViewEventRegistrations = async (ev) => {
     try {
       setDetailLoading(true);
+      setDetailError('');
       const res = await API.get(`/events/${ev._id}`);
       if (res.data.success) {
         setEventDetail(res.data);
         setShowEventDetail(true);
+      } else {
+        setDetailError(res.data.message || 'Could not load registration details.');
       }
     } catch (err) {
       console.error('Error fetching event registrations:', err);
+      setDetailError(err.response?.data?.message || 'Could not load registrations. The server returned an error.');
+      setShowEventDetail(true);
+      setEventDetail(null);
     } finally {
       setDetailLoading(false);
     }
@@ -1028,19 +1035,25 @@ const loadContactMessages = async () => {
       )}
 
       {/* Event Registrants Modal */}
-      {showEventDetail && eventDetail && (
+      {showEventDetail && (eventDetail || detailError) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-2xl w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-white">{eventDetail.event.title}</h3>
-                <span className="text-[10px] uppercase font-bold text-indigo-400">{eventDetail.event.category} • {eventDetail.event.venue}</span>
+                <h3 className="text-lg font-bold text-white">{eventDetail?.event?.title || 'Registrants'}</h3>
+                <span className="text-[10px] uppercase font-bold text-indigo-400">{eventDetail?.event?.category || ''}{eventDetail?.event?.venue ? ` • ${eventDetail.event.venue}` : ''}</span>
               </div>
               <button onClick={() => setShowEventDetail(false)} className="p-2 rounded-lg bg-slate-900 text-slate-400 hover:text-white">✕</button>
             </div>
 
             {detailLoading ? (
               <p className="text-xs text-slate-400">Loading registrations...</p>
+            ) : detailError ? (
+              <div className="p-6 text-center text-xs text-red-400 bg-red-500/10 rounded-xl border border-red-500/30 space-y-2">
+                <p className="font-bold">Could not open registrations</p>
+                <p>{detailError}</p>
+                <p className="text-[10px] text-slate-500">If this keeps happening, check the server logs — the registrations endpoint returned an error.</p>
+              </div>
             ) : eventDetail.registrations.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/50 rounded-xl border border-slate-800">
                 No students have registered for this event yet.
