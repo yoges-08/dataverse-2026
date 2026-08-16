@@ -68,9 +68,10 @@ exports.getEventById = async (req, res) => {
           seenStudents.add(String(r.student._id));
           const t = teamByStudent.get(String(r.student._id));
           // Dedupe by student id so legacy/garbled teams never render the same
-          // person twice or inflate the member count.
+          // person twice or inflate the member count. `t` is undefined for
+          // solo-only events (no Team document is ever created) — guard it.
           const seen = new Set();
-          const members = (t.members || []).filter(m => {
+          const members = ((t && t.members) || []).filter(m => {
             const id = String(m.student && (m.student._id || m.student) || '');
             if (!id || seen.has(id)) return false;
             seen.add(id);
@@ -114,9 +115,10 @@ exports.getEventById = async (req, res) => {
         const u = mockStore.users.find(usr => usr._id === s.user || String(usr._id) === String(s.user));
         const t = teamByStudent.get(String(r.student));
         // Dedupe by student id so legacy/garbled teams never render the same
-        // person twice or inflate the member count.
+        // person twice or inflate the member count. `t` is undefined for
+        // solo-only events (no Team document is ever created) — guard it.
         const seen = new Set();
-        const members = (t.members || []).filter(mm => {
+        const members = ((t && t.members) || []).filter(mm => {
           const id = String(mm.student && (mm.student._id || mm.student) || '');
           if (!id || seen.has(id)) return false;
           seen.add(id);

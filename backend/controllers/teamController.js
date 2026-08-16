@@ -7,6 +7,12 @@ const mockStore = require('../utils/mockStore');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
+// Transactions require a replica set / Atlas dedicated tiers. Shared tiers
+// (M0/M2/M5) do not support them; probe once and fall back to a best-effort
+// atomic update for team-member additions.
+let txSupported = true;
+let txProbeDone = false;
+
 // 0 (or missing) means solo-only. When positive it is the maximum TOTAL team
 // size (leader included), e.g. 4 = leader + up to 3 teammates.
 const getEffectiveTeamLimit = (event) =>
@@ -397,9 +403,92 @@ exports.addTeamMember = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This student has not registered for this event.' });
     }
 
-    if (isDbConnected()) {
-      // Atomic capacity + membership-checked update so two concurrent adds of
-      // the SAME student (or an overflow) can never both succeed.
+    if (isDbConnected() && txSupported) {
+      // Transactional add so a concurrent mutual-add can never leave two live
+      // teams carrying the same pair of students (TOCTOU race fix).
+      try {
+        const session = await mongoose.startSession();
+        try {
+          session.startTransaction();
+
+          // Fresh in-transaction conflict check: is the teammate already on
+          // another team for this event with more than one member?
+          const conflict = await Team.findOne({
+            event: eventId,
+            _id: { $ne: team._id },
+            'members.student': teammate._id,
+            $expr: { $gt: [{ $size: '$members' }, 1] }
+          }).session(session);
+          if (conflict) {
+            await session.abortTransaction();
+            return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
+          }
+
+          const updated = await Team.findOneAndUpdate(
+            {
+              event: eventId,
+              _id: team._id,
+              'members.student': { $ne: teammate._id },
+              $expr: { $lt: [{ $size: '$members' }, teamLimit] }
+            },
+            { $push: { members: { student: teammate._id, addedAt: new Date() } } },
+            { new: true, session }
+          );
+          if (!updated) {
+            await session.abortTransaction();
+            return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
+          }
+          team = updated;
+          team.status = recomputeStatus(team, event);
+          await team.save({ session });
+
+          // Remove ANY other team for this event that now contains the teammate
+          // (not just "abandoned solo" ones) — even one that raced to 2+
+          // members is dissolved here, and its leftover members are merged into
+          // the kept team so nobody silently loses a teammate.
+          const staleTeams = await Team.find({
+            event: eventId,
+            _id: { $ne: team._id },
+            'members.student': teammate._id
+          }).session(session);
+
+          for (const stale of staleTeams) {
+            const otherMembers = (stale.members || []).filter(m => String(m.student) !== String(teammate._id));
+            if (otherMembers.length > 0 && (team.members.length + otherMembers.length) <= teamLimit) {
+              for (const m of otherMembers) {
+                if (!team.members.some(tm => String(tm.student) === String(m.student))) {
+                  team.members.push({ student: m.student, addedAt: m.addedAt || new Date() });
+                }
+              }
+              team.status = recomputeStatus(team, event);
+              await team.save({ session });
+            }
+            await Team.deleteOne({ _id: stale._id }).session(session);
+          }
+
+          await session.commitTransaction();
+        } catch (txErr) {
+          await session.abortTransaction();
+          throw txErr;
+        } finally {
+          session.endSession();
+        }
+      } catch (txErr) {
+        // Probe once: on shared Atlas tiers transactions are unsupported.
+        // Downgrade to the best-effort path below instead of failing.
+        if (!txProbeDone && /transaction|replica set|not supported|no such command|Transaction numbers/i.test(txErr.message || '')) {
+          txSupported = false;
+          console.warn('MongoDB transactions not available for team adds; using best-effort path.');
+        }
+        if (txSupported) throw txErr;
+        // Fall through to the best-effort branch below.
+      }
+    }
+
+    if (isDbConnected() && !txSupported) {
+      // Best-effort atomic update (no transactions): adds the teammate only if
+      // they are not already a member and there is capacity. Desired duplicate
+      // protection on clusters without transactions is best-effort.
       const updated = await Team.findOneAndUpdate(
         {
           event: eventId,
@@ -416,7 +505,9 @@ exports.addTeamMember = async (req, res) => {
       team = updated;
       team.status = recomputeStatus(team, event);
       await team.save();
-    } else {
+    }
+
+    if (!isDbConnected()) {
       if ((team.members || []).length >= teamLimit) {
         return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
       }
