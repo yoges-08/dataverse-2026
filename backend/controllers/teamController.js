@@ -4,6 +4,7 @@ const Event = require('../models/Event');
 const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
+const { collegesMatch } = require('../utils/collegeMatch');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -432,7 +433,7 @@ exports.getAvailableTeammates = async (req, res) => {
     const registered = await isStudentRegisteredForEvent(student._id, eventId);
     if (!registered) return res.status(403).json({ success: false, message: 'You must register for this event before browsing teammates.' });
 
-    const qCollege = norm(student.collegeName || '');
+    const qCollege = student.collegeName || '';
     const qDept = norm(student.department || '');
     const qYear = norm(student.year || '');
 
@@ -468,7 +469,7 @@ exports.getAvailableTeammates = async (req, res) => {
     const result = candidates
       .filter(c => String(c._id) !== String(student._id))
       .filter(c => !takenIds.has(String(c._id)))
-      .filter(c => !qCollege || norm(c.collegeName || '') === qCollege)
+      .filter(c => !qCollege || collegesMatch(c.collegeName || '', qCollege))
       .filter(c => !qDept || norm(c.department || '') === qDept)
       .filter(c => !qYear || norm(c.year || '') === qYear)
       .map(c => ({
@@ -521,7 +522,7 @@ exports.addTeamMember = async (req, res) => {
       ? await Student.findById(studentId)
       : resolveStudentMock(studentId);
     if (!teammate) return res.status(400).json({ success: false, message: 'Selected student was not found.' });
-    if (norm(teammate.collegeName || '') !== norm(requester.collegeName || '')) {
+    if (!collegesMatch(teammate.collegeName || '', requester.collegeName || '')) {
       return res.status(400).json({ success: false, message: `Only students from ${requester.collegeName} can join this team.` });
     }
     if (String(teammate._id) === String(requester._id)) {
