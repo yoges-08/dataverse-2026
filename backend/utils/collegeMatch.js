@@ -78,6 +78,13 @@ const acronymMatchesLongName = (shortForm, longAcronym) => {
     (longAcronym.length - shortForm.length) <= MAX_ACRONYM_SUFFIX_SLACK;
 };
 
+// Squash normalize: the strict form with ALL internal whitespace removed
+// (not just collapsed). This makes "R M K Engineering College" and "RMK
+// Engineering College" — or "Rajalakshmi Engineering College" and "Raja
+// Lakshmi Engineering College" — compare equal: the letters and their
+// order are identical, only where the word boundaries fall differs.
+const normSquash = (s) => normStrict(s).replace(/\s+/g, '');
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -87,6 +94,16 @@ const collegesMatch = (a, b) => {
   const strictA = normStrict(a);
   const strictB = normStrict(b);
   if (strictA === strictB) return true;
+
+  // Split/merged-word tier: same letters, same order, only the spacing
+  // differs. Guarded on length so two short, generic names typed with
+  // different spacing can't coincidentally squash to the same short string
+  // (e.g. "AB College" vs "A B College" — plausibly two different, unrelated
+  // small colleges, not worth risking a false merge over).
+  const squashA = normSquash(a);
+  const squashB = normSquash(b);
+  const MIN_SQUASH_LENGTH = 10;
+  if (squashA === squashB && squashA.length >= MIN_SQUASH_LENGTH) return true;
 
   // Acronym tier: one side may be typed as a short-form acronym of the
   // other's full spelled-out name (e.g. "AAMEC" vs "Anjalai Ammal
