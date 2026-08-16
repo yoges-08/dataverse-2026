@@ -58,6 +58,26 @@ const acronymOf = (s) => normStrict(s)
   .map(w => w[0])
   .join('');
 
+const looksLikeAcronym = (s) => s.length >= 3 && s.length <= 8;
+
+// How many extra trailing letters an acronym-prefix match may tolerate. A
+// location/campus suffix on the full-name side adds one initial per extra
+// word ("AAMEC" -> "AAMECK" from a trailing "Kovilveeni"). Bounded so a short
+// acronym can't prefix-match an unrelated long name by stretching too far.
+const MAX_ACRONYM_SUFFIX_SLACK = 3;
+
+// Acronym tier matcher. shortForm must look like a real acronym (3-8 chars);
+// longAcronym is the initials built from the other, spelled-out name. Compares
+// as a PREFIX match with bounded slack, mirroring the suffix tolerance the
+// containment tier already has — so "AAMEC" matches "... College Kovilveeni"
+// (longAcronym "AAMECK", +1 letter) instead of silently failing.
+const acronymMatchesLongName = (shortForm, longAcronym) => {
+  if (!looksLikeAcronym(shortForm)) return false;
+  if (longAcronym === shortForm) return true;
+  return longAcronym.startsWith(shortForm) &&
+    (longAcronym.length - shortForm.length) <= MAX_ACRONYM_SUFFIX_SLACK;
+};
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -70,13 +90,12 @@ const collegesMatch = (a, b) => {
 
   // Acronym tier: one side may be typed as a short-form acronym of the
   // other's full spelled-out name (e.g. "AAMEC" vs "Anjalai Ammal
-  // Mahalingam Engineering College"). Guarded to 3-8 letters so a short,
-  // generic string can't coincidentally match an unrelated long name.
+  // Mahalingam Engineering College"). Tolerates a bounded location/campus
+  // suffix on the long-name side (e.g. "... College Kovilveeni").
   const acrA = acronymOf(a);
   const acrB = acronymOf(b);
-  const looksLikeAcronym = (s) => s.length >= 3 && s.length <= 8;
-  if (looksLikeAcronym(strictA) && strictA === acrB) return true;
-  if (looksLikeAcronym(strictB) && strictB === acrA) return true;
+  if (acronymMatchesLongName(strictA, acrB)) return true;
+  if (acronymMatchesLongName(strictB, acrA)) return true;
 
   const coreA = normCore(a);
   const coreB = normCore(b);
