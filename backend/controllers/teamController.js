@@ -434,7 +434,6 @@ exports.getAvailableTeammates = async (req, res) => {
     if (!registered) return res.status(403).json({ success: false, message: 'You must register for this event before browsing teammates.' });
 
     const qCollege = student.collegeName || '';
-    const qDept = norm(student.department || '');
     const qYear = norm(student.year || '');
 
     // Students already committed to ANY OTHER team for this event are excluded.
@@ -470,7 +469,6 @@ exports.getAvailableTeammates = async (req, res) => {
       .filter(c => String(c._id) !== String(student._id))
       .filter(c => !takenIds.has(String(c._id)))
       .filter(c => !qCollege || collegesMatch(c.collegeName || '', qCollege))
-      .filter(c => !qDept || norm(c.department || '') === qDept)
       .filter(c => !qYear || norm(c.year || '') === qYear)
       .map(c => ({
         studentId: String(c._id),

@@ -302,7 +302,7 @@ export default function TeamManagementTab() {
               <span>Add a Teammate</span>
             </h3>
             <p className="text-xs text-slate-400 mb-5">
-              These are students registered for this event from your college, department and year who are not yet
+              These are students registered for this event from your college and year who are not yet
               on a team. Click one to add them instantly.
             </p>
 
@@ -313,7 +313,7 @@ export default function TeamManagementTab() {
             ) : available.length === 0 ? (
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
                 No classmates available to add right now. Eligible students must be registered for this event,
-                from your college/department/year, and not already on another team.
+                from your college/year, and not already on another team.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -343,7 +343,7 @@ export default function TeamManagementTab() {
           <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-[11px] text-slate-400 flex items-start space-x-2.5">
             <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-indigo-400" />
             <span>
-              Only students registered for this event from the same college, department and year can be added.
+              Only students registered for this event from the same college and year can be added.
               Any member can add or remove any teammate — everyone has the same access. This event allows up to
               <span className="text-white font-bold"> {ev.teamLimit || team.teamSize} </span> members. A team always keeps at least one member.
             </span>
