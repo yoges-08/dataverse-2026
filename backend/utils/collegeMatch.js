@@ -41,6 +41,9 @@ const normCore = (s) => {
   return core.length ? core.join(' ') : tokens.join(' ');
 };
 
+// Token set for the containment check below.
+const coreTokens = (s) => new Set(normCore(s).split(' ').filter(Boolean));
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -55,7 +58,25 @@ const collegesMatch = (a, b) => {
   const coreB = normCore(b);
   if (!coreA || !coreB || coreA.length < 2) return false;
 
-  return coreA === coreB;
+  if (coreA === coreB) return true;
+
+  // Containment tier: if every core word of the SHORTER name appears in the
+  // LONGER name, treat them as the same college (handles a location/campus
+  // suffix being present on only one side, e.g. "RMS Engineering College"
+  // vs "RMS Engineering College Orathanadu").
+  const tokensA = coreTokens(a);
+  const tokensB = coreTokens(b);
+  const [shorter, longer] = tokensA.size <= tokensB.size ? [tokensA, tokensB] : [tokensB, tokensA];
+
+  // Require at least 2 shared core words (or the shorter side to be a single,
+  // reasonably specific word of 3+ chars — real abbreviations like RMS, SRM,
+  // PSG, MIT) so a lone short/generic token doesn't cause an over-eager match
+  // between two unrelated colleges.
+  if (shorter.size === 0) return false;
+  const allContained = [...shorter].every(t => longer.has(t));
+  if (!allContained) return false;
+
+  return shorter.size >= 2 || [...shorter][0].length >= 3;
 };
 
 module.exports = { normStrict, normCore, collegesMatch };
