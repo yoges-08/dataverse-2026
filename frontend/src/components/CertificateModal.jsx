@@ -123,43 +123,48 @@ export default function CertificateModal({ certificate, onClose }) {
                     height: DESIGN_H,
                     transform: `scale(${scale})`,
                     transformOrigin: 'top left',
-                    background: 'linear-gradient(160deg, #ffffff 0%, #f5f7ff 40%, #eef1fc 100%)',
-                    border: `3px solid ${theme.accentBorder}`,
-                    outline: '1px solid rgba(148,163,184,0.45)',
-                    outlineOffset: '5px',
-                    borderRadius: 12
+                    background: 'linear-gradient(165deg, #ffffff 0%, #fafbff 42%, #eef2fb 100%)',
+                    border: `2.5px solid ${theme.accentBorder}`,
+                    outline: '1px solid rgba(148,163,184,0.35)',
+                    outlineOffset: '6px',
+                    borderRadius: 14
                   }}
                 >
-                  {/* Outer decorative frame */}
+                  {/* Soft paper sheen */}
                   <div
-                    className="absolute inset-3 pointer-events-none rounded-lg"
-                    style={{ border: `1.5px solid ${theme.accent}` }}
-                  ></div>
-                  {/* Inner hairline frame */}
-                  <div className="absolute inset-4 pointer-events-none rounded-md" style={{ border: '1px solid rgba(148,163,184,0.5)' }}></div>
-                  {/* Top accent band */}
-                  <div className="absolute inset-x-0 top-0 h-2.5 pointer-events-none" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}, transparent)` }}></div>
-
-                  {/* Soft radial glow */}
-                  <div
-                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full blur-3xl opacity-15 pointer-events-none"
-                    style={{ background: `radial-gradient(circle, ${theme.accent}, transparent 70%)` }}
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.98), rgba(255,255,255,0) 55%)' }}
                   ></div>
 
-                  {/* Corner Ornaments */}
+                  {/* Watermark emblem (left) + (right) */}
+                  <img src="/cert-right.png" alt="" className="absolute -left-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
+                  <img src="/cert-left.png" alt="" className="absolute -right-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
+
+                  {/* Double decorative frame */}
+                  <div
+                    className="absolute inset-4 pointer-events-none rounded-xl"
+                    style={{ border: `1.5px solid ${theme.accent}`, boxShadow: `inset 0 0 0 4px #ffffff, inset 0 0 0 5px ${theme.accentBorder}` }}
+                  ></div>
+                  <div className="absolute inset-6 pointer-events-none rounded-lg" style={{ border: '1px solid rgba(148,163,184,0.4)' }}></div>
+
+                  {/* Top + bottom accent hairlines */}
+                  <div className="absolute inset-x-12 top-0 h-[3px] pointer-events-none" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}, transparent)` }}></div>
+                  <div className="absolute inset-x-12 bottom-0 h-[3px] pointer-events-none" style={{ background: `linear-gradient(90deg, transparent, ${theme.accent}, transparent)` }}></div>
+
+                  {/* Corner flourishes */}
                   {[
-                    'top-5 left-5 border-t-[3px] border-l-[3px] rounded-tl-lg',
-                    'top-5 right-5 border-t-[3px] border-r-[3px] rounded-tr-lg',
-                    'bottom-5 left-5 border-b-[3px] border-l-[3px] rounded-bl-lg',
-                    'bottom-5 right-5 border-b-[3px] border-r-[3px] rounded-br-lg'
+                    'top-6 left-6 border-t-[3px] border-l-[3px] rounded-tl-lg',
+                    'top-6 right-6 border-t-[3px] border-r-[3px] rounded-tr-lg',
+                    'bottom-6 left-6 border-b-[3px] border-l-[3px] rounded-bl-lg',
+                    'bottom-6 right-6 border-b-[3px] border-r-[3px] rounded-br-lg'
                   ].map((pos, i) => (
-                    <div key={i} className={`absolute ${pos} w-10 h-10 pointer-events-none`} style={{ borderColor: theme.accent }}>
+                    <div key={i} className={`absolute ${pos} w-9 h-9 pointer-events-none`} style={{ borderColor: theme.accent }}>
                       <span className="absolute -right-1 -top-1 w-2 h-2" style={{ background: theme.accent }}></span>
                       <span className="absolute -left-1 -bottom-1 w-2 h-2" style={{ background: 'transparent', border: '1px solid ' + theme.accent }}></span>
                     </div>
                   ))}
 
-                  <div className="p-7 relative">
+                  <div className="p-8 relative">
                     {/* Type ribbon */}
                     <div className={`inline-flex items-center gap-1.5 px-5 py-1.5 rounded-full bg-gradient-to-r ${theme.bar} text-[10px] font-extrabold uppercase tracking-widest shadow-lg mb-4`} style={{ color: '#ffffff' }}>
                       {isWinner ? <Crown className="w-3.5 h-3.5" /> : isRunnerUp ? <Medal className="w-3.5 h-3.5" /> : isThird ? <Star className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
@@ -167,8 +172,8 @@ export default function CertificateModal({ certificate, onClose }) {
                     </div>
 
                     {/* College header with flanking emblems */}
-                    <div className="flex items-center justify-center gap-7 mb-3">
-                      <img src="/cert-left.png" alt="AAMEC" className="h-16 w-16 object-contain shrink-0 drop-shadow-sm" />
+                    <div className="flex items-center justify-center gap-8 mb-3">
+                      <img src="/cert-right.png" alt="AI&DS" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
                       <div className="space-y-1">
                         <span className="text-[11px] uppercase font-bold tracking-[0.2em]" style={{ color: theme.accent }}>
                           Anjalai Ammal Mahalingam Engineering College, Kovilvenni
@@ -177,7 +182,7 @@ export default function CertificateModal({ certificate, onClose }) {
                           Department of Artificial Intelligence & Data Science
                         </p>
                       </div>
-                      <img src="/cert-right.png" alt="AI&DS" className="h-16 w-16 object-contain shrink-0 drop-shadow-sm" />
+                      <img src="/cert-left.png" alt="AAMEC" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
                     </div>
 
                     {/* Title */}
@@ -206,13 +211,15 @@ export default function CertificateModal({ certificate, onClose }) {
 
                     {/* Body */}
                     <div className="space-y-2.5 my-3.5 text-sm text-slate-700">
-                      <p>This is to proudly certify that</p>
-                      <h3 className="text-[26px] font-black italic text-slate-900 break-words leading-snug px-2 pb-1 inline-block border-b-2" style={{ borderColor: theme.accentSoft }}>
-                        {studentName}
-                      </h3>
+                      <p className="text-[12px] tracking-wide">This is to proudly certify that</p>
+                      <div className="inline-block">
+                        <h3 className="text-[27px] font-black italic text-slate-900 break-words leading-snug px-3 pb-0.5" style={{ borderBottom: `2px solid ${theme.accentSoft}` }}>
+                          {studentName}
+                        </h3>
+                      </div>
 
                       {/* Department & College */}
-                      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-semibold pt-1">
+                      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-semibold pt-0.5">
                         {department && (
                           <span className="px-3 py-1 rounded-full border" style={{ borderColor: theme.accentBorder, color: theme.accent }}>
                             {department}

@@ -167,6 +167,14 @@ export default function StudentDashboard() {
             </span>
           </div>
 
+          <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              <span className="font-black">Team Management:</span> You can now join or create a team for your registered events in the{' '}
+              <Link to="/team-management" className="font-black underline hover:text-indigo-200">Team Management</Link> tab.
+            </span>
+          </div>
+
           {registeredEvents.length === 0 ? (
             <div className="glass-card p-8 rounded-2xl text-center text-slate-400 space-y-3">
               <Calendar className="w-10 h-10 text-indigo-400 mx-auto opacity-50" />
