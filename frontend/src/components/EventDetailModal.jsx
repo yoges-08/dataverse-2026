@@ -61,8 +61,19 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-950/85 backdrop-blur-md overflow-y-auto py-6 sm:py-10">
-      <div className="glass-card modal-card max-w-2xl w-full sm:m-4 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md overflow-y-auto py-6 sm:py-10">
+      <div className="mx-auto w-full max-w-2xl">
+        {/* Sticky close — pinned near the top of the viewport while the card
+            scrolls, so it never disappears when you scroll down to Register. */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="block ml-auto mr-2 sm:mr-3 sticky top-1 z-30 -mb-11 min-w-[44px] min-h-[44px] p-2.5 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors flex items-center justify-center"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="glass-card modal-card w-full rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col">
         
         {/* Banner Header */}
         <div className="relative h-40 sm:h-48 bg-slate-900 shrink-0">
@@ -74,13 +85,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>
           
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 p-2.5 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
           <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
@@ -246,6 +250,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           </button>
         </div>
 
+      </div>
       </div>
     </div>,
     document.body
