@@ -39,7 +39,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Follow DATAVERSE on Instagram"
-                className="w-9 h-9 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
+                className="w-10 h-10 rounded-xl bg-slate-900 hover:bg-gradient-to-tr hover:from-fuchsia-600 hover:to-amber-500 flex items-center justify-center text-slate-300 hover:text-white transition-[background-color,color,transform,border-color] duration-200 active:scale-95 motion-reduce:transition-none border border-slate-800"
               >
                 <Instagram className="w-4 h-4" />
               </a>
@@ -92,7 +92,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between text-xs space-y-4 md:space-y-0">
           <p>© 2026 DATAVERSE - Anjalai Ammal Mahalingam Engineering College. All rights reserved.</p>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-2">
             <span className="flex items-center space-x-1">
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
               <span>SSL Secured & Verified</span>

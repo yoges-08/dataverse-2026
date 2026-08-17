@@ -488,13 +488,15 @@ const loadContactMessages = async () => {
                     const name = getStudentName(s, s.email || 'Student');
                     return (
                       <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
-                        <td className="p-4 flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
+                        <td className="p-4">
+                          <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
                             <User className="w-4 h-4 text-indigo-400" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <span className="font-bold text-white block">{name}</span>
-                            <span className="text-[10px] text-slate-400">{s.email}</span>
+                            <span className="text-[10px] text-slate-400 truncate block">{s.email}</span>
+                          </div>
                           </div>
                         </td>
 
@@ -529,7 +531,7 @@ const loadContactMessages = async () => {
                         <td className="p-4 text-right space-x-1.5">
                           <button
                             onClick={() => setSelectedStudentForBadge(s)}
-                            className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
+                            className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
                             title="Preview Badge & QR Pass"
                           >
                             <QrCode className="w-4 h-4" />
@@ -538,7 +540,7 @@ const loadContactMessages = async () => {
                           {s.verificationStatus !== 'Approved' && (
                             <button
                               onClick={() => handleStatusChange(s._id, 'Approved')}
-                              className="px-2 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[10px]"
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[11px]"
                             >
                               Approve
                             </button>
@@ -547,7 +549,7 @@ const loadContactMessages = async () => {
                           {s.verificationStatus !== 'Rejected' && (
                             <button
                               onClick={() => handleStatusChange(s._id, 'Rejected')}
-                              className="px-2 py-1 rounded-lg bg-amber-600/30 text-amber-300 font-bold text-[10px]"
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-600/30 text-amber-300 font-bold text-[11px]"
                             >
                               Reject
                             </button>
@@ -555,7 +557,7 @@ const loadContactMessages = async () => {
 
                           <button
                             onClick={() => handleDeleteStudent(s._id)}
-                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20"
+                            className="p-2 rounded-lg text-red-400 hover:bg-red-500/20"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -573,7 +575,7 @@ const loadContactMessages = async () => {
       {/* TAB 2: EVENTS MANAGEMENT */}
       {activeTab === 'events' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <h3 className="text-xl font-bold text-white">Manage Symposium Competitions</h3>
             <button
               onClick={() => setShowEventModal(true)}
@@ -802,7 +804,7 @@ const loadContactMessages = async () => {
       {/* TAB 4: STAFF MANAGEMENT */}
       {activeTab === 'staff' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <h3 className="text-xl font-bold text-white">Event Coordinators & Volunteers</h3>
             <button
               onClick={() => setShowStaffModal(true)}
@@ -830,7 +832,7 @@ const loadContactMessages = async () => {
       {/* TAB 4: ANNOUNCEMENTS */}
       {activeTab === 'announcements' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <h3 className="text-xl font-bold text-white">Publish Live Announcements</h3>
             <button
               onClick={() => setShowAnnModal(true)}

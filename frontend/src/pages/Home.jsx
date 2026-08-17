@@ -49,7 +49,7 @@ export default function Home() {
     <div className="space-y-16 sm:space-y-24 pb-16 overflow-hidden">
       
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         
         {/* Glowing Background Mesh */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/20 via-fuchsia-500/15 to-cyan-500/20 rounded-full blur-[120px] pointer-events-none"></div>
@@ -369,14 +369,14 @@ function CampusSlider() {
         {/* Prev / Next controls */}
         <button
           onClick={() => goTo(current - 1)}
-          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
+          className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
           aria-label="Previous photo"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <button
           onClick={() => goTo(current + 1)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-slate-950/60 hover:bg-slate-900/80 text-white border border-white/20 backdrop-blur-sm transition-colors"
           aria-label="Next photo"
         >
           <ChevronRight className="w-5 h-5" />
@@ -389,8 +389,8 @@ function CampusSlider() {
           <button
             key={idx}
             onClick={() => goTo(idx)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              idx === current ? 'w-6 bg-indigo-400' : 'w-2 bg-white/40 hover:bg-white/70'
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              idx === current ? 'w-7 bg-indigo-400' : 'w-3 bg-white/40 hover:bg-white/70'
             }`}
             aria-label={`Photo ${idx + 1}`}
           />

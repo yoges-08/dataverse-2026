@@ -72,7 +72,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center space-x-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <Link
             to="/"
             className="flex-1 md:flex-initial px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-bold transition-all flex items-center justify-center space-x-2"
