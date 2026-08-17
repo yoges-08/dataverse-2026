@@ -1,14 +1,21 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import LoginCanvasBackground from '../components/LoginCanvasBackground';
 
 export default function Register() {
   const { user, registerStudent } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Tracks whether THIS component is already handling the post-register
+  // redirect itself (with the success-animation delay). When true, the
+  // effect below must not also redirect -- otherwise the two race and the
+  // animation never gets seen (same pattern as Login.jsx).
+  const justRegisteredRef = useRef(false);
+
   useEffect(() => {
-    if (user) {
+    if (user && !justRegisteredRef.current) {
       navigate('/dashboard/student', { replace: true });
     }
   }, [user, navigate]);
@@ -29,6 +36,7 @@ export default function Register() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [customDepartment, setCustomDepartment] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -94,7 +102,9 @@ export default function Register() {
 
       const res = await registerStudent(finalData);
       if (res.success) {
-        navigate('/dashboard/student', { replace: true });
+        justRegisteredRef.current = true; // tell the effect above to stand down
+        setShowSuccess(true);
+        setTimeout(() => navigate('/dashboard/student', { replace: true }), 900);
       }
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed');
@@ -105,10 +115,20 @@ export default function Register() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="glass-card p-8 sm:p-10 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-8">
-        
+      <div className="login-canvas-wrap glass-card p-8 sm:p-10 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-8 relative">
+        <LoginCanvasBackground />
+
+        {/* Success overlay */}
+        <div className={`login-success-overlay ${showSuccess ? 'visible' : ''}`}>
+          <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <h2>Account Created</h2>
+        </div>
+
         {/* Title */}
-        <div className="text-center space-y-2">
+        <div className="relative z-10 text-center space-y-2">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase">
             <Sparkles className="w-3.5 h-3.5" />
             <span>DATAVERSE 2026 Student Registration</span>
@@ -118,13 +138,13 @@ export default function Register() {
         </div>
 
         {errorMsg && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
+          <div className="relative z-10 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6 text-xs">
+        <form onSubmit={handleSubmit} className="relative z-10 space-y-6 text-xs">
           
           {/* Section 1: Credentials */}
           <div className="space-y-4">
@@ -312,7 +332,7 @@ export default function Register() {
 
         </form>
 
-        <p className="text-center text-slate-400 text-xs">
+        <p className="relative z-10 text-center text-slate-400 text-xs">
           Already registered? <Link to="/login" className="text-indigo-400 font-bold hover:underline">Sign in here</Link>
         </p>
 
