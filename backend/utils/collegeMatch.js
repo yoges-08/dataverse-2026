@@ -78,6 +78,25 @@ const acronymMatchesLongName = (shortForm, longAcronym) => {
     (longAcronym.length - shortForm.length) <= MAX_ACRONYM_SUFFIX_SLACK;
 };
 
+// Candidate acronym forms for a given input: the whole string, and — when
+// it's more than one word — just its FIRST word. This is what lets "AAMEC
+// Kovilvenni" (an acronym with a location suffix attached) still be
+// recognized as "AAMEC": tested as a whole string it's too long to look
+// like an acronym at all, so without this, the acronym tier silently never
+// ran for a student who typed it this way.
+const acronymCandidates = (s) => {
+  const whole = normStrict(s);
+  const first = whole.split(' ')[0] || '';
+  return first && first !== whole ? [whole, first] : [whole];
+};
+
+// Tests whether shortSide (as a whole, or just its leading word) is an
+// acronym of longSide's full spelled-out name.
+const acronymMatch = (shortSide, longSide) => {
+  const longAcronym = acronymOf(longSide);
+  return acronymCandidates(shortSide).some(cand => acronymMatchesLongName(cand, longAcronym));
+};
+
 // Squash normalize: the strict form with ALL internal whitespace removed
 // (not just collapsed). This makes "R M K Engineering College" and "RMK
 // Engineering College" — or "Rajalakshmi Engineering College" and "Raja
@@ -108,11 +127,10 @@ const collegesMatch = (a, b) => {
   // Acronym tier: one side may be typed as a short-form acronym of the
   // other's full spelled-out name (e.g. "AAMEC" vs "Anjalai Ammal
   // Mahalingam Engineering College"). Tolerates a bounded location/campus
-  // suffix on the long-name side (e.g. "... College Kovilveeni").
-  const acrA = acronymOf(a);
-  const acrB = acronymOf(b);
-  if (acronymMatchesLongName(strictA, acrB)) return true;
-  if (acronymMatchesLongName(strictB, acrA)) return true;
+  // suffix on the long-name side (e.g. "... College Kovilveeni"), and
+  // treats the FIRST word as an acronym candidate so an acronym typed with
+  // its own location suffix ("AAMEC Kovilvenni") still matches.
+  if (acronymMatch(a, b) || acronymMatch(b, a)) return true;
 
   const coreA = normCore(a);
   const coreB = normCore(b);
