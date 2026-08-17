@@ -37,6 +37,21 @@ const classifyTxError = (err) => {
 };
 exports.classifyTxError = classifyTxError;
 
+// Abort a transaction ONLY if it is still active. MongoDB auto-aborts a
+// transaction when commitTransaction() fails (e.g. a transient write
+// conflict), so a naive unconditional abort in the catch would throw
+// MongoTransactionError ("Cannot call abortTransaction twice"). This guard
+// makes every abort idempotent and side-effect-free.
+const abortTx = async (session) => {
+  if (session && session.inTransaction) {
+    try {
+      if (session.inTransaction()) await session.abortTransaction();
+    } catch (_) {
+      // Already aborted/ended — nothing to do.
+    }
+  }
+};
+
 // 0 (or missing) means solo-only. When positive it is the maximum TOTAL team
 // size (leader included), e.g. 4 = leader + up to 3 teammates.
 const getEffectiveTeamLimit = (event) =>
@@ -349,7 +364,7 @@ exports.getMyTeamForEvent = async (req, res) => {
 
           await session.commitTransaction();
         } catch (txErr) {
-          await session.abortTransaction();
+          await abortTx(session);
 
           // A transient write conflict is NORMAL under concurrent recovery —
           // it means a racing addTeamMember committed first, which is fine.
@@ -557,7 +572,7 @@ exports.addTeamMember = async (req, res) => {
             $expr: { $gt: [{ $size: '$members' }, 1] }
           }).session(session);
           if (conflict) {
-            await session.abortTransaction();
+            await abortTx(session);
             return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
           }
 
@@ -580,14 +595,14 @@ exports.addTeamMember = async (req, res) => {
           } catch (pushErr) {
             // The DB-level unique (event, member) index rejected the push: a
             // concurrent request already placed this student elsewhere.
-            await session.abortTransaction();
+            await abortTx(session);
             if (pushErr.code === 11000) {
               return res.status(400).json({ success: false, message: 'This student is already on another team for this event.' });
             }
             throw pushErr;
           }
           if (!updated) {
-            await session.abortTransaction();
+            await abortTx(session);
             return res.status(400).json({ success: false, code: 'TEAM_MEMBER_LIMIT_REACHED', message: 'Team is full.' });
           }
           team = updated;
@@ -623,7 +638,7 @@ exports.addTeamMember = async (req, res) => {
 
           await session.commitTransaction();
         } catch (txErr) {
-          await session.abortTransaction();
+          await abortTx(session);
           throw txErr;
         } finally {
           session.endSession();
@@ -770,18 +785,49 @@ exports.removeTeamMember = async (req, res) => {
       return res.status(400).json({ success: false, message: 'A team must always have at least one member.' });
     }
 
-    team.members = members.filter(m => String(m.student) !== String(studentId));
+    const wasLeader = String(team.leader) === String(studentId);
+    const remaining = members.filter(m => String(m.student) !== String(studentId));
 
-    // The `leader` field is just the tracked creator id (used for the unique
-    // index); if the created left, re-point it at the oldest remaining member.
-    if (String(team.leader) === String(studentId)) {
-      const oldest = [...team.members]
-        .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0];
-      team.leader = oldest.student;
+    if (isDbConnected()) {
+      // Atomic remove: the database does the $pull in one shot, so a concurrent
+      // addTeamMember/removeTeamMember can no longer produce a VersionError
+      // (no stale in-memory copy is ever re-saved).
+      team = await Team.findOneAndUpdate(
+        { _id: team._id, 'members.student': studentId },
+        { $pull: { members: { student: studentId } } },
+        { new: true }
+      );
+      if (!team) return res.status(404).json({ success: false, message: 'That member is not in this team.' });
+
+      // The `leader` field is just the tracked creator id (used for the unique
+      // index); if the creator left, re-point it at the oldest remaining member.
+      const newLeader = remaining.length && wasLeader
+        ? [...team.members]
+            .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0]
+        : team.leader;
+
+      const status = recomputeStatus(team, event);
+      const patch = {};
+      if (String(newLeader) !== String(team.leader)) patch.leader = newLeader;
+      if (status !== team.status) patch.status = status;
+      if (Object.keys(patch).length) {
+        await Team.updateOne({ _id: team._id }, { $set: patch });
+        if (patch.leader) team.leader = patch.leader;
+        if (patch.status) team.status = patch.status;
+      }
+    } else {
+      team.members = remaining;
+
+      // The `leader` field is just the tracked creator id (used for the unique
+      // index); if the created left, re-point it at the oldest remaining member.
+      if (wasLeader) {
+        const oldest = [...team.members]
+          .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0];
+        team.leader = oldest.student;
+      }
+
+      team.status = recomputeStatus(team, event);
     }
-
-    team.status = recomputeStatus(team, event);
-    if (isDbConnected()) await team.save();
 
     const full = await fetchTeamForResponse(team);
     return res.status(200).json({ success: true, message: 'Member removed.', team: serializeTeam(full, event) });
