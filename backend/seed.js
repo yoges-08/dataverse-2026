@@ -270,7 +270,7 @@ const seedData = async () => {
         registrationDeadline: '2026-09-09',
         maxParticipants: 80,
         currentRegistrations: 0,
-        teamLimit: 4,
+        teamLimit: 8,
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Sriram', phone: '' },
         prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },

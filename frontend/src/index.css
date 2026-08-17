@@ -344,3 +344,91 @@
     border-radius: 0 !important;
   }
 }
+
+/* ---- Animated Login Page ---- */
+
+.login-canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+}
+
+.floating-input-group {
+  position: relative;
+}
+
+.floating-input-group input {
+  width: 100%;
+  padding: 1.1rem 0.9rem 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 0.75rem;
+  color: white;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.floating-input-group input:focus {
+  border-color: rgba(129, 116, 245, 0.9);
+}
+
+.floating-input-group label {
+  position: absolute;
+  left: 0.9rem;
+  top: 0.95rem;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.8);
+  pointer-events: none;
+  transition: transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
+  transform-origin: left top;
+}
+
+.floating-input-group input:focus + label,
+.floating-input-group input:not(:placeholder-shown) + label {
+  transform: translateY(-0.6rem) scale(0.78);
+  color: rgb(165, 158, 245);
+}
+
+/* Success overlay: checkmark + "Welcome In" shown briefly on login success */
+.login-success-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(15, 12, 41, 0.92);
+  backdrop-filter: blur(6px);
+  border-radius: 1.5rem;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.login-success-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.login-success-overlay svg {
+  animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.login-success-overlay h2 {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-success-overlay svg { animation: none; }
+}

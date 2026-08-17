@@ -215,7 +215,9 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               <FileText className="w-4 h-4 shrink-0 mt-0.5" />
               <span>
                 <span className="font-bold">Reel Submission:</span> After registering, send your reels to this number{' '}
-                <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>
+                <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>{' '}
+                or{' '}
+                <a href="https://wa.me/qr/R7CRFQEORARMK1" target="_blank" rel="noreferrer" className="font-bold underline hover:text-rose-200">https://wa.me/qr/R7CRFQEORARMK1</a>
               </span>
             </div>
           )}

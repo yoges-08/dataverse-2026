@@ -101,7 +101,7 @@ const EVENT_TEAM_LIMITS = [
   { title: 'Knowledge Knockout', teamLimit: 0 },
   { title: 'Layman Vibes', teamLimit: 3 },
   { title: 'Luminas Fest', teamLimit: 2 },
-  { title: 'Viral Vision', teamLimit: 4 }
+  { title: 'Viral Vision', teamLimit: 8 }
 ];
 const syncEventTeamLimits = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
