@@ -120,7 +120,7 @@ export default function Navbar() {
           <div
             ref={navRef}
             className={`relative hidden lg:flex items-center text-xs font-bold text-slate-300 transition-all duration-300 ${
-              scrolled ? 'space-x-6' : 'space-x-8'
+              scrolled ? 'gap-6' : 'gap-8'
             }`}
           >
             {studentNavItems.map((item) => (
