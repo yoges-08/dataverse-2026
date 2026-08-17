@@ -451,9 +451,18 @@ exports.getAvailableTeammates = async (req, res) => {
     const qCollege = student.collegeName || '';
     const qYear = norm(student.year || '');
 
-    // Students already committed to ANY OTHER team for this event are excluded.
-    // A solo team (the auto-created seat with only the leader) still counts as
-    // available — those leaders can be recruited to join another squad.
+    // Determine the event's team limit once, so "taken" means "team already
+    // full", not "team has 2+ members". A partial team still has room, so its
+    // members stay visible as recruitable free agents.
+    const eventForLimit = isDbConnected()
+      ? await Event.findById(eventId).select('teamLimit')
+      : resolveEventMock(eventId);
+    const limit = getEffectiveTeamLimit(eventForLimit);
+
+    // Only students on a team that is ALREADY FULL for this event are excluded.
+    // A solo seat (auto-created with only the leader) and every partial team
+    // still count as available — those people can be recruited to join another
+    // squad.
     const takenIds = new Set();
     let allTeams = [];
     if (isDbConnected()) {
@@ -463,6 +472,7 @@ exports.getAvailableTeammates = async (req, res) => {
     }
     allTeams.forEach(t => {
       const members = t.members || [];
+      if (limit > 0 && members.length < limit) return; // partial team — members still available
       if (members.length <= 1) return; // solo seat — leader is still available
       if (t.leader) takenIds.add(String(t.leader));
       members.forEach(m => takenIds.add(String(m.student)));
