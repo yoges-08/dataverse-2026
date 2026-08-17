@@ -26,29 +26,9 @@
     background-attachment: fixed;
   }
 
-  /* Visible animated aurora blobs floating over the page */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(48% 42% at 20% 16%, rgba(168, 85, 247, 0.55) 0%, transparent 70%),
-      radial-gradient(42% 38% at 80% 26%, rgba(236, 72, 153, 0.45) 0%, transparent 70%),
-      radial-gradient(52% 44% at 55% 92%, rgba(129, 140, 248, 0.50) 0%, transparent 70%);
-    animation: auroraShift 18s linear infinite alternate;
-  }
-
   h1, h2, h3, h4 {
     letter-spacing: -0.02em;
   }
-}
-
-@keyframes auroraShift {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(-2%, 1.5%, 0) scale(1.06); }
-  100% { transform: translate3d(2%, -1.5%, 0) scale(1.02); }
 }
 
 @keyframes shimmer {
@@ -470,7 +450,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
-  body::before,
   .hero-glow-pulse {
     animation: none !important;
   }
