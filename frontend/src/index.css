@@ -443,3 +443,26 @@
     animation: none !important;
   }
 }
+
+/* ============================================================
+   MOBILE FINE-TUNING
+   ============================================================ */
+
+/* Prevent any stray wide element from forcing the browser to render a
+   wider-than-screen layout (which reads as a "zoomed-out desktop" view on
+   phones). `clip` avoids creating a scroll container, so the sticky nav
+   keeps working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* iOS Safari auto-zooms into any input/select that is smaller than 16px.
+   Force 16px on small screens so tapping a field never pinches the page. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
