@@ -96,7 +96,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
+      <div className="min-h-screen flex flex-col text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
         <div className="relative z-10 flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
@@ -112,10 +112,22 @@ export default function App() {
 
 // Route transitions: remount the route content per path so each page
 // fades in with a subtle rise (tab-switch style animation).
+const NAV_ORDER = ['/', '/events', '/schedule', '/sponsors', '/about', '/contact'];
+
 function AnimatedRoutes() {
   const location = useLocation();
+  const prevIndexRef = React.useRef(NAV_ORDER.indexOf(location.pathname));
+
+  const currentIndex = NAV_ORDER.indexOf(location.pathname);
+  const goingBack = currentIndex !== -1 && currentIndex < prevIndexRef.current;
+  prevIndexRef.current = currentIndex === -1 ? prevIndexRef.current : currentIndex;
+
   return (
-    <div key={location.pathname} className="page-enter">
+    <div
+      key={location.pathname}
+      className="page-enter"
+      style={{ '--slide-from': goingBack ? '-24px' : '24px' }}
+    >
       <Suspense fallback={<PageLoader />}>
         <Routes location={location}>
             <Route path="/" element={<Home />} />

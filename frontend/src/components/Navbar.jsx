@@ -68,10 +68,15 @@ export default function Navbar() {
       }
     };
     measure();
+    // Re-measure once the scroll-triggered shrink/grow transition finishes
+    const t = setTimeout(measure, 320);
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', measure);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, user]);
+  }, [location.pathname, user, scrolled]);
 
   return (
     <nav
