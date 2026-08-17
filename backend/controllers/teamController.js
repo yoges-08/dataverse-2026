@@ -451,23 +451,19 @@ exports.getAvailableTeammates = async (req, res) => {
     const qCollege = student.collegeName || '';
     const qYear = norm(student.year || '');
 
-    // Determine the event's team limit once, so "taken"/"hidden" means "team
-    // already full", while "teamed" means "on any team with 2+ members".
+    // Determine the event's team limit once, so "taken" means "team already
+    // full", not "team has 2+ members". A partial team still has room, so its
+    // members stay visible as recruitable free agents.
     const eventForLimit = isDbConnected()
       ? await Event.findById(eventId).select('teamLimit')
       : resolveEventMock(eventId);
     const limit = getEffectiveTeamLimit(eventForLimit);
 
-    // Two separate concepts (visibility vs addability):
-    //  - fullTeamIds:     students on a team that is ALREADY FULL. These are
-    //                     excluded from the browse list entirely.
-    //  - alreadyTeamedIds: students on ANY team with 2+ members (full or not).
-    //                     They stay VISIBLE so nobody wonders where they went,
-    //                     but they are reported as alreadyOnTeam so the UI marks
-    //                     them non-addable. addTeamMember's own blocking check
-    //                     (isStudentInAnyTeamForEvent) still refuses to add them.
-    const fullTeamIds = new Set();
-    const alreadyTeamedIds = new Set();
+    // Only students on a team that is ALREADY FULL for this event are excluded.
+    // A solo seat (auto-created with only the leader) and every partial team
+    // still count as available — those people can be recruited to join another
+    // squad.
+    const takenIds = new Set();
     let allTeams = [];
     if (isDbConnected()) {
       allTeams = await Team.find({ event: eventId }).select('leader members').lean();
@@ -476,12 +472,10 @@ exports.getAvailableTeammates = async (req, res) => {
     }
     allTeams.forEach(t => {
       const members = t.members || [];
-      if (members.length <= 1) return; // solo seat — leader still fully available
-      const ids = [t.leader, ...members.map(m => m.student)].filter(Boolean).map(String);
-      ids.forEach(id => alreadyTeamedIds.add(id));
-      if (limit > 0 && members.length >= limit) {
-        ids.forEach(id => fullTeamIds.add(id));
-      }
+      if (limit > 0 && members.length < limit) return; // partial team — members still available
+      if (members.length <= 1) return; // solo seat — leader is still available
+      if (t.leader) takenIds.add(String(t.leader));
+      members.forEach(m => takenIds.add(String(m.student)));
     });
 
     let candidates = [];
@@ -498,7 +492,7 @@ exports.getAvailableTeammates = async (req, res) => {
 
     const result = candidates
       .filter(c => String(c._id) !== String(student._id))
-      .filter(c => !fullTeamIds.has(String(c._id)))
+      .filter(c => !takenIds.has(String(c._id)))
       .filter(c => !qCollege || collegesMatch(c.collegeName || '', qCollege))
       .filter(c => !qYear || norm(c.year || '') === qYear)
       .map(c => ({
@@ -507,8 +501,7 @@ exports.getAvailableTeammates = async (req, res) => {
         collegeName: c.collegeName || '',
         department: c.department || '',
         year: c.year || '',
-        registerNumber: c.registerNumber || 'N/A',
-        alreadyOnTeam: alreadyTeamedIds.has(String(c._id))
+        registerNumber: c.registerNumber || 'N/A'
       }));
 
     return res.status(200).json({ success: true, count: result.length, students: result });
