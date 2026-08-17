@@ -61,8 +61,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card modal-card max-w-2xl w-full sm:m-4 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col max-h-[92dvh] sm:max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-950/85 backdrop-blur-md overflow-y-auto py-6 sm:py-10">
+      <div className="glass-card modal-card max-w-2xl w-full sm:m-4 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col">
         
         {/* Banner Header */}
         <div className="relative h-40 sm:h-48 bg-slate-900 shrink-0">
@@ -95,8 +95,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           </div>
         </div>
 
-        {/* Content (scrolls) */}
-        <div className="p-4 sm:p-6 pt-5 space-y-5 overflow-y-auto flex-1 min-h-0">
+        {/* Content (no internal scroll — grows naturally, page scrolls if needed) */}
+        <div className="p-4 sm:p-6 pt-5 space-y-5">
           
           <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
 
