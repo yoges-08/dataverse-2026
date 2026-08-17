@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BackToTop from './components/BackToTop';
@@ -100,8 +100,24 @@ export default function App() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Navbar />
           <main className="flex-grow">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+            <AnimatedRoutes />
+        </main>
+        <Footer />
+        <BackToTop />
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+// Route transitions: remount the route content per path so each page
+// fades in with a subtle rise (tab-switch style animation).
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="page-enter">
+      <Suspense fallback={<PageLoader />}>
+        <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/events" element={<Events />} />
@@ -133,14 +149,9 @@ export default function App() {
 
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />
-            </Routes>
-            </Suspense>
-        </main>
-        <Footer />
-        <BackToTop />
-        </div>
-      </div>
-    </Router>
+        </Routes>
+      </Suspense>
+    </div>
   );
 }
 

@@ -432,3 +432,35 @@
 @media (prefers-reduced-motion: reduce) {
   .login-success-overlay svg { animation: none; }
 }
+
+/* ============================================================
+   ROUTE / NAV / HERO MOTION (nav animation ideas)
+   ============================================================ */
+
+/* Tab-switch style page transition on every route change */
+.page-enter {
+  animation: pageEnter 0.45s var(--ease-out) both;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulsing glow behind the hero content */
+.hero-glow-pulse {
+  animation: heroGlowPulse 7s ease-in-out infinite;
+}
+
+@keyframes heroGlowPulse {
+  0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  body::before,
+  .hero-glow-pulse {
+    animation: none !important;
+  }
+}

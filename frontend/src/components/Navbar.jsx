@@ -1,6 +1,7 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import useMagneticHover from '../utils/useMagneticHover';
 import { 
   Sparkles, Menu, X, User, LogOut, LayoutDashboard, 
   Calendar, Info, Phone, Trophy, Award, ShieldCheck, Zap
@@ -9,8 +10,21 @@ import {
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, visible: false });
+  const navRef = useRef(null);
+  const navLinkRefs = useRef({});
+  const registerMagnetic = useMagneticHover(0.2);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Shrink the bar once the page is scrolled (Apple-style).
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -44,14 +58,35 @@ export default function Navbar() {
     return location.pathname.startsWith(item.to);
   };
 
+  // Slide the underline indicator to the active link.
+  useEffect(() => {
+    const measure = () => {
+      const activeItem = studentNavItems.find(isActive) || studentNavItems[0];
+      const el = activeItem && navLinkRefs.current[activeItem.to];
+      if (el && navRef.current) {
+        setIndicator({ left: el.offsetLeft, width: el.offsetWidth, visible: true });
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, user]);
+
   return (
-    <nav className="sticky top-0 z-40 bg-slate-950/40 backdrop-blur-2xl border-b border-violet-400/30 shadow-lg shadow-purple-950/40">
+    <nav
+      className={`sticky top-0 z-40 backdrop-blur-2xl border-b transition-all duration-300 ${
+        scrolled
+          ? 'bg-slate-950/70 border-violet-400/30 shadow-lg shadow-purple-950/50'
+          : 'bg-slate-950/40 border-violet-400/20'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-16' : 'h-20'}`}>
           
           {/* Brand Logo & Name */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 p-0.5 shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform overflow-hidden flex items-center justify-center">
+          <Link to="/" className="flex items-center space-x-3 group shrink-0">
+            <div className={`relative rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 p-0.5 shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-all overflow-hidden flex items-center justify-center ${scrolled ? 'w-9 h-9' : 'w-10 h-10'}`}>
               <img
                 src="/logo.png"
                 alt="DATAVERSE Logo"
@@ -67,7 +102,7 @@ export default function Navbar() {
               </div>
             </div>
             <div>
-              <span className="text-xl font-black tracking-wider text-white">
+              <span className={`font-black tracking-wider text-white transition-all duration-300 ${scrolled ? 'text-lg' : 'text-xl'}`}>
                 DATA<span className="gradient-text">VERSE</span>
               </span>
               <span className="text-[10px] block font-bold text-indigo-400 tracking-widest uppercase -mt-1">
@@ -77,16 +112,34 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav Links */}
-          <div className="hidden lg:flex items-center space-x-8 text-xs font-bold text-slate-300">
+          <div
+            ref={navRef}
+            className={`relative hidden lg:flex items-center text-xs font-bold text-slate-300 transition-all duration-300 ${
+              scrolled ? 'space-x-6' : 'space-x-8'
+            }`}
+          >
             {studentNavItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`transition-colors ${isActive(item) ? 'text-indigo-400 border-b-2 border-indigo-500 pb-0.5' : 'hover:text-indigo-400'}`}
+                ref={(el) => { navLinkRefs.current[item.to] = el; }}
+                className={`relative z-10 pb-1 transition-all duration-200 hover:-translate-y-0.5 ${
+                  isActive(item) ? 'text-indigo-400' : 'hover:text-indigo-400'
+                }`}
               >
                 {item.label}
               </Link>
             ))}
+            {/* Sliding underline indicator */}
+            <span
+              aria-hidden
+              className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-400 transition-all duration-300 ease-out"
+              style={{
+                left: indicator.left,
+                width: indicator.width,
+                opacity: indicator.visible ? 1 : 0,
+              }}
+            />
           </div>
 
           {/* Auth Action Buttons */}
@@ -119,7 +172,8 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-glow px-5 py-2.5 rounded-xl text-white font-extrabold shadow-lg shadow-indigo-600/30"
+                  {...registerMagnetic}
+                  className="btn-glow px-5 py-2.5 rounded-xl text-white font-extrabold shadow-lg shadow-indigo-600/30 will-change-transform"
                 >
                   Register
                 </Link>
