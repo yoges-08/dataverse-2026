@@ -79,7 +79,7 @@ export default function Events() {
             <button
               key={cat}
               onClick={() => setFilterCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 filterCategory === cat
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30'
                   : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800'
@@ -106,13 +106,13 @@ export default function Events() {
 
       {/* Events Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-80 rounded-2xl bg-slate-900 animate-pulse border border-slate-800"></div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
           {filteredEvents.map((ev) => (
             <div
               key={ev._id}
@@ -162,7 +162,7 @@ export default function Events() {
                 <div className="space-y-3 pt-3 border-t border-slate-800">
                   <button
                     onClick={() => setSelectedEvent(ev)}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-purple-600/40 hover:shadow-purple-500/60 hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-purple-600/40 hover:shadow-purple-500/60 hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2"
                   >
                     <Zap className="w-4 h-4" />
                     <span>View Rules & Register</span>

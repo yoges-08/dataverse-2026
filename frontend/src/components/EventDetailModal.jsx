@@ -60,11 +60,11 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card modal-card max-w-2xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md">
+      <div className="glass-card modal-card max-w-2xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col max-h-[92vh]">
         
         {/* Banner Header */}
-        <div className="relative h-48 bg-slate-900">
+        <div className="relative h-40 sm:h-48 bg-slate-900 shrink-0">
           <img
             src={event.bannerImage || 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80'}
             alt={event.title}
@@ -75,12 +75,12 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+            className="absolute top-3 right-3 p-2.5 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
+          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 event.category === 'Technical'
@@ -89,13 +89,13 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               }`}>
                 {event.category} Event
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">{event.title}</h2>
+              <h2 className="text-xl sm:text-3xl font-extrabold text-white mt-1 leading-tight">{event.title}</h2>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+        {/* Content (scrolls) */}
+        <div className="p-4 sm:p-6 pt-5 space-y-5 overflow-y-auto flex-1 min-h-0">
           
           <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
 
@@ -172,32 +172,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             </div>
           )}
 
-          {/* PDF Upload for Paper Presentation */}
-          {event.pdfRequired && (
-            <div className="p-3 bg-slate-900 rounded-xl border border-indigo-500/30 space-y-2">
-              <label className="text-xs font-semibold text-indigo-300 flex items-center space-x-1.5">
-                <FileText className="w-4 h-4" />
-                <span>Upload Paper Presentation Abstract (.pdf mandatory)</span>
-              </label>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setPaperFile(e.target.files[0])}
-                className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500"
-              />
-            </div>
-          )}
-
-          {/* Message feedback */}
-          {msg.text && (
-            <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
-              msg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
-            }`}>
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{msg.text}</span>
-            </div>
-          )}
-
           {/* NovaSpeak paper submission notice */}
           {event.title === 'NovaSpeak' && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2">
@@ -217,7 +191,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 <span className="font-bold">Reel Submission:</span> After registering, send your reels to this number{' '}
                 <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>{' '}
                 or{' '}
-                <a href="https://wa.me/qr/R7CRFQEORARMK1" target="_blank" rel="noreferrer" className="font-bold underline hover:text-rose-200">https://wa.me/qr/R7CRFQEORARMK1</a>
+                <a href="https://wa.me/qr/R7CRFQEORARMK1" target="_blank" rel="noreferrer" className="font-bold underline hover:text-rose-200">WhatsApp</a>
               </span>
             </div>
           )}
@@ -231,16 +205,44 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             </span>
           </div>
 
-          {/* Action button */}
+        </div>
+
+        {/* PDF Upload for Paper Presentation (always reachable above the button) */}
+        {event.pdfRequired && (
+          <div className="px-4 sm:px-6 pb-3 pt-1 shrink-0">
+            <div className="p-3 bg-slate-900 rounded-xl border border-indigo-500/30 space-y-2">
+              <label className="text-xs font-semibold text-indigo-300 flex items-center space-x-1.5">
+                <FileText className="w-4 h-4 shrink-0" />
+                <span>Upload Paper Presentation Abstract (.pdf mandatory)</span>
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPaperFile(e.target.files[0])}
+                className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sticky Register footer — always visible */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-800 bg-slate-950/80 backdrop-blur shrink-0 space-y-3">
+          {msg.text && (
+            <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
+              msg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
+            }`}>
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{msg.text}</span>
+            </div>
+          )}
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-[opacity,transform] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition-[opacity,transform] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             <Sparkles className="w-4 h-4" />
             <span>{loading ? 'Processing Registration...' : 'Register For Event'}</span>
           </button>
-
         </div>
 
       </div>
