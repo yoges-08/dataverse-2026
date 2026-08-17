@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LogIn, AlertCircle, KeyRound, Eye, EyeOff } from 'lucide-react';
@@ -10,8 +10,16 @@ export default function Login() {
   const navigate = useNavigate();
   const magnetic = useMagneticHover(0.2);
 
+  // Tracks whether THIS component is already handling the post-login
+  // redirect itself (with the animation delay). When true, the effect
+  // below must not also try to redirect -- otherwise the two race and
+  // the animation never gets seen.
+  const justLoggedInRef = useRef(false);
+
   useEffect(() => {
-    if (user) redirectByRole(user.role);
+    if (user && !justLoggedInRef.current) {
+      redirectByRole(user.role);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -39,6 +47,7 @@ export default function Login() {
 
       const res = await login(email, password);
       if (res.success) {
+        justLoggedInRef.current = true; // tell the effect above to stand down
         setShowSuccess(true);
         setTimeout(() => redirectByRole(res.user.role), 900);
       }
