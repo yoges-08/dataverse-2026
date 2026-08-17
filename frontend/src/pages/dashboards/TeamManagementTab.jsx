@@ -302,8 +302,8 @@ export default function TeamManagementTab() {
               <span>Add a Teammate</span>
             </h3>
             <p className="text-xs text-slate-400 mb-5">
-              These are students registered for this event from your college and year who are not yet
-              on a team. Click one to add them instantly.
+              These are students registered for this event from your college and year. Click one to add them
+              instantly. Students already on another team stay visible but can't be added directly.
             </p>
 
             {isFull ? (
@@ -325,14 +325,20 @@ export default function TeamManagementTab() {
                         {st.department || '—'}{st.year ? ` • Year ${st.year}` : ''}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleAdd(st)}
-                      disabled={adding === st.studentId}
-                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all disabled:opacity-50 shrink-0 flex items-center space-x-1.5"
-                    >
-                      {adding === st.studentId ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
-                      <span>Add</span>
-                    </button>
+                    {st.alreadyOnTeam ? (
+                      <span className="text-[11px] text-amber-400 shrink-0 text-right" title="This student is on another team for this event">
+                        On a team
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleAdd(st)}
+                        disabled={adding === st.studentId}
+                        className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all disabled:opacity-50 shrink-0 flex items-center space-x-1.5"
+                      >
+                        {adding === st.studentId ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+                        <span>Add</span>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
