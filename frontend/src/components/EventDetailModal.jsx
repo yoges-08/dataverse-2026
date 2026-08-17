@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
@@ -59,7 +60,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/85 backdrop-blur-md">
       <div className="glass-card modal-card max-w-2xl w-full sm:m-4 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col max-h-[92dvh] sm:max-h-[92vh]">
         
@@ -246,6 +247,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

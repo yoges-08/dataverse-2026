@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { QrCode, Search, X, Camera, ShieldCheck, AlertCircle, Sparkles, UserCheck, User } from 'lucide-react';
 import API from '../services/api';
@@ -96,7 +97,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
       <div className="glass-card modal-card max-w-xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative">
         
@@ -254,6 +255,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
@@ -919,7 +920,7 @@ const loadContactMessages = async () => {
       )}
 
       {/* Create Event Modal */}
-      {showEventModal && (
+      {showEventModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-xl w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white">Create New Symposium Event</h3>
@@ -950,11 +951,12 @@ const loadContactMessages = async () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Create Staff Modal */}
-      {showStaffModal && (
+      {showStaffModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4">
             <h3 className="text-lg font-bold text-white">Create Staff Account</h3>
@@ -972,11 +974,12 @@ const loadContactMessages = async () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Create Announcement Modal */}
-      {showAnnModal && (
+      {showAnnModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-md w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4">
             <h3 className="text-lg font-bold text-white">Publish Live Announcement</h3>
@@ -989,11 +992,12 @@ const loadContactMessages = async () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     {/* Edit Event Modal */}
-      {showEditEventModal && (
+      {showEditEventModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-xl w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4 max-h-[85vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white">Edit Event</h3>
@@ -1031,11 +1035,12 @@ const loadContactMessages = async () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Event Registrants Modal */}
-      {showEventDetail && (eventDetail || detailError) && (
+      {showEventDetail && (eventDetail || detailError) && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="glass-card max-w-2xl w-full rounded-2xl p-6 border border-indigo-500/30 space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between">
@@ -1122,7 +1127,8 @@ const loadContactMessages = async () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

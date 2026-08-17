@@ -116,7 +116,10 @@ const NAV_ORDER = ['/', '/events', '/schedule', '/sponsors', '/about', '/contact
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const [animating, setAnimating] = React.useState(true);
   const prevIndexRef = React.useRef(NAV_ORDER.indexOf(location.pathname));
+
+  React.useEffect(() => setAnimating(true), [location.pathname]);
 
   const currentIndex = NAV_ORDER.indexOf(location.pathname);
   const goingBack = currentIndex !== -1 && currentIndex < prevIndexRef.current;
@@ -125,8 +128,11 @@ function AnimatedRoutes() {
   return (
     <div
       key={location.pathname}
-      className="page-enter"
+      className={animating ? 'page-enter' : ''}
       style={{ '--slide-from': goingBack ? '-24px' : '24px' }}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget) setAnimating(false);
+      }}
     >
       <Suspense fallback={<PageLoader />}>
         <Routes location={location}>

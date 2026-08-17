@@ -1,11 +1,12 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, ShieldCheck, Sparkles, User, MapPin } from 'lucide-react';
 
 export default function StudentBadgeModal({ student, onClose }) {
   if (!student) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md cert-modal-overlay">
       <div className="glass-card modal-card max-w-md w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative cert-modal-card">
         
@@ -96,6 +97,7 @@ export default function StudentBadgeModal({ student, onClose }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

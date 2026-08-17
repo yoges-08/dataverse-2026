@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { X, Download, Award, ShieldCheck, Sparkles, Medal, Crown, Star } from 'lucide-react';
@@ -80,7 +81,7 @@ export default function CertificateModal({ certificate, onClose }) {
 
   const perfWord = isWinner ? 'outstanding' : 'commendable';
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md cert-modal-overlay">
       <div className="glass-card modal-card max-w-[840px] w-full rounded-2xl border border-amber-500/30 shadow-2xl relative cert-modal-card max-h-[94vh] overflow-y-auto">
 
@@ -279,6 +280,7 @@ export default function CertificateModal({ certificate, onClose }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
