@@ -97,6 +97,28 @@ const acronymMatch = (shortSide, longSide) => {
   return acronymCandidates(shortSide).some(cand => acronymMatchesLongName(cand, longAcronym));
 };
 
+// Bounded Levenshtein edit distance, capped at `max` for speed — once the
+// cheapest possible path through the DP table exceeds `max` we can stop
+// caring about the exact number, so this returns max+1 as an "over budget"
+// sentinel instead of the true (larger) distance.
+const editDistance = (a, b, max) => {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = cur[0];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const val = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      cur.push(val);
+      if (val < rowMin) rowMin = val;
+    }
+    if (rowMin > max) return max + 1; // whole row over budget, no point continuing
+    prev = cur;
+  }
+  return prev[b.length];
+};
+
 // Squash normalize: the strict form with ALL internal whitespace removed
 // (not just collapsed). This makes "R M K Engineering College" and "RMK
 // Engineering College" — or "Rajalakshmi Engineering College" and "Raja
@@ -152,9 +174,23 @@ const collegesMatch = (a, b) => {
   // between two unrelated colleges.
   if (shorter.size === 0) return false;
   const allContained = [...shorter].every(t => longer.has(t));
-  if (!allContained) return false;
+  if (allContained && (shorter.size >= 2 || [...shorter][0].length >= 3)) return true;
 
-  return shorter.size >= 2 || [...shorter][0].length >= 3;
+  // Fuzzy tier (last resort): tolerates small free-text typos — a missing/
+  // doubled letter, a swap, one wrong character — most often landing in a
+  // location suffix ("kovilvenni" vs "kovilveni"). Compared on the CORE
+  // (filler words like "Engineering College" already stripped, then
+  // squashed) rather than the full name — shared generic words are long and
+  // would otherwise dilute the distance budget, masking a real difference
+  // in the short, distinctive part of the name (e.g. "SRM" vs "SSN"
+  // Engineering College must NOT match just because both end the same way).
+  const coreSquashA = coreA.replace(/\s+/g, '');
+  const coreSquashB = coreB.replace(/\s+/g, '');
+  const fuzzyA = coreSquashA.length <= coreSquashB.length ? coreSquashA : coreSquashB;
+  const fuzzyB = coreSquashA.length <= coreSquashB.length ? coreSquashB : coreSquashA;
+  if (fuzzyA.length < 10) return false; // too short to fuzzy-match safely
+  const budget = Math.min(2, Math.floor(fuzzyB.length / 14) + 1);
+  return editDistance(fuzzyA, fuzzyB, budget) <= budget;
 };
 
 module.exports = { normStrict, normCore, collegesMatch };
