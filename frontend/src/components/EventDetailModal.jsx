@@ -60,8 +60,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md">
-      <div className="glass-card modal-card max-w-2xl w-full rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/85 backdrop-blur-md">
+      <div className="glass-card modal-card max-w-2xl w-full sm:m-4 rounded-t-2xl sm:rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl relative flex flex-col max-h-[92dvh] sm:max-h-[92vh]">
         
         {/* Banner Header */}
         <div className="relative h-40 sm:h-48 bg-slate-900 shrink-0">
