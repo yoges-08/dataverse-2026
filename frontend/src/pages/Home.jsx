@@ -52,7 +52,7 @@ export default function Home() {
       <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8">
         
         {/* Glowing Background Mesh */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-violet-600/40 via-fuchsia-500/30 to-cyan-500/40 rounded-full blur-[140px] pointer-events-none"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/20 via-fuchsia-500/15 to-cyan-500/20 rounded-full blur-[120px] pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-8">
           
