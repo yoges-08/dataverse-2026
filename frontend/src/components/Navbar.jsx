@@ -26,6 +26,17 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Lock body scroll while the mobile drawer is open, and close it on resize.
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
+    const onResize = () => setMobileMenuOpen(false);
+    window.addEventListener('resize', onResize);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('resize', onResize);
+    };
+  }, [mobileMenuOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -80,7 +91,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`sticky top-0 z-40 backdrop-blur-2xl border-b transition-all duration-300 ${
+      className={`sticky top-0 z-40 backdrop-blur-md lg:backdrop-blur-2xl border-b transition-all duration-300 ${
         scrolled
           ? 'bg-slate-950/70 border-violet-400/30 shadow-lg shadow-purple-950/50'
           : 'bg-slate-950/40 border-violet-400/20'
@@ -93,8 +104,10 @@ export default function Navbar() {
           <Link to="/" className="flex items-center space-x-3 group shrink-0">
             <div className={`relative rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 p-0.5 shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-all overflow-hidden flex items-center justify-center ${scrolled ? 'w-9 h-9' : 'w-10 h-10'}`}>
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="DATAVERSE Logo"
+                width="40"
+                height="40"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.style.display = 'none';
@@ -148,7 +161,7 @@ export default function Navbar() {
           </div>
 
           {/* Auth Action Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-3">
                 <Link
@@ -161,7 +174,7 @@ export default function Navbar() {
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-900 transition-colors"
+                  className="p-3 lg:p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-900 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -190,7 +203,8 @@ export default function Navbar() {
           <div className="lg:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl bg-slate-900 text-slate-400 hover:text-white"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className="p-3 rounded-xl bg-slate-900 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -198,6 +212,15 @@ export default function Navbar() {
 
         </div>
       </div>
+
+      {/* Mobile menu background tap-out overlay */}
+      {mobileMenuOpen && (
+        <div
+          aria-hidden
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (

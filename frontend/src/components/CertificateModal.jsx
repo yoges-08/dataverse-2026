@@ -102,7 +102,7 @@ export default function CertificateModal({ certificate, onClose }) {
             </button>
             <button
               onClick={onClose}
-              className="p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -138,8 +138,8 @@ export default function CertificateModal({ certificate, onClose }) {
                   ></div>
 
                   {/* Watermark emblem (left) + (right) */}
-                  <img src="/cert-right.png" alt="" className="absolute -left-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
-                  <img src="/cert-left.png" alt="" className="absolute -right-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
+                  <img src="/cert-right.webp" alt="" className="absolute -left-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
+                  <img src="/cert-left.webp" alt="" className="absolute -right-6 -bottom-10 w-40 opacity-[0.06] pointer-events-none" />
 
                   {/* Double decorative frame */}
                   <div
@@ -174,7 +174,7 @@ export default function CertificateModal({ certificate, onClose }) {
 
                     {/* College header with flanking emblems */}
                     <div className="flex items-center justify-center gap-8 mb-3">
-                      <img src="/cert-right.png" alt="AI&DS" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
+                      <img src="/cert-right.webp" alt="AI&DS" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
                       <div className="space-y-1">
                         <span className="text-[11px] uppercase font-bold tracking-[0.2em]" style={{ color: theme.accent }}>
                           Anjalai Ammal Mahalingam Engineering College, Kovilvenni
@@ -183,7 +183,7 @@ export default function CertificateModal({ certificate, onClose }) {
                           Department of Artificial Intelligence & Data Science
                         </p>
                       </div>
-                      <img src="/cert-left.png" alt="AAMEC" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
+                      <img src="/cert-left.webp" alt="AAMEC" className="h-[68px] w-[68px] object-contain shrink-0 drop-shadow-lg" />
                     </div>
 
                     {/* Title */}

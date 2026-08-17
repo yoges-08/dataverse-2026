@@ -40,9 +40,11 @@ export default function About() {
 
         <div className="glass-card p-6 rounded-3xl border border-indigo-500/30">
           <img
-            src="/campus1.jpg"
+            src="/campus1.webp"
             alt="AAMEC campus"
             loading="lazy"
+            width="1280"
+            height="720"
             className="w-full h-72 object-cover rounded-2xl"
           />
         </div>

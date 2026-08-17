@@ -25,6 +25,11 @@
       radial-gradient(50% 40% at 8% 90%, rgba(34, 211, 238, 0.20) 0%, transparent 65%);
     background-attachment: fixed;
   }
+  @media (max-width: 1023px) {
+    body {
+      background-attachment: scroll;
+    }
+  }
 
   h1, h2, h3, h4 {
     letter-spacing: -0.02em;
@@ -55,6 +60,15 @@
       0 20px 50px -20px rgba(0, 0, 0, 0.55);
     transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out);
     overflow: hidden;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+
+  @media (max-width: 767px) {
+    .glass-card {
+      backdrop-filter: blur(8px) saturate(150%);
+      -webkit-backdrop-filter: blur(8px) saturate(150%);
+    }
   }
 
   /* Glowing aurora seam along the top of every glass card */
@@ -434,6 +448,19 @@
   }
 }
 
+@media (max-width: 767px) {
+  @keyframes pageSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(var(--slide-from, 24px));
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
 .page-enter {
   animation: pageSlideIn 0.5s var(--ease-out) both;
 }
@@ -454,7 +481,8 @@
    keeps working. */
 html,
 body {
-  overflow-x: clip;
+  overflow-x: hidden; /* fallback for older WebViews */
+  overflow-x: clip; /* modern browsers, keeps sticky nav working */
 }
 
 /* iOS Safari auto-zooms into any input/select that is smaller than 16px.

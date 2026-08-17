@@ -76,7 +76,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-2.5 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+            className="absolute top-3 right-3 p-2.5 rounded-full bg-slate-950/70 text-slate-300 hover:text-white hover:bg-slate-900 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>

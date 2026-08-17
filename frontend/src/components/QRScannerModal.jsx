@@ -109,7 +109,7 @@ export default function QRScannerModal({ onClose, onVerifySuccess }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>

@@ -49,7 +49,7 @@ export default function Home() {
     <div className="space-y-16 sm:space-y-24 pb-16 overflow-hidden">
       
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative min-h-[85vh] min-h-[85dvh] flex items-center justify-center pt-8 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         
         {/* Glowing Background Mesh */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/20 via-fuchsia-500/15 to-cyan-500/20 rounded-full blur-[120px] pointer-events-none"></div>
@@ -59,9 +59,11 @@ export default function Home() {
           {/* College Logo */}
           <div className="flex justify-center mb-4">
             <img
-              src="/college_logo.png"
+              src="/college_logo.webp"
               alt="AAMEC Official College Emblem"
-              className="w-36 sm:w-44 object-contain"
+              width="176"
+              height="176"
+              className="w-36 sm:w-44 h-auto object-contain"
               style={{ filter: 'drop-shadow(0 0 25px rgba(255, 170, 20, 0.55)) drop-shadow(0 0 60px rgba(255, 120, 40, 0.35))' }}
             />
           </div>
@@ -331,12 +333,12 @@ export default function Home() {
 }
 
 const campusImages = [
-  '/campus1.jpg',
-  '/campus3.jpg',
-  '/campus7.jpg',
-  '/campus4.jpg',
-  '/campus5.jpg',
-  '/campus6.jpg'
+  '/campus1.webp',
+  '/campus3.webp',
+  '/campus7.webp',
+  '/campus4.webp',
+  '/campus5.webp',
+  '/campus6.webp'
 ];
 
 function CampusSlider() {
