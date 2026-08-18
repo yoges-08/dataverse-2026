@@ -190,15 +190,34 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
           {/* Viral Vision reel submission notice */}
           {event.title === 'Viral Vision' && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2">
-              <FileText className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                <span className="font-bold">Reel Submission:</span> After registering, send your reels to this number{' '}
-                <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>{' '}
-                or{' '}
-                <a href="https://wa.me/qr/R7CRFQEORARMK1" target="_blank" rel="noreferrer" className="font-bold underline hover:text-rose-200">WhatsApp</a>
-              </span>
-            </div>
+            <>
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2">
+                <FileText className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  <span className="font-bold">Reel Submission:</span> After registering, send your reels to this number{' '}
+                  <a href="tel:7845204654" className="font-bold underline hover:text-rose-200">7845204654</a>{' '}
+                  or{' '}
+                  <a href="https://wa.me/qr/R7CRFQEORARMK1" target="_blank" rel="noreferrer" className="font-bold underline hover:text-rose-200">WhatsApp</a>
+                </span>
+              </div>
+
+              {/* Viral Vision topics */}
+              <div className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/30 text-xs text-pink-200">
+                <span className="font-bold text-pink-300 flex items-center space-x-1.5 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span>Reel Topics</span>
+                </span>
+                <ul className="space-y-1 list-disc list-inside">
+                  <li>Engineering Student Life</li>
+                  <li>Our Last College Bell</li>
+                  <li>A World Without Phones</li>
+                  <li>The Unseen Side of Success</li>
+                  <li>The Lesson Beyond the Textbooks</li>
+                  <li>Degree vs. Skills</li>
+                  <li>The Last Bench vs. The First Bench</li>
+                </ul>
+              </div>
+            </>
           )}
 
           {/* Team Management notice */}
