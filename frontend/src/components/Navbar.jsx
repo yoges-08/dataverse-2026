@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import useMagneticHover from '../utils/useMagneticHover';
@@ -213,18 +214,21 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu background tap-out overlay */}
-      {mobileMenuOpen && (
+      {/* Mobile menu background tap-out overlay (portaled so the nav's
+          backdrop-blur can't trap it inside the nav box) */}
+      {mobileMenuOpen && createPortal(
         <div
           aria-hidden
           className="fixed inset-0 z-30 bg-black/60 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
-        />
+        />,
+        document.body
       )}
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer — absolute under the sticky bar so it's always at the
+          top of the viewport even when the page is scrolled down */}
       {mobileMenuOpen && (
-        <div className="relative z-40 lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
+        <div className="absolute top-full left-0 right-0 z-40 lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
           {studentNavItems.map((item) => (
             <Link
               key={item.to}

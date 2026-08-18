@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
 import API from '../services/api';
@@ -14,6 +14,7 @@ const formatDate = (d) => {
 
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [paperFile, setPaperFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
@@ -22,7 +23,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
   const handleRegister = async () => {
     if (!user) {
-      setMsg({ type: 'error', text: 'Please log in to register for events.' });
+      navigate('/login', { state: { from: '/events', reason: 'register' } });
       return;
     }
 

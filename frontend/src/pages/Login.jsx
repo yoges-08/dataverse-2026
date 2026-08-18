@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { LogIn, AlertCircle, KeyRound, Eye, EyeOff } from 'lucide-react';
 import LoginCanvasBackground from '../components/LoginCanvasBackground';
@@ -8,6 +8,7 @@ import useMagneticHover from '../utils/useMagneticHover';
 export default function Login() {
   const { user, login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const magnetic = useMagneticHover(0.2);
 
   // Tracks whether THIS component is already handling the post-login
@@ -31,6 +32,13 @@ export default function Login() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const redirectByRole = (role) => {
+    // If the student came here from clicking "Register" on an event, send
+    // them back to the events page so they can pick up where they left off.
+    const pending = location.state?.from;
+    if (role === 'student' && pending) {
+      navigate(pending, { replace: true });
+      return;
+    }
     switch (role) {
       case 'super_admin': navigate('/dashboard/admin', { replace: true }); break;
       case 'coordinator': navigate('/dashboard/coordinator', { replace: true }); break;
