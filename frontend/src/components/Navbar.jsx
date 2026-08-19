@@ -12,8 +12,10 @@ export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [drawerTop, setDrawerTop] = useState(0);
   const [indicator, setIndicator] = useState({ left: 0, width: 0, visible: false });
   const navRef = useRef(null);
+  const barRef = useRef(null);
   const navLinkRefs = useRef({});
   const registerMagnetic = useMagneticHover(0.2);
   const navigate = useNavigate();
@@ -37,6 +39,14 @@ export default function Navbar() {
       window.removeEventListener('resize', onResize);
     };
   }, [mobileMenuOpen]);
+
+  const toggleMobileMenu = () => {
+    const next = !mobileMenuOpen;
+    if (next && barRef.current) {
+      setDrawerTop(barRef.current.offsetHeight);
+    }
+    setMobileMenuOpen(next);
+  };
 
   const handleLogout = () => {
     logout();
@@ -99,7 +109,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-16' : 'h-20'}`}>
+        <div ref={barRef} className={`flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-16' : 'h-20'}`}>
           
           {/* Brand Logo & Name */}
           <Link to="/" className="flex items-center space-x-3 group shrink-0">
@@ -203,8 +213,9 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <div className="lg:hidden">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={toggleMobileMenu}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
               className="p-3 rounded-xl bg-slate-900 text-slate-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -225,10 +236,13 @@ export default function Navbar() {
         document.body
       )}
 
-      {/* Mobile Drawer — absolute under the sticky bar so it's always at the
-          top of the viewport even when the page is scrolled down */}
-      {mobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 z-40 lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold">
+      {/* Mobile Drawer — portaled and fixed at the measured bar height, so it
+          always opens right below the visible bar regardless of scroll */}
+      {mobileMenuOpen && createPortal(
+        <div
+          className="fixed left-0 right-0 z-40 lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-6 space-y-4 text-sm font-semibold max-h-[calc(100dvh-4rem)] overflow-y-auto"
+          style={{ top: drawerTop }}
+        >
           {studentNavItems.map((item) => (
             <Link
               key={item.to}
@@ -279,7 +293,8 @@ export default function Navbar() {
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </nav>
   );

@@ -16,17 +16,22 @@ export default function LoginCanvasBackground() {
     let width, height, dpr;
 
     const resize = () => {
-      dpr = window.devicePixelRatio || 1;
+      // Cap DPR at 2 — a 3x phone display makes the canvas 9x the pixels for
+      // no visual gain on drifting dots, and it's the #1 mobile lag source.
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       width = canvas.clientWidth;
       height = canvas.clientHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      canvas.width = Math.max(1, Math.floor(width * dpr));
+      canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     window.addEventListener('resize', resize);
 
-    const PARTICLE_COUNT = 45;
+    // Fewer particles when the drawing area is small (mobiles/tablets) — the
+    // O(n^2) link check below is the hot path, so fewer dots = far cheaper.
+    const area = Math.max(1, width * height);
+    const PARTICLE_COUNT = Math.max(18, Math.min(45, Math.floor(area / 14000)));
     const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
@@ -64,10 +69,38 @@ export default function LoginCanvasBackground() {
       }
       animationId = requestAnimationFrame(tick);
     };
+
+    // Pause the loop while the card is off-screen or the tab is hidden — no
+    // point burning CPU/GPU on a canvas nobody can see (common on long pages
+    // like the register card where the user scrolls past it).
+    let visible = true;
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationId);
+        visible = false;
+      } else if (!visible) {
+        visible = true;
+        tick();
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) {
+        cancelAnimationFrame(animationId);
+        visible = false;
+      } else if (!visible) {
+        visible = true;
+        tick();
+      }
+    });
+    observer.observe(canvas);
+    document.addEventListener('visibilitychange', onVisibility);
+
     tick();
 
     return () => {
       cancelAnimationFrame(animationId);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', resize);
     };
   }, []);
