@@ -35,7 +35,7 @@ DATAVERSE 2026 is a **production-grade, role-based event management platform** b
 | 🎓 **Student** | 15+ field online registration, ID card upload, encrypted QR ticket receipt, registered-events tracker |
 | 🛡️ **Super Admin** | Analytics overview, student approval/rejection with `DV2026-REG-XXXX` codes, event CRUD, staff account creation, announcements publisher, CSV exporter |
 | 🎪 **Event Coordinator** | Participant monitoring, winner declaration, CSV list export |
-| 🙋 **Volunteer** | Live webcam QR scanner, manual student lookup, college ID verification modal, 1-click check-in with duplicate protection, spot registration desk, printable ID badge generator |
+| 🙋 **Volunteer** | Live webcam QR scanner,  1-click check-in with duplicate protection, spot registration desk, printable ID badge generator |
 
 ### ⚙️ Resilient Backend & Offline Hybrid Data Engine
 - Runs on **MongoDB Atlas** or local MongoDB
