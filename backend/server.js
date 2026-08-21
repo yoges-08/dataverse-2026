@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const compression = require('compression');
 const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -13,8 +12,6 @@ const mockStore = require('./utils/mockStore');
 dotenv.config();
 
 const app = express();
-
-app.use(compression());
 
 // Render (and most cloud hosts) run behind a reverse proxy, so enable trust
 // proxy to read visitors' real IP addresses.
