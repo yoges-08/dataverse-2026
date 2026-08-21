@@ -353,20 +353,27 @@ function CampusSlider() {
 
   const goTo = (idx) => setCurrent((idx + campusImages.length) % campusImages.length);
 
+  const nextIdx = (current + 1) % campusImages.length;
+
   return (
     <div className="glass-card rounded-3xl overflow-hidden border border-violet-500/25 relative">
       <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden">
-        {campusImages.map((src, idx) => (
-          <img
-            key={src}
-            src={src}
-            alt={`AAMEC Campus ${idx + 1}`}
-            loading="lazy"
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-              idx === current ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-            }`}
-          />
-        ))}
+        {campusImages.map((src, idx) => {
+          if (idx !== current && idx !== nextIdx) return null;
+          const isCurrent = idx === current;
+          return (
+            <img
+              key={src}
+              src={src}
+              alt={`AAMEC Campus ${idx + 1}`}
+              loading={isCurrent ? 'eager' : 'lazy'}
+              fetchPriority={isCurrent ? 'high' : 'low'}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                isCurrent ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+              }`}
+            />
+          );
+        })}
 
         {/* Prev / Next controls */}
         <button
