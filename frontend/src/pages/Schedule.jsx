@@ -8,9 +8,11 @@ export default function Schedule() {
     Day1: [
       { time: '08:30 AM - 09:30 AM', title: 'Student Registration & QR Check-In', venue: 'Main Block Admin Reception', category: 'General' },
       { time: '09:30 AM - 10:30 AM', title: 'DATAVERSE 2026 Grand Inauguration', venue: 'Main College Auditorium', category: 'Inauguration' },
-      { time: '10:30 AM - 12:30 PM', title: 'Quiz Prelims & Buzzer Round', venue: 'Auditorium Block A', category: 'Technical' },
+      { time: '10:30 AM - 12:30 PM', title: 'Knowledge Knockout Quiz & Buzzer Round', venue: 'A/C Conference Hall', category: 'Technical' },
+      { time: '11:00 AM - 01:00 PM', title: 'Bug Hunt - Syntax & Logic Debugging Battle', venue: 'CC2 Lab', category: 'Technical' },
       { time: '11:00 AM - 03:00 PM', title: 'Agentic AI Hackathon & Agent Demo', venue: 'CS Lab 3 & High Performance Computing Lab', category: 'Technical' },
-      { time: '01:30 PM - 04:30 PM', title: 'Paper Presentation Sessions', venue: 'Seminar Hall B', category: 'Technical' }
+      { time: '01:30 PM - 04:30 PM', title: 'NovaSpeak Paper Presentation Sessions', venue: 'MB-110 (Smart Class)', category: 'Technical' },
+      { time: '02:00 PM - 03:30 PM', title: 'Code Sprint - Speed Coding & Reconstruction', venue: 'CC1 Lab', category: 'Technical' }
     ],
     Day2: [
       { time: '09:30 AM - 10:30 AM', title: 'Day 2 Keynote: Future of Generative AI', venue: 'Auditorium Block A', category: 'Keynote' },

@@ -145,17 +145,17 @@ export default function TeamManagementTab() {
           Choose an event to build or manage your team with classmates from the same college.
         </p>
 
-        {myEvents.length === 0 ? (
+        {myEvents.filter(ev => (ev.teamLimit || 0) > 1).length === 0 ? (
           <div className="glass-card p-10 rounded-2xl border border-slate-800 text-center space-y-3">
             <Users className="w-10 h-10 text-indigo-400 mx-auto opacity-50" />
             <p className="text-sm text-slate-300 font-bold">No team-enabled events yet</p>
             <p className="text-xs text-slate-400">
-              Register for a team event (like Agentic AI or NovaSpeak) to start forming your team here.
+              Register for a team event (like Agentic AI, Bug Hunt, or NovaSpeak) to start forming your team here.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {myEvents.map((ev) => (
+            {myEvents.filter(ev => (ev.teamLimit || 0) > 1).map((ev) => (
               <button
                 key={ev._id || ev.id}
                 onClick={() => selectEvent(ev)}

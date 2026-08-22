@@ -304,7 +304,7 @@ exports.getMyTeamEvents = async (req, res) => {
         .populate({ path: 'event', select: 'title category venue date time teamLimit description' });
       const events = regs
         .map(r => r.event)
-        .filter(ev => ev && getEffectiveTeamLimit(ev) > 0);
+        .filter(ev => ev && getEffectiveTeamLimit(ev) > 1);
       return res.status(200).json({ success: true, count: events.length, events });
     }
     const student = mockStore.students.find(s => String(s.user) === String(userId));
@@ -312,7 +312,7 @@ exports.getMyTeamEvents = async (req, res) => {
     const events = mockStore.registrations
       .filter(r => String(r.student) === String(student._id) && r.status !== 'Cancelled')
       .map(r => resolveEventMock(r.event))
-      .filter(ev => ev && getEffectiveTeamLimit(ev) > 0);
+      .filter(ev => ev && getEffectiveTeamLimit(ev) > 1);
     return res.status(200).json({ success: true, count: events.length, events });
   } catch (error) {
     console.error('My team events error:', error);

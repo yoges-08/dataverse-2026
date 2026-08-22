@@ -149,8 +149,8 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { icon: Code, title: "Technical Excellence", desc: "QuizEE, Agentic AI, and Research Paper Presentations." },
-            { icon: Flame, title: "Non-Technical Fest", desc: "Layman Vibes, Luminas Fest, and E-Sports Gaming Arena." },
+            { icon: Code, title: "Technical Excellence", desc: "Agentic AI, Bug Hunt, Code Sprint, NovaSpeak & Quizzes." },
+            { icon: Flame, title: "Non-Technical Fest", desc: "Layman Vibes, Luminas Fest, and Viral Vision Reels." },
             { icon: ShieldCheck, title: "Instant QR Check-In", desc: "Digital tickets, QR verification, and automated ID badges." },
             { icon: Award, title: "E-Certificates", desc: "Verified PDF certificates issued to all participants." }
           ].map((item, idx) => (
@@ -180,7 +180,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {events.slice(0, 6).map((ev, idx) => (
+          {events.map((ev, idx) => (
             <Reveal key={ev._id} delay={idx * 60}>
               <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
               <div className="relative h-48 overflow-hidden">
