@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
-  FileBadge, Loader
+  FileBadge, Loader, Code
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -51,12 +51,12 @@ export default function AdminDashboard() {
 
   // New Event Form State
   const [newEvent, setNewEvent] = useState({
-    title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
+    title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, requiresLanguageChoice: false, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
   });
 
   // Edit Event Form State
   const [editEvent, setEditEvent] = useState({
-    id: '', title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
+    id: '', title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, requiresLanguageChoice: false, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
   });
 
   const openEditEvent = (ev) => {
@@ -73,6 +73,7 @@ export default function AdminDashboard() {
       registrationDeadline: ev.registrationDeadline || '2026-09-11',
       maxParticipants: ev.maxParticipants || 100,
       teamLimit: ev.teamLimit ?? 0,
+      requiresLanguageChoice: !!ev.requiresLanguageChoice,
       facultyName: ev.facultyCoordinator?.name || '',
       facultyPhone: ev.facultyCoordinator?.phone || '',
       studentName: ev.studentCoordinator?.name || '',
@@ -169,6 +170,7 @@ const loadContactMessages = async () => {
       const res = await API.post('/events', {
         ...newEvent,
         teamLimit: Number(newEvent.teamLimit) || 0,
+        requiresLanguageChoice: !!newEvent.requiresLanguageChoice,
         rules: (newEvent.rules || '').split('\n'),
         facultyCoordinator: { name: newEvent.facultyName, phone: newEvent.facultyPhone },
         studentCoordinator: { name: newEvent.studentName, phone: newEvent.studentPhone },
@@ -290,6 +292,7 @@ const loadContactMessages = async () => {
         registrationDeadline: editEvent.registrationDeadline,
         maxParticipants: Number(editEvent.maxParticipants) || 100,
         teamLimit: Number(editEvent.teamLimit) || 0,
+        requiresLanguageChoice: !!editEvent.requiresLanguageChoice,
         facultyCoordinator: { name: editEvent.facultyName, phone: editEvent.facultyPhone },
         studentCoordinator: { name: editEvent.studentName, phone: editEvent.studentPhone },
         prizes: { first: editEvent.firstPrize, second: editEvent.secondPrize, third: editEvent.thirdPrize }
@@ -944,6 +947,15 @@ const loadContactMessages = async () => {
               <input type="number" placeholder="Team Limit (0 = solo only, no teammates)" value={newEvent.teamLimit} onChange={e => setNewEvent({...newEvent, teamLimit: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Student Coordinator Name (optional)" value={newEvent.studentName} onChange={e => setNewEvent({...newEvent, studentName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Faculty Coordinator Name (optional)" value={newEvent.facultyName} onChange={e => setNewEvent({...newEvent, facultyName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
+              <label className="flex items-center space-x-2 text-xs text-slate-300 py-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newEvent.requiresLanguageChoice}
+                  onChange={e => setNewEvent({...newEvent, requiresLanguageChoice: e.target.checked})}
+                  className="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                />
+                <span>Require Language Selection (Python, C, C++)</span>
+              </label>
               <textarea placeholder="Rules & Guidelines (one per line)" value={newEvent.rules} onChange={e => setNewEvent({...newEvent, rules: e.target.value})} rows={4} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white font-mono" />
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowEventModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
@@ -1029,6 +1041,15 @@ const loadContactMessages = async () => {
               </div>
               <input type="text" placeholder="Student Coordinator Name (optional)" value={editEvent.studentName} onChange={e => setEditEvent({...editEvent, studentName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <input type="text" placeholder="Faculty Coordinator Name (optional)" value={editEvent.facultyName} onChange={e => setEditEvent({...editEvent, facultyName: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
+              <label className="flex items-center space-x-2 text-xs text-slate-300 py-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editEvent.requiresLanguageChoice}
+                  onChange={e => setEditEvent({...editEvent, requiresLanguageChoice: e.target.checked})}
+                  className="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                />
+                <span>Require Language Selection (Python, C, C++)</span>
+              </label>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowEditEventModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
                 <button type="submit" className="w-1/2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold">Update Event</button>
@@ -1070,7 +1091,27 @@ const loadContactMessages = async () => {
                   const studentCount = grouped.reduce((n, g) => n + (g.kind === 'team' ? (g.registrations?.length || 1) : 1), 0);
                   return (
                     <>
-                <p className="text-xs font-bold text-white">{studentCount} student(s) registered</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-white">{studentCount} student(s) registered</p>
+                </div>
+
+                {/* Per-Language Breakdown Summary */}
+                {eventDetail?.event?.requiresLanguageChoice && eventDetail?.languageBreakdown && (
+                  <div className="p-3.5 bg-indigo-950/40 rounded-xl border border-indigo-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <span className="font-bold text-indigo-300 flex items-center gap-1.5">
+                      <Code className="w-4 h-4 text-indigo-400" />
+                      <span>Language Breakdown:</span>
+                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {Object.entries(eventDetail.languageBreakdown).map(([lang, count]) => (
+                        <span key={lang} className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 border border-indigo-500/40 font-mono font-bold text-xs">
+                          {lang}: <span className="text-white font-extrabold">{count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {grouped.map((g, idx) => {
                   if (g.kind === 'team') {
                     const team = g.team;
@@ -1096,7 +1137,14 @@ const loadContactMessages = async () => {
                         <div className="mt-2 pt-2 border-t border-cyan-800/50 space-y-1">
                           {(g.registrations || []).map(r => (
                             <div key={r._id || idx} className="flex items-center justify-between gap-3 text-[10px]">
-                              <span className="font-bold text-white">{getStudentName(r.student, 'Unknown')}</span>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-bold text-white truncate">{getStudentName(r.student, 'Unknown')}</span>
+                                {r.language && (
+                                  <span className="px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 font-mono font-bold text-[9px] shrink-0">
+                                    {r.language}
+                                  </span>
+                                )}
+                              </div>
                               <span className="font-mono text-indigo-300 shrink-0">{r.student?.symposiumCode || r.student?.registerNumber}</span>
                             </div>
                           ))}
@@ -1105,11 +1153,19 @@ const loadContactMessages = async () => {
                     );
                   }
                   const s = g.student;
+                  const lang = g.language || (eventDetail.registrations?.find(r => (r._id === g._id || (r.student && String(r.student._id || r.student) === String(s?._id || s))))?.language);
                   return (
                     <div key={g._id || idx} className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <span className="font-bold text-white text-sm block">{getStudentName(s, 'Unknown')}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-sm block">{getStudentName(s, 'Unknown')}</span>
+                            {lang && (
+                              <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-mono font-bold text-[10px]">
+                                {lang}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
                         </div>
                         <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>

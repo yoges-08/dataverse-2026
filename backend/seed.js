@@ -232,6 +232,7 @@ const seedData = async () => {
         maxParticipants: 60,
         currentRegistrations: 0,
         teamLimit: 2,
+        requiresLanguageChoice: true,
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Student Coordinator', phone: '' },
         prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },

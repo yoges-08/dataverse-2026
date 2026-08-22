@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User } from 'lucide-react';
+import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -16,6 +16,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [paperFile, setPaperFile] = useState(null);
+  const [language, setLanguage] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
@@ -37,6 +38,11 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       return;
     }
 
+    if (event.requiresLanguageChoice && !language) {
+      setMsg({ type: 'error', text: 'Please select a programming language to register for this event.' });
+      return;
+    }
+
     try {
       setLoading(true);
       setMsg({ type: '', text: '' });
@@ -44,6 +50,9 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
       const formData = new FormData();
       if (paperFile) {
         formData.append('paperPdf', paperFile);
+      }
+      if (event.requiresLanguageChoice && language) {
+        formData.append('language', language);
       }
 
       const res = await API.post(`/events/${event._id}/register`, formData, {
@@ -231,6 +240,50 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           </div>
 
         </div>
+
+        {/* Programming Language Selection (for Bug Hunt / language-enabled events) */}
+        {event.requiresLanguageChoice && (
+          <div className="px-4 sm:px-6 pb-3 pt-1 shrink-0">
+            <div className="p-4 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <Code className="w-4 h-4 text-indigo-400" />
+                  <span>Choose Programming Language <span className="text-rose-400">*</span></span>
+                </label>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+                  Required
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Select the programming language you will use to identify and debug code during the competition.
+              </p>
+              <div className="grid grid-cols-3 gap-2.5">
+                {['Python', 'C', 'C++'].map((langOption) => (
+                  <button
+                    key={langOption}
+                    type="button"
+                    onClick={() => {
+                      setLanguage(langOption);
+                      if (msg.type === 'error') setMsg({ type: '', text: '' });
+                    }}
+                    className={`py-3 px-3 rounded-xl font-bold text-xs transition-all border flex flex-col items-center justify-center space-y-1 ${
+                      language === langOption
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30 scale-[1.02]'
+                        : 'bg-slate-950/70 border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:bg-slate-900 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-sm font-extrabold">{langOption}</span>
+                    <span className={`text-[9px] uppercase tracking-wider font-bold ${
+                      language === langOption ? 'text-indigo-200' : 'text-slate-500'
+                    }`}>
+                      {language === langOption ? '✓ Selected' : 'Choose'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* PDF Upload for Paper Presentation (always reachable above the button) */}
         {event.pdfRequired && (

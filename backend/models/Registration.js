@@ -4,6 +4,7 @@ const registrationSchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   status: { type: String, enum: ['Registered', 'Attended', 'Cancelled'], default: 'Registered' },
+  language: { type: String, enum: ['Python', 'C', 'C++'] },
   paperPdfUrl: { type: String, default: null },
   teamMembers: {
     type: [

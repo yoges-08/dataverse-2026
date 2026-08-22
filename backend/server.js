@@ -139,6 +139,7 @@ const syncDefaultEvents = async () => {
       maxParticipants: 60,
       currentRegistrations: 0,
       teamLimit: 2,
+      requiresLanguageChoice: true,
       facultyCoordinator: { name: '', phone: '' },
       studentCoordinator: { name: 'Student Coordinator', phone: '' },
       prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
@@ -183,6 +184,11 @@ const syncDefaultEvents = async () => {
 const syncEventTeamLimits = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
   await syncDefaultEvents();
+  // Ensure Bug Hunt has requiresLanguageChoice flag set in existing databases
+  await Event.updateMany(
+    { title: { $regex: /^Bug Hunt$/i } },
+    { $set: { requiresLanguageChoice: true } }
+  );
   let updated = 0;
   for (const spec of EVENT_TEAM_LIMITS) {
     const result = await Event.updateMany(

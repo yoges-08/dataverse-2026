@@ -32,6 +32,7 @@ const eventSchema = new mongoose.Schema({
   },
   bannerImage: { type: String, default: '/uploads/events/default.jpg' },
   pdfRequired: { type: Boolean, default: false },
+  requiresLanguageChoice: { type: Boolean, default: false },
   winnersUploaded: { type: Boolean, default: false },
   winners: [
     {

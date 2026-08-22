@@ -119,11 +119,27 @@ exports.getEventById = async (req, res) => {
           }
           teamGroups.get(t.teamId).registrations.push(row);
         } else {
-          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null });
+          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null, language: row.language });
         }
       });
       teamGroups.forEach((g, teamId) => groups.push(g));
-      return res.status(200).json({ success: true, event, registrations: enriched, groups });
+
+      const languageBreakdown = { Python: 0, C: 0, 'C++': 0 };
+      if (event.requiresLanguageChoice) {
+        enriched.forEach(r => {
+          if (r.language && languageBreakdown[r.language] !== undefined) {
+            languageBreakdown[r.language]++;
+          }
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        event,
+        registrations: enriched,
+        groups,
+        languageBreakdown: event.requiresLanguageChoice ? languageBreakdown : undefined
+      });
     } else {
       const event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
@@ -192,11 +208,27 @@ exports.getEventById = async (req, res) => {
           }
           teamGroups.get(t.teamId).registrations.push(row);
         } else {
-          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null });
+          groups.push({ _id: row._id, kind: 'solo', student: row.student, team: null, language: row.language });
         }
       });
       teamGroups.forEach((g) => groups.push(g));
-      return res.status(200).json({ success: true, event, registrations: populated, groups });
+
+      const languageBreakdown = { Python: 0, C: 0, 'C++': 0 };
+      if (event.requiresLanguageChoice) {
+        populated.forEach(r => {
+          if (r.language && languageBreakdown[r.language] !== undefined) {
+            languageBreakdown[r.language]++;
+          }
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        event,
+        registrations: populated,
+        groups,
+        languageBreakdown: event.requiresLanguageChoice ? languageBreakdown : undefined
+      });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching event details' });
@@ -269,6 +301,8 @@ exports.registerForEvent = async (req, res) => {
   try {
     const eventId = req.params.id;
     const userId = req.user.id || req.user._id;
+    const rawLanguage = req.body?.language ? String(req.body.language).trim() : null;
+    const ALLOWED_LANGUAGES = ['Python', 'C', 'C++'];
 
     if (isDbConnected()) {
       // Run the duplicate-check + insert atomically so two simultaneous
@@ -294,6 +328,11 @@ exports.registerForEvent = async (req, res) => {
         if (event.pdfRequired && !req.file) {
           return res.status(400).json({ success: false, message: 'This event requires a paper presentation PDF upload.' });
         }
+        if (event.requiresLanguageChoice) {
+          if (!rawLanguage || !ALLOWED_LANGUAGES.includes(rawLanguage)) {
+            return res.status(400).json({ success: false, message: 'Please select a programming language to register for this event.' });
+          }
+        }
 
         const student = useTx
           ? await Student.findOne({ user: userId }).session(session)
@@ -314,9 +353,16 @@ exports.registerForEvent = async (req, res) => {
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
+        const regDoc = {
+          student: student._id,
+          event: eventId,
+          paperPdfUrl,
+          language: event.requiresLanguageChoice ? rawLanguage : undefined
+        };
+
         const registration = useTx
-          ? (await Registration.create([{ student: student._id, event: eventId, paperPdfUrl }], { session }))[0]
-          : await Registration.create({ student: student._id, event: eventId, paperPdfUrl });
+          ? (await Registration.create([regDoc], { session }))[0]
+          : await Registration.create(regDoc);
         event.currentRegistrations += 1;
         if (useTx) await event.save({ session });
         else await event.save();
@@ -387,6 +433,11 @@ exports.registerForEvent = async (req, res) => {
       if (event.pdfRequired && !req.file) {
         return res.status(400).json({ success: false, message: 'This event requires a paper presentation PDF upload.' });
       }
+      if (event.requiresLanguageChoice) {
+        if (!rawLanguage || !ALLOWED_LANGUAGES.includes(rawLanguage)) {
+          return res.status(400).json({ success: false, message: 'Please select a programming language to register for this event.' });
+        }
+      }
 
       const student = mockStore.students.find(s => s.user === userId || String(s.user) === String(userId));
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
@@ -399,7 +450,14 @@ exports.registerForEvent = async (req, res) => {
         return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
       }
 
-      const registration = { _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered', paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null };
+      const registration = {
+        _id: 'r' + (mockStore.registrations.length + 1),
+        student: student._id,
+        event: eventId,
+        status: 'Registered',
+        language: event.requiresLanguageChoice ? rawLanguage : undefined,
+        paperPdfUrl: req.file ? `/uploads/${req.file.filename}` : null
+      };
       mockStore.registrations.push(registration);
       event.currentRegistrations += 1;
 

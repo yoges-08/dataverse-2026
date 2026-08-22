@@ -69,12 +69,17 @@ export default function CoordinatorDashboard() {
 
   const exportParticipantCSV = () => {
     if (!selectedEvent) return;
-    const headers = ['Symposium Code,Register No,Student Name,College,Department,Team Members,Status,Checked In\n'];
+    const hasLang = selectedEvent.requiresLanguageChoice;
+    const headers = [hasLang
+      ? 'Symposium Code,Register No,Student Name,College,Department,Language,Team Members,Status,Checked In\n'
+      : 'Symposium Code,Register No,Student Name,College,Department,Team Members,Status,Checked In\n'];
     const rows = registrations.map(r => {
       const s = r.student;
       const uName = getStudentName(s, 'Student');
       const team = (r.team?.members || []).map(tm => `${tm.name}`).filter(n => n).join('; ');
-      return `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
+      return hasLang
+        ? `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${r.language || 'N/A'}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`
+        : `"${s?.symposiumCode}","${s?.registerNumber}","${uName}","${s?.collegeName}","${s?.department}","${team}","${s?.verificationStatus}","${s?.isCheckedIn ? 'Yes' : 'No'}"\n`;
     });
 
     const blob = new Blob([headers.concat(rows).join('')], { type: 'text/csv' });
@@ -141,6 +146,7 @@ export default function CoordinatorDashboard() {
                       <th className="p-3">Symposium Code</th>
                       <th className="p-3">Student Name</th>
                       <th className="p-3">College & Dept</th>
+                      {selectedEvent.requiresLanguageChoice && <th className="p-3">Language</th>}
                       <th className="p-3">Team</th>
                       <th className="p-3">Attendance</th>
                     </tr>
@@ -155,6 +161,17 @@ export default function CoordinatorDashboard() {
                           <td className="p-3 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>
                           <td className="p-3 font-bold text-white">{uName}</td>
                           <td className="p-3 text-slate-300">{s.collegeName} ({s.department})</td>
+                          {selectedEvent.requiresLanguageChoice && (
+                            <td className="p-3">
+                              {r.language ? (
+                                <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono font-bold text-[10px]">
+                                  {r.language}
+                                </span>
+                              ) : (
+                                <span className="text-slate-500 text-[10px]">—</span>
+                              )}
+                            </td>
+                          )}
                           <td className="p-3">
                             {r.team && r.team.members.length > 1 ? (
                               <div className="flex flex-wrap gap-1 max-w-[200px]">
