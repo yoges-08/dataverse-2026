@@ -21,17 +21,46 @@ const jobs = [
 for (const job of jobs) {
   const input = path.join(publicDir, job.src);
   const output = path.join(publicDir, job.out);
-  await sharp(input, { failOn: 'none' })
-    .resize({ width: job.width, withoutEnlargement: true })
-    .webp({ quality: job.q })
-    .toFile(output);
-  const size = (await fs.stat(output)).size;
-  console.log(`${job.src} -> ${job.out}  ${(size / 1024).toFixed(0)} KB`);
+  try {
+    await fs.access(input);
+    await sharp(input, { failOn: 'none' })
+      .resize({ width: job.width, withoutEnlargement: true })
+      .webp({ quality: job.q })
+      .toFile(output);
+    const size = (await fs.stat(output)).size;
+    console.log(`${job.src} -> ${job.out}  ${(size / 1024).toFixed(0)} KB`);
+  } catch (err) {
+    // Input source file not present in public directory, skip
+  }
 }
 
 // Small crisp PNG for iOS apple-touch-icon (iOS does not read webp touch icons)
-await sharp(path.join(publicDir, 'logo.png'), { failOn: 'none' })
-  .resize({ width: 180, height: 180, fit: 'inside', withoutEnlargement: true })
-  .png({ compressionLevel: 9, palette: true })
-  .toFile(path.join(publicDir, 'apple-touch-icon.png'));
-console.log(`logo.png -> apple-touch-icon.png  ${((await fs.stat(path.join(publicDir, 'apple-touch-icon.png'))).size / 1024).toFixed(0)} KB`);
+const logoInput = path.join(publicDir, 'logo.png');
+try {
+  await fs.access(logoInput);
+  await sharp(logoInput, { failOn: 'none' })
+    .resize({ width: 180, height: 180, fit: 'inside', withoutEnlargement: true })
+    .png({ compressionLevel: 9, palette: true })
+    .toFile(path.join(publicDir, 'apple-touch-icon.png'));
+  console.log(`logo.png -> apple-touch-icon.png  ${((await fs.stat(path.join(publicDir, 'apple-touch-icon.png'))).size / 1024).toFixed(0)} KB`);
+} catch (err) {
+  // logo.png not present, skip
+}
+
+// Re-compress existing campus .webp files to smaller size (width 1600, quality 70, effort 6)
+const campusFiles = ['campus1.webp', 'campus3.webp', 'campus4.webp', 'campus5.webp', 'campus6.webp', 'campus7.webp'];
+
+for (const file of campusFiles) {
+  const input = path.join(publicDir, file);
+  try {
+    const inputBuf = await fs.readFile(input);
+    const optimizedBuf = await sharp(inputBuf)
+      .resize({ width: 1600, withoutEnlargement: true })
+      .webp({ quality: 70, effort: 6 })
+      .toBuffer();
+    await fs.writeFile(input, optimizedBuf);
+    console.log(`Re-compressed ${file} -> ${(optimizedBuf.length / 1024).toFixed(0)} KB`);
+  } catch (err) {
+    console.error(`Failed to re-compress ${file}:`, err.message);
+  }
+}
