@@ -301,7 +301,7 @@ exports.getMyTeamEvents = async (req, res) => {
       const student = await Student.findOne({ user: userId });
       if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
       const regs = await Registration.find({ student: student._id, status: { $ne: 'Cancelled' } })
-        .populate({ path: 'event', select: 'title category venue date time teamLimit description' });
+        .populate({ path: 'event', select: 'title category venue date time teamLimit description requiresLanguageChoice' });
       const events = regs
         .map(r => r.event)
         .filter(ev => ev && getEffectiveTeamLimit(ev) > 1);
@@ -445,9 +445,15 @@ exports.getAvailableTeammates = async (req, res) => {
       : mockStore.students.find(s => String(s.user) === String(userId));
     if (!student) return res.status(404).json({ success: false, message: 'Student profile not found' });
 
-    const registered = await isStudentRegisteredForEvent(student._id, eventId);
-    if (!registered) return res.status(403).json({ success: false, message: 'You must register for this event before browsing teammates.' });
+    const event = isDbConnected() ? await Event.findById(eventId) : resolveEventMock(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
 
+    const myReg = isDbConnected()
+      ? await Registration.findOne({ student: student._id, event: eventId, status: { $ne: 'Cancelled' } })
+      : mockStore.registrations.find(r => String(r.student) === String(student._id) && String(r.event) === String(eventId) && r.status !== 'Cancelled');
+    if (!myReg) return res.status(403).json({ success: false, message: 'You must register for this event before browsing teammates.' });
+
+    const myLanguage = myReg?.language || null;
     const qCollege = student.collegeName || '';
     const qYear = norm(student.year || '');
 
@@ -472,11 +478,23 @@ exports.getAvailableTeammates = async (req, res) => {
     if (isDbConnected()) {
       const regs = await Registration.find({ event: eventId, status: { $ne: 'Cancelled' } })
         .populate({ path: 'student', populate: { path: 'user', select: 'name' } });
-      candidates = regs.map(r => r.student).filter(Boolean);
+      candidates = regs
+        .filter(r => r.student)
+        .map(r => ({
+          ...r.student.toObject(),
+          language: r.language || null
+        }));
     } else {
       candidates = mockStore.registrations
         .filter(r => String(r.event) === String(eventId) && r.status !== 'Cancelled')
-        .map(r => resolveStudentMock(r.student))
+        .map(r => {
+          const st = resolveStudentMock(r.student);
+          if (!st) return null;
+          return {
+            ...st,
+            language: r.language || null
+          };
+        })
         .filter(Boolean);
     }
 
@@ -485,16 +503,29 @@ exports.getAvailableTeammates = async (req, res) => {
       .filter(c => !takenIds.has(String(c._id)))
       .filter(c => !qCollege || collegesMatch(c.collegeName || '', qCollege))
       .filter(c => !qYear || norm(c.year || '') === qYear)
+      .filter(c => {
+        if (event.requiresLanguageChoice && myLanguage) {
+          return c.language === myLanguage;
+        }
+        return true;
+      })
       .map(c => ({
         studentId: String(c._id),
         name: c.user?.name || c.name || c.email || '',
         collegeName: c.collegeName || '',
         department: c.department || '',
         year: c.year || '',
-        registerNumber: c.registerNumber || 'N/A'
+        registerNumber: c.registerNumber || 'N/A',
+        language: c.language || null
       }));
 
-    return res.status(200).json({ success: true, count: result.length, students: result });
+    return res.status(200).json({
+      success: true,
+      count: result.length,
+      students: result,
+      myLanguage: myLanguage || null,
+      requiresLanguageChoice: !!event.requiresLanguageChoice
+    });
   } catch (error) {
     console.error('Available teammates error:', error);
     res.status(500).json({ success: false, message: 'Error loading available teammates' });
@@ -549,6 +580,18 @@ exports.addTeamMember = async (req, res) => {
     }
     if (!await isStudentRegisteredForEvent(teammate._id, eventId)) {
       return res.status(400).json({ success: false, message: 'This student has not registered for this event.' });
+    }
+
+    if (event.requiresLanguageChoice) {
+      const myReg = isDbConnected()
+        ? await Registration.findOne({ student: requester._id, event: eventId, status: { $ne: 'Cancelled' } })
+        : mockStore.registrations.find(r => String(r.student) === String(requester._id) && String(r.event) === String(eventId) && r.status !== 'Cancelled');
+      const theirReg = isDbConnected()
+        ? await Registration.findOne({ student: teammate._id, event: eventId, status: { $ne: 'Cancelled' } })
+        : mockStore.registrations.find(r => String(r.student) === String(teammate._id) && String(r.event) === String(eventId) && r.status !== 'Cancelled');
+      if (myReg?.language && theirReg?.language && myReg.language !== theirReg.language) {
+        return res.status(400).json({ success: false, message: `Only students who also selected ${myReg.language} can join this team.` });
+      }
     }
 
     // True only when THIS request hit a transient write conflict, so it can

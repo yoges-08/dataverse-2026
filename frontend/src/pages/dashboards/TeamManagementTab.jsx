@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Users, UserPlus, UserMinus, AlertCircle, CheckCircle2, Loader,
-  ShieldCheck, ArrowLeft, Group, RefreshCw
+  ShieldCheck, ArrowLeft, Group, RefreshCw, Code
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -13,6 +13,7 @@ export default function TeamManagementTab() {
   // Team detail state
   const [team, setTeam] = useState(null);
   const [available, setAvailable] = useState([]);
+  const [myLanguage, setMyLanguage] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [msg, setMsg] = useState({ type: '', text: '' });
 
@@ -50,7 +51,10 @@ export default function TeamManagementTab() {
       } else {
         setMsg({ type: 'error', text: teamRes.data.message });
       }
-      if (availRes.data.success) setAvailable(availRes.data.students || []);
+      if (availRes.data.success) {
+        setAvailable(availRes.data.students || []);
+        setMyLanguage(availRes.data.myLanguage || null);
+      }
     } catch (err) {
       setMsg({ type: 'error', text: err.response?.data?.message || 'Could not load team details.' });
     } finally {
@@ -67,6 +71,7 @@ export default function TeamManagementTab() {
     setSelectedEvent(null);
     setTeam(null);
     setAvailable([]);
+    setMyLanguage(null);
     setMsg({ type: '', text: '' });
   };
 
@@ -301,10 +306,22 @@ export default function TeamManagementTab() {
               <UserPlus className="w-5 h-5 text-indigo-400" />
               <span>Add a Teammate</span>
             </h3>
-            <p className="text-xs text-slate-400 mb-5">
+            <p className="text-xs text-slate-400 mb-4">
               These are students registered for this event from your college and year who are not yet
               on a team. Click one to add them instantly.
             </p>
+
+            {myLanguage && (
+              <div className="mb-4 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-center justify-between flex-wrap gap-2">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Code className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span>Showing students who also chose: <strong className="text-white font-mono">{myLanguage}</strong></span>
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 text-[10px] font-bold">
+                  Same Language
+                </span>
+              </div>
+            )}
 
             {isFull ? (
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
@@ -313,15 +330,22 @@ export default function TeamManagementTab() {
             ) : available.length === 0 ? (
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
                 No classmates available to add right now. Eligible students must be registered for this event,
-                from your college/year, and not already on another team.
+                from your college/year{myLanguage ? ` with ${myLanguage} selected` : ''}, and not already on another team.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {available.map((st) => (
                   <div key={st.studentId} className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{st.name || 'Unnamed Student'}</p>
-                      <p className="text-[11px] text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white truncate">{st.name || 'Unnamed Student'}</p>
+                        {st.language && (
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono font-bold text-[10px] shrink-0">
+                            {st.language}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
                         {st.department || '—'}{st.year ? ` • Year ${st.year}` : ''}
                       </p>
                     </div>
