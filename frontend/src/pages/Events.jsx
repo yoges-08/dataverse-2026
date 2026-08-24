@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import EventDetailModal from '../components/EventDetailModal';
-import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap } from 'lucide-react';
+import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2 } from 'lucide-react';
 import API from '../services/api';
 
 export default function Events() {
@@ -19,11 +19,9 @@ export default function Events() {
     try {
       setLoading(true);
       const res = await API.get('/events');
-      if (res.data.success) {
-        setEvents(res.data.events);
-      }
+      setEvents(res.data.events || []);
     } catch (err) {
-      console.error('Error fetching events:', err);
+      console.error('Failed to load events:', err);
     } finally {
       setLoading(false);
     }
@@ -47,19 +45,31 @@ export default function Events() {
       
       {/* Page Header */}
       <div className="text-center space-y-3 max-w-3xl mx-auto">
-        <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-          DATAVERSE 2026 Event Competitions
-        </span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+            DATAVERSE 2026 Event Competitions
+          </span>
+          <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-xs font-bold flex items-center space-x-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>No Registration Fee • ₹0 Free</span>
+          </span>
+        </div>
         <h1 className="text-4xl sm:text-6xl font-black text-white">Symposium Events Catalog</h1>
         <p className="text-sm text-slate-400">
           Participate in technical AI challenges, quizzes, paper presentations, and non-technical creative events to win exciting certificates
         </p>
       </div>
 
-      {/* Registration limit notice */}
-      <div className="max-w-3xl mx-auto -mt-6 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center">
-        <Trophy className="w-4 h-4 shrink-0" />
-        <span>Each student can register for up to <span className="font-black">4 events</span> total (max <span className="font-black">2 Technical</span> & <span className="font-black">2 Non-Technical</span>). Choose wisely!</span>
+      {/* Free Entry & Registration limit notice */}
+      <div className="max-w-3xl mx-auto -mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold text-center">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+          <span><span className="font-black">No Registration Fee:</span> Entry is 100% Free for all participants!</span>
+        </div>
+        <div className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center">
+          <Trophy className="w-4 h-4 shrink-0" />
+          <span>Up to <span className="font-black">4 events</span> total (max <span className="font-black">2 Tech</span> & <span className="font-black">2 Non-Tech</span>).</span>
+        </div>
       </div>
 
       {/* Team Management notice */}

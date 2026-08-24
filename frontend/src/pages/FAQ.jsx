@@ -5,6 +5,7 @@ export default function FAQ() {
   const [openIdx, setOpenIdx] = useState(0);
 
   const faqs = [
+    { q: "Is there any registration fee for DATAVERSE 2026?", a: "No! Registration is completely free (₹0 Fee) for all technical competitions, quizzes, paper presentations, creative non-technical events, food, and certificates. There is no registration fee required." },
     { q: "Who can register for DATAVERSE 2026?", a: "DATAVERSE is open to only for engineering students (B.E/B.Tech) students from any recognized institute across India." },
     { q: "Is on-spot registration available for non-registered students?", a: "Yes! While online pre-registration is recommended to reserve event seats, spot registration counters will be open at Main Block Admin Reception on Day 1 starting 9:30 AM." },
     { q: "How do I get my entry ticket and QR code?", a: "Once your online registration is approved by the admin team, your unique Symposium Code (e.g. DV2026-REG-1001) and QR Code ticket will appear on your Student Dashboard and downloadable receipt." },

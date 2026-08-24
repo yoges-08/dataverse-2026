@@ -105,6 +105,13 @@ export default function Home() {
                 <span className="text-base sm:text-lg font-black text-white">07 / 09 / 2026</span>
               </div>
             </div>
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600/25 to-teal-600/20 border border-emerald-400/40 shadow-xl">
+              <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+              <div className="text-left">
+                <span className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider block">Registration Fee</span>
+                <span className="text-base sm:text-lg font-black text-white">No Fee • 100% Free</span>
+              </div>
+            </div>
           </div>
 
           {/* CTA Buttons */}
@@ -123,7 +130,7 @@ export default function Home() {
                 className="btn-glow w-full sm:w-auto px-8 py-4 rounded-2xl text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 hover:scale-105 transition-transform flex items-center justify-center space-x-2"
               >
                 <Zap className="w-5 h-5 fill-white" />
-                <span>Register Now</span>
+                <span>Register Now (Free)</span>
               </Link>
             )}
 
@@ -134,6 +141,12 @@ export default function Home() {
               <span>Explore Events</span>
               <ArrowRight className="w-5 h-5 text-violet-400" />
             </Link>
+          </div>
+
+          {/* No Registration Fee Notice */}
+          <div className="inline-flex items-center justify-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span><strong className="text-emerald-200 font-black">No Registration Fee Required:</strong> Free entry for all technical & non-technical symposium events</span>
           </div>
 
           {/* Countdown Timer */}

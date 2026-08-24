@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import LoginCanvasBackground from '../components/LoginCanvasBackground';
 
 export default function Register() {
@@ -129,12 +129,24 @@ export default function Register() {
 
         {/* Title */}
         <div className="relative z-10 text-center space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>DATAVERSE 2026 Student Registration</span>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>DATAVERSE 2026 Registration</span>
+            </div>
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-xs font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>No Fee • ₹0 Free Entry</span>
+            </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white">Create Participant Account</h1>
-          <p className="text-xs sm:text-sm text-slate-400">Fill in your contact and college details to receive your unique DATAVERSE Ticket Code & QR Pass.</p>
+          <p className="text-xs sm:text-sm text-slate-400">Fill in your contact and college details to register for free and receive your unique DATAVERSE Ticket Code & QR Pass.</p>
+        </div>
+
+        {/* No Registration Fee Alert Banner */}
+        <div className="relative z-10 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-center space-x-2 font-medium text-center">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span><strong className="font-bold text-emerald-200">No Registration Fee Required:</strong> Registration, food, and event entry are completely free for all participants!</span>
         </div>
 
         {errorMsg && (

@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check } from 'lucide-react';
+import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check, CheckCircle2 } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -116,6 +116,13 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
           {/* Event Schedule & Venue Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 bg-emerald-950/40 rounded-xl border border-emerald-500/30 flex items-start space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] uppercase font-bold text-emerald-400 block">Registration Fee</span>
+                <span className="text-xs font-bold text-emerald-200">100% Free • ₹0 Fee</span>
+              </div>
+            </div>
             {event.date && (
               <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
                 <Calendar className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
