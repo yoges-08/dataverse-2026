@@ -236,7 +236,7 @@ const seedData = async () => {
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Student Coordinator', phone: '' },
         prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80'
+        bannerImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80'
       },
       {
         title: 'Code Sprint',
@@ -261,7 +261,7 @@ const seedData = async () => {
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Student Coordinator', phone: '' },
         prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=800&q=80'
+        bannerImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80'
       },
       {
         title: 'Layman Vibes',

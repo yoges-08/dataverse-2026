@@ -143,7 +143,7 @@ const syncDefaultEvents = async () => {
       facultyCoordinator: { name: '', phone: '' },
       studentCoordinator: { name: 'Student Coordinator', phone: '' },
       prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
-      bannerImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80'
+      bannerImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80'
     },
     {
       title: 'Code Sprint',
@@ -168,7 +168,7 @@ const syncDefaultEvents = async () => {
       facultyCoordinator: { name: '', phone: '' },
       studentCoordinator: { name: 'Student Coordinator', phone: '' },
       prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
-      bannerImage: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=800&q=80'
+      bannerImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80'
     }
   ];
 
@@ -184,10 +184,15 @@ const syncDefaultEvents = async () => {
 const syncEventTeamLimits = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
   await syncDefaultEvents();
-  // Ensure Bug Hunt has requiresLanguageChoice flag set in existing databases
+  // Ensure Bug Hunt has requiresLanguageChoice flag and distinct thumbnail set in existing databases
   await Event.updateMany(
     { title: { $regex: /^Bug Hunt$/i } },
-    { $set: { requiresLanguageChoice: true } }
+    { $set: { requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80' } }
+  );
+  // Ensure Code Sprint has distinct speed-coding thumbnail set in existing databases
+  await Event.updateMany(
+    { title: { $regex: /^Code Sprint$/i } },
+    { $set: { bannerImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80' } }
   );
   let updated = 0;
   for (const spec of EVENT_TEAM_LIMITS) {
