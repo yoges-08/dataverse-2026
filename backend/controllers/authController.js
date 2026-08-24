@@ -220,10 +220,12 @@ exports.registerStudent = async (req, res) => {
       mockStore.students.push(student);
       const token = generateToken(userId);
 
-      const emailResult = await sendEmail({
+      const emailResult = await sendRegistrationMail({
         to: cleanEmail,
-        subject: 'Welcome to DATAVERSE 2026 - Symposium Registration Confirmed',
-        html: `<h3>Dear ${name},</h3><p>Your unique Symposium Ticket Code is: <strong>${symposiumCode}</strong></p>`
+        name: cleanName,
+        registerNumber: student.registerNumber,
+        symposiumCode,
+        qrCodeData: symposiumCode
       });
 
       return res.status(201).json({

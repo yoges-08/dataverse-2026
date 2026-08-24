@@ -81,6 +81,13 @@ const mailShell = (innerHtml) => `
   <div style="margin:0;padding:0;background:#090d16;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;padding:24px;background:linear-gradient(160deg,#1e1b4b 0%,#090d16 100%);border:1px solid rgba(139,92,246,0.35);border-radius:18px;">
       <div style="text-align:center;padding-bottom:16px;border-bottom:1px dashed rgba(139,92,246,0.4);">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:0 auto 12px;">
+          <tr>
+            <td align="center">
+              <img src="https://dataverse-2026-qhyb.vercel.app/apple-touch-icon.png" alt="DATAVERSE 2026 Logo" width="64" height="64" style="display:block;border-radius:14px;border:1px solid rgba(139,92,246,0.4);background:#090d16;" />
+            </td>
+          </tr>
+        </table>
         <div style="font-size:26px;font-weight:900;letter-spacing:2px;">
           <span style="color:#818cf8;">DATA</span><span style="color:#a78bfa;">VERSE</span>
           <span style="color:#ec4899;font-size:14px;"> 2026</span>
