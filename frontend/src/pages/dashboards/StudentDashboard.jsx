@@ -49,6 +49,9 @@ export default function StudentDashboard() {
     );
   }
 
+  const technicalCount = registeredEvents.filter(r => r.event?.category === 'Technical').length;
+  const nonTechnicalCount = registeredEvents.filter(r => r.event?.category === 'Non-Technical').length;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       
@@ -99,7 +102,11 @@ export default function StudentDashboard() {
         <div className="glass-card p-6 rounded-2xl border border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase text-slate-400 block">Registered Events</span>
-            <span className="text-3xl font-black text-white">{registeredEvents.length}</span>
+            <div className="flex items-baseline space-x-1.5">
+              <span className="text-3xl font-black text-white">{registeredEvents.length}</span>
+              <span className="text-xs font-bold text-slate-500">/ 4 max</span>
+            </div>
+            <span className="text-[10px] text-slate-400 block mt-0.5">{technicalCount}/2 Tech • {nonTechnicalCount}/2 Non-Tech</span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
             <Calendar className="w-6 h-6 text-indigo-400" />
@@ -152,18 +159,20 @@ export default function StudentDashboard() {
         
         {/* Col 1 & 2: Registered Events List */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-xl font-bold text-white">My Registered Events</h3>
-            <span className="text-xs text-slate-400">{registeredEvents.length} of 3 events confirmed</span>
+            <span className="text-xs text-slate-400 font-medium">
+              {registeredEvents.length}/4 events ({technicalCount}/2 Technical, {nonTechnicalCount}/2 Non-Technical)
+            </span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-start space-x-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
-              You can register for a maximum of <span className="font-black">3 events</span> only. 
-              {registeredEvents.length >= 3
-                ? 'You have reached your registration limit.'
-                : `You can register for ${3 - registeredEvents.length} more event${3 - registeredEvents.length > 1 ? 's' : ''}.`}
+              You can register for a maximum of <span className="font-black">4 events</span> total (at most <span className="font-black">2 Technical</span> & <span className="font-black">2 Non-Technical</span>).{' '}
+              {registeredEvents.length >= 4
+                ? 'You have reached your overall registration limit (4/4 events).'
+                : `You have ${4 - registeredEvents.length} registration slot${4 - registeredEvents.length > 1 ? 's' : ''} remaining (${Math.max(0, 2 - technicalCount)} Technical, ${Math.max(0, 2 - nonTechnicalCount)} Non-Technical).`}
             </span>
           </div>
 

@@ -174,9 +174,9 @@ export default function Home() {
           <h2 className="text-3xl sm:text-5xl font-black text-white">Technical & Non-Technical Lineup</h2>
         </Reveal>
 
-        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+        <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center">
           <Trophy className="w-4 h-4 shrink-0" />
-          <span>Each student can register for a maximum of <span className="font-black">3 events</span> only.</span>
+          <span>Each student can register for up to <span className="font-black">4 events</span> (max <span className="font-black">2 Technical</span> & <span className="font-black">2 Non-Technical</span>).</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

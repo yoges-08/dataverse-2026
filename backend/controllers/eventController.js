@@ -295,7 +295,8 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
-const MAX_EVENT_REGISTRATIONS = 3;
+const MAX_TOTAL_REGISTRATIONS = 4;
+const MAX_PER_CATEGORY = 2;
 
 exports.registerForEvent = async (req, res) => {
   try {
@@ -344,11 +345,29 @@ exports.registerForEvent = async (req, res) => {
           : await Registration.findOne({ student: student._id, event: eventId });
         if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
 
-        const totalRegistrations = useTx
-          ? await Registration.countDocuments({ student: student._id }).session(session)
-          : await Registration.countDocuments({ student: student._id });
-        if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
-          return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+        const existingRegs = useTx
+          ? await Registration.find({ student: student._id, status: { $ne: 'Cancelled' } })
+              .populate({ path: 'event', select: 'category' })
+              .session(session)
+          : await Registration.find({ student: student._id, status: { $ne: 'Cancelled' } })
+              .populate({ path: 'event', select: 'category' });
+
+        if (existingRegs.length >= MAX_TOTAL_REGISTRATIONS) {
+          return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
+        }
+
+        const categoryCounts = existingRegs.reduce((acc, r) => {
+          const cat = r.event?.category;
+          if (cat === 'Technical') acc.technical += 1;
+          else if (cat === 'Non-Technical') acc.nonTechnical += 1;
+          return acc;
+        }, { technical: 0, nonTechnical: 0 });
+
+        if (event.category === 'Technical' && categoryCounts.technical >= MAX_PER_CATEGORY) {
+          return res.status(400).json({ success: false, message: 'You can register for a maximum of 2 Technical events only.' });
+        }
+        if (event.category === 'Non-Technical' && categoryCounts.nonTechnical >= MAX_PER_CATEGORY) {
+          return res.status(400).json({ success: false, message: 'You can register for a maximum of 2 Non-Technical events only.' });
         }
 
         const paperPdfUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -445,9 +464,24 @@ exports.registerForEvent = async (req, res) => {
       const existing = mockStore.registrations.find(r => (r.student === student._id || String(r.student) === String(student._id)) && (r.event === eventId || String(r.event) === String(eventId)));
       if (existing) return res.status(400).json({ success: false, message: 'Already registered for this event' });
 
-      const totalRegistrations = mockStore.registrations.filter(r => r.student === student._id || String(r.student) === String(student._id)).length;
-      if (totalRegistrations >= MAX_EVENT_REGISTRATIONS) {
-        return res.status(400).json({ success: false, message: `You can register for a maximum of ${MAX_EVENT_REGISTRATIONS} events only.` });
+      const existingRegs = mockStore.registrations.filter(r => (r.student === student._id || String(r.student) === String(student._id)) && r.status !== 'Cancelled');
+      if (existingRegs.length >= MAX_TOTAL_REGISTRATIONS) {
+        return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
+      }
+
+      const categoryCounts = existingRegs.reduce((acc, r) => {
+        const ev = mockStore.events.find(e => e._id === r.event || String(e._id) === String(r.event));
+        const cat = ev?.category;
+        if (cat === 'Technical') acc.technical += 1;
+        else if (cat === 'Non-Technical') acc.nonTechnical += 1;
+        return acc;
+      }, { technical: 0, nonTechnical: 0 });
+
+      if (event.category === 'Technical' && categoryCounts.technical >= MAX_PER_CATEGORY) {
+        return res.status(400).json({ success: false, message: 'You can register for a maximum of 2 Technical events only.' });
+      }
+      if (event.category === 'Non-Technical' && categoryCounts.nonTechnical >= MAX_PER_CATEGORY) {
+        return res.status(400).json({ success: false, message: 'You can register for a maximum of 2 Non-Technical events only.' });
       }
 
       const registration = {
