@@ -4,9 +4,9 @@ const nodemailer = require('nodemailer');
 // services that use an API key (Brevo) are allowed. No SMTP/Gmail fallback.
 
 const getFromEmail = () => {
-  const raw = String(process.env.SMTP_FROM || process.env.BREVO_FROM || '').replace(/^["']|["']$/g, '').trim();
+  const raw = String(process.env.BREVO_FROM || process.env.SMTP_FROM || '').replace(/^["']|["']$/g, '').trim();
   if (raw && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) return raw;
-  return 'no-reply@dataverse.aamec.in';
+  return 'dataverse26ai@gmail.com';
 };
 
 const sendViaBrevoApi = async ({ to, subject, html }) => {
@@ -56,7 +56,7 @@ const sendMail = async ({ to, subject, html }) => {
       auth: { user: account.user, pass: account.pass }
     });
     const info = await demoTransporter.sendMail({
-      from: '"DATAVERSE 2026 - AAMEC" <no-reply@dataverse.aamec.in>',
+      from: `"DATAVERSE 2026 - AAMEC" <${getFromEmail()}>`,
       to,
       subject,
       html
@@ -84,7 +84,7 @@ const mailShell = (innerHtml) => `
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:0 auto 12px;">
           <tr>
             <td align="center">
-              <img src="https://dataverse-2026-qhyb.vercel.app/apple-touch-icon.png" alt="DATAVERSE 2026 Logo" width="64" height="64" style="display:block;border-radius:14px;border:1px solid rgba(139,92,246,0.4);background:#090d16;" />
+              <img src="https://dataverse-2026-qhyb.vercel.app/email-logo.png" alt="AAMEC AI & DS Logo" width="80" height="80" style="display:block;border-radius:50%;border:2px solid rgba(139,92,246,0.5);background:#ffffff;padding:2px;" />
             </td>
           </tr>
         </table>
@@ -92,12 +92,13 @@ const mailShell = (innerHtml) => `
           <span style="color:#818cf8;">DATA</span><span style="color:#a78bfa;">VERSE</span>
           <span style="color:#ec4899;font-size:14px;"> 2026</span>
         </div>
-        <div style="color:#94a3b8;font-size:12px;margin-top:6px;">Anjalai Ammal Mahalingam Engineering College, Kovilvenni</div>
-        <div style="color:#c4b5fd;font-size:11px;margin-top:2px;letter-spacing:1px;">Innovate • Inspire • Create</div>
+        <div style="color:#94a3b8;font-size:12px;margin-top:6px;">Department of Artificial Intelligence and Data Science</div>
+        <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">Anjalai Ammal Mahalingam Engineering College, Kovilvenni</div>
+        <div style="color:#c4b5fd;font-size:11px;margin-top:3px;letter-spacing:1px;">Health • Education • Character • Innovate</div>
       </div>
       ${innerHtml}
       <div style="text-align:center;color:#64748b;font-size:11px;padding-top:16px;border-top:1px dashed rgba(139,92,246,0.3);margin-top:20px;">
-        For any queries contact symposium desk • AAMEC Kovilvenni • Tamil Nadu
+        Official Symposium Desk • <a href="mailto:dataverse26ai@gmail.com" style="color:#818cf8;text-decoration:none;">dataverse26ai@gmail.com</a> • AAMEC Kovilvenni
       </div>
     </div>
   </div>
