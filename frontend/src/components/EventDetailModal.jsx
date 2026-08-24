@@ -145,12 +145,12 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
             )}
             </div>
 
-          {/* Event Coordinators */}
+          {/* Event Coordinator */}
           {(event.facultyCoordinator?.name || event.studentCoordinator?.name) && (
             <div className="p-3 bg-slate-900/70 rounded-xl border border-emerald-500/20 space-y-2">
               <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center space-x-1.5">
                 <User className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Event Coordinators</span>
+                <span>Event Coordinator</span>
               </span>
               {event.facultyCoordinator?.name && (
                 <p className="text-xs text-slate-300">

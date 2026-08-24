@@ -52,7 +52,7 @@ export default function Events() {
         </span>
         <h1 className="text-4xl sm:text-6xl font-black text-white">Symposium Events Catalog</h1>
         <p className="text-sm text-slate-400">
-          Compete in technical AI challenges, quizzes, paper presentations, and non-technical creative events and win certificates.
+          Participate in technical AI challenges, quizzes, paper presentations, and non-technical creative events to win exciting certificates
         </p>
       </div>
 
