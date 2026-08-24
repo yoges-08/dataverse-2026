@@ -102,7 +102,7 @@ export default function Home() {
               <Sparkles className="w-5 h-5 text-cyan-300" />
               <div className="text-left">
                 <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider block">Registration Deadline</span>
-                <span className="text-base sm:text-lg font-black text-white">08 / 09 / 2026</span>
+                <span className="text-base sm:text-lg font-black text-white">07 / 09 / 2026</span>
               </div>
             </div>
           </div>
