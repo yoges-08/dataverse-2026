@@ -9,6 +9,29 @@ const getFromEmail = () => {
   return 'dataverse26ai@gmail.com';
 };
 
+const sendViaGmailSmtp = async ({ to, subject, html }) => {
+  const user = process.env.GMAIL_USER || process.env.SMTP_USER || getFromEmail();
+  const pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+  if (!pass) return null;
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass }
+    });
+    const info = await transporter.sendMail({
+      from: `"DATAVERSE 2026 - AAMEC" <${user}>`,
+      to,
+      subject,
+      html
+    });
+    console.log(`📧 Email DELIVERED to ${to} via Direct Gmail SMTP (Native DP): ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (e) {
+    console.error(`📧 Direct Gmail SMTP attempt failed: ${e.message}`);
+    return null;
+  }
+};
+
 const sendViaBrevoApi = async ({ to, subject, html }) => {
   const key = process.env.BREVO_API_KEY;
   if (!key) return null;
@@ -38,7 +61,13 @@ const sendViaBrevoApi = async ({ to, subject, html }) => {
 };
 
 const sendMail = async ({ to, subject, html }) => {
-  // Preferred: Brevo HTTPS API (port 443) - reliable from cloud servers.
+  // 1. Direct Gmail SMTP (if GMAIL_APP_PASSWORD is set): Guaranteed native Google DP & official Google DKIM
+  if (process.env.GMAIL_APP_PASSWORD || (process.env.SMTP_PASS && process.env.SMTP_USER)) {
+    const viaGmail = await sendViaGmailSmtp({ to, subject, html });
+    if (viaGmail) return viaGmail;
+  }
+
+  // 2. Brevo HTTPS API (port 443)
   if (process.env.BREVO_API_KEY) {
     const viaApi = await sendViaBrevoApi({ to, subject, html });
     if (viaApi) return viaApi;
