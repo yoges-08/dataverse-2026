@@ -201,7 +201,7 @@ class MockStore {
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Student Coordinator', phone: '' },
         prizes: { first: '₹6,000 + Trophy & Certificate', second: '₹3,500 + Trophy & Certificate', third: '₹2,000 + Certificate' },
-        bannerImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80'
+        bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80'
       },
       {
         _id: 'e9',
