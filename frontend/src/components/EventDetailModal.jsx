@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check, CheckCircle2 } from 'lucide-react';
+import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check, CheckCircle2, Users } from 'lucide-react';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -115,6 +115,36 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
           {/* Event Details */}
           <div className="p-4 sm:p-6 space-y-5">
+
+            {/* Top Notice Bar */}
+            <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+              event.teamLimit && event.teamLimit > 1
+                ? 'bg-cyan-950/40 border-cyan-500/30 text-cyan-200'
+                : 'bg-amber-950/40 border-amber-500/30 text-amber-200'
+            }`}>
+              <div className="flex items-center space-x-2.5 min-w-0">
+                {event.teamLimit && event.teamLimit > 1 ? (
+                  <Users className="w-5 h-5 text-cyan-400 shrink-0" />
+                ) : (
+                  <User className="w-5 h-5 text-amber-400 shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <span className="text-[10px] uppercase font-black tracking-wider block opacity-80">Top Notice</span>
+                  <span className="text-xs font-bold text-white block truncate">
+                    {event.teamLimit && event.teamLimit > 1
+                      ? `Team Event: Up to ${event.teamLimit} Members Allowed per Team`
+                      : 'no team mates solo performance'}
+                  </span>
+                </div>
+              </div>
+              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 ${
+                event.teamLimit && event.teamLimit > 1
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              }`}>
+                {event.teamLimit && event.teamLimit > 1 ? `Max ${event.teamLimit} Members` : 'Solo Only'}
+              </span>
+            </div>
             
             <p className="text-sm text-slate-300 leading-relaxed">{event.description}</p>
 

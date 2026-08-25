@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import EventDetailModal from '../components/EventDetailModal';
-import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2, Users, User } from 'lucide-react';
 import API from '../services/api';
 
 export default function Events() {
@@ -128,6 +128,32 @@ export default function Events() {
               key={ev._id}
               className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full group"
             >
+              {/* Top Notice: Team Limit vs Solo Performance */}
+              <div className={`px-3.5 py-1.5 text-xs font-bold flex items-center justify-between border-b ${
+                ev.teamLimit && ev.teamLimit > 1
+                  ? 'bg-cyan-950/80 text-cyan-200 border-cyan-500/30'
+                  : 'bg-amber-950/80 text-amber-200 border-amber-500/30'
+              }`}>
+                <span className="flex items-center space-x-1.5 truncate">
+                  {ev.teamLimit && ev.teamLimit > 1 ? (
+                    <>
+                      <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span className="truncate"><strong className="text-white font-extrabold">Top Notice:</strong> Team Limit: Up to {ev.teamLimit} Members</span>
+                    </>
+                  ) : (
+                    <>
+                      <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="truncate"><strong className="text-white font-extrabold">Top Notice:</strong> no team mates solo performance</span>
+                    </>
+                  )}
+                </span>
+                <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md shrink-0 ml-2 ${
+                  ev.teamLimit && ev.teamLimit > 1 ? 'bg-cyan-500/20 text-cyan-300' : 'bg-amber-500/20 text-amber-300'
+                }`}>
+                  {ev.teamLimit && ev.teamLimit > 1 ? `Team of ${ev.teamLimit}` : 'Solo'}
+                </span>
+              </div>
+
               <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
                 <img
                   src={ev.bannerImage}
