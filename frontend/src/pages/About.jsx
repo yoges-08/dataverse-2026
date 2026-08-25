@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, Building2, MapPin, Award, ShieldCheck, Target, Users, BookOpen } from 'lucide-react';
+import BlurImage from '../components/BlurImage';
 
 export default function About() {
   return (
@@ -39,13 +40,12 @@ export default function About() {
         </div>
 
         <div className="glass-card p-6 rounded-3xl border border-indigo-500/30">
-          <img
+          <BlurImage
             src="/campus1.webp"
             alt="AAMEC campus"
             loading="lazy"
-            width="1280"
-            height="720"
-            className="w-full h-72 object-cover rounded-2xl"
+            wrapperClassName="w-full h-72 rounded-2xl"
+            className="w-full h-full object-cover"
           />
         </div>
       </div>

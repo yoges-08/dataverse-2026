@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import CertificateModal from '../../components/CertificateModal';
+import BlurImage from '../../components/BlurImage';
 import {
   User, QrCode, CheckCircle2, AlertCircle, Award,
   Calendar, Bell, Download, ShieldCheck, Home
@@ -197,11 +198,12 @@ export default function StudentDashboard() {
                 return (
                   <div key={reg._id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center space-x-4">
-                      <img
+                      <BlurImage
                         src={ev.bannerImage}
                         alt={ev.title}
                         loading="lazy"
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-700"
+                        wrapperClassName="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-slate-700 shrink-0"
+                        className="w-full h-full object-cover"
                       />
                       <div>
                         <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check, CheckCircle2 } from 'lucide-react';
 import API from '../services/api';
+import BlurImage from './BlurImage';
 
 const formatDate = (d) => {
   if (!d) return '';
@@ -87,11 +88,11 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         
         {/* Banner Header */}
         <div className="relative h-40 sm:h-48 bg-slate-900 shrink-0">
-          <img
+          <BlurImage
             src={event.bannerImage || 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80'}
             alt={event.title}
-            loading="lazy"
-            className="w-full h-full object-cover opacity-60"
+            loading="eager"
+            className="w-full h-full object-cover opacity-80"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>
           
