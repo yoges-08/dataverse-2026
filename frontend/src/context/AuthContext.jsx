@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 import API from '../services/api';
 
 export const AuthContext = createContext();
@@ -9,16 +9,37 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('dataverse_token') || null);
   const [loading, setLoading] = useState(true);
 
+  const isFetchingRef = useRef(false);
+  const userRef = useRef(user);
+  const tokenRef = useRef(token);
+
   useEffect(() => {
-    if (token) {
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    tokenRef.current = token;
   }, [token]);
 
-  const fetchMe = async () => {
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setStudent(null);
+    localStorage.removeItem('dataverse_token');
+  }, []);
+
+  const fetchMe = useCallback(async () => {
+    // Ensure only one in-flight request runs at a time
+    if (isFetchingRef.current) return;
+
+    const currentToken = tokenRef.current || localStorage.getItem('dataverse_token');
+    if (!currentToken) {
+      setLoading(false);
+      return;
+    }
+
     try {
+      isFetchingRef.current = true;
       setLoading(true);
       const res = await API.get('/auth/me');
       if (res.data.success) {
@@ -31,9 +52,41 @@ export const AuthProvider = ({ children }) => {
       console.error('Fetch user error:', err);
       logout();
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  };
+  }, [logout]);
+
+  useEffect(() => {
+    if (token) {
+      fetchMe();
+    } else {
+      setLoading(false);
+    }
+  }, [token, fetchMe]);
+
+  // Handle visibility change and pageshow (e.g. backgrounding tab, switching apps, recent tabs)
+  useEffect(() => {
+    const handleResume = (event) => {
+      const isVisible = document.visibilityState === 'visible';
+      const isPageShow = event?.type === 'pageshow';
+
+      if (isVisible || isPageShow) {
+        const storedToken = localStorage.getItem('dataverse_token');
+        if (storedToken && (!userRef.current || isFetchingRef.current === false)) {
+          fetchMe();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleResume);
+    window.addEventListener('pageshow', handleResume);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleResume);
+      window.removeEventListener('pageshow', handleResume);
+    };
+  }, [fetchMe]);
 
   const login = async (email, password) => {
     try {
@@ -68,13 +121,6 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       throw new Error(err.response?.data?.message || err.message || 'Registration failed');
     }
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    setStudent(null);
-    localStorage.removeItem('dataverse_token');
   };
 
   return (
