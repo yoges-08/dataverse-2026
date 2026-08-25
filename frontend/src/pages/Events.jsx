@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import EventDetailModal from '../components/EventDetailModal';
-import BlurImage from '../components/BlurImage';
 import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2 } from 'lucide-react';
 import API from '../services/api';
 
@@ -130,7 +129,7 @@ export default function Events() {
               className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group"
             >
               <div className="relative h-48 overflow-hidden">
-                <BlurImage
+                <img
                   src={ev.bannerImage}
                   alt={ev.title}
                   loading="lazy"

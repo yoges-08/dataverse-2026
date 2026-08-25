@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import Reveal from '../components/Reveal';
-import BlurImage from '../components/BlurImage';
 import {
   Sparkles, Calendar, Users, Award, ShieldCheck,
   ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy,
@@ -198,7 +197,7 @@ export default function Home() {
             <Reveal key={ev._id} delay={idx * 60}>
               <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group">
               <div className="relative h-48 overflow-hidden">
-                <BlurImage
+                <img
                   src={ev.bannerImage}
                   alt={ev.title}
                   loading="lazy"
