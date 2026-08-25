@@ -35,7 +35,6 @@ export default function Register() {
   const [errorMsg, setErrorMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [customDepartment, setCustomDepartment] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
@@ -76,8 +75,8 @@ export default function Register() {
       errors.collegeName = 'Please enter your College Name';
     }
 
-    if (formData.department === 'Other' && !customDepartment.trim()) {
-      errors.department = 'Please enter your Department';
+    if (!formData.department.trim()) {
+      errors.department = 'Please select your Department';
     }
 
     setFieldErrors(errors);
@@ -95,12 +94,7 @@ export default function Register() {
       setLoading(true);
       setErrorMsg('');
 
-      const finalData = {
-        ...formData,
-        department: formData.department === 'Other' ? customDepartment.trim() : formData.department
-      };
-
-      const res = await registerStudent(finalData);
+      const res = await registerStudent(formData);
       if (res.success) {
         justRegisteredRef.current = true; // tell the effect above to stand down
         setShowSuccess(true);
@@ -294,23 +288,7 @@ export default function Register() {
                   <option value="Electrical & Electronics Engineering">Electrical & Electronics Engineering</option>
                   <option value="Mechanical Engineering">Mechanical Engineering</option>
                   <option value="Civil Engineering">Civil Engineering</option>
-                  <option value="MCA / Computer Applications">MCA / Computer Applications</option>
-                  <option value="Other">Other (type your department)</option>
                 </select>
-                {formData.department === 'Other' && (
-                  <input
-                    type="text"
-                    name="customDepartment"
-                    required
-                    value={customDepartment}
-                    onChange={(e) => {
-                      setCustomDepartment(e.target.value);
-                      setFieldErrors((prev) => ({ ...prev, department: '' }));
-                    }}
-                    placeholder="Type your department name"
-                    className="mt-2 w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                  />
-                )}
                 {fieldErrors.department && (
                   <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.department}</span>
                 )}
