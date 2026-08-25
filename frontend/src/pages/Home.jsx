@@ -21,6 +21,7 @@ export default function Home() {
       case 'super_admin': return '/dashboard/admin';
       case 'coordinator': return '/dashboard/coordinator';
       case 'volunteer': return '/dashboard/volunteer';
+      case 'co_organizer': return '/dashboard/co-organizer';
       default: return '/dashboard/student';
     }
   };

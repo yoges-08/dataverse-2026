@@ -12,14 +12,16 @@ const {
 } = require('../controllers/adminController');
 
 router.use(protect);
-router.use(authorize('super_admin'));
 
-router.get('/analytics', getAnalytics);
-router.get('/students', getAllStudents);
-router.get('/students/export', exportStudentsExcel);
-router.put('/students/:id/status', updateStudentStatus);
-router.delete('/students/:id', deleteStudent);
-router.post('/staff', createStaff);
-router.get('/staff', getStaffList);
+// Read-only routes (allow both super_admin and co_organizer)
+router.get('/analytics', authorize('super_admin', 'co_organizer'), getAnalytics);
+router.get('/students', authorize('super_admin', 'co_organizer'), getAllStudents);
+
+// Write/admin-only routes (keep locked to super_admin only, do NOT allow co_organizer)
+router.get('/students/export', authorize('super_admin'), exportStudentsExcel);
+router.put('/students/:id/status', authorize('super_admin'), updateStudentStatus);
+router.delete('/students/:id', authorize('super_admin'), deleteStudent);
+router.post('/staff', authorize('super_admin'), createStaff);
+router.get('/staff', authorize('super_admin'), getStaffList);
 
 module.exports = router;

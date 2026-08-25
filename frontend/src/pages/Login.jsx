@@ -43,6 +43,7 @@ export default function Login() {
       case 'super_admin': navigate('/dashboard/admin', { replace: true }); break;
       case 'coordinator': navigate('/dashboard/coordinator', { replace: true }); break;
       case 'volunteer': navigate('/dashboard/volunteer', { replace: true }); break;
+      case 'co_organizer': navigate('/dashboard/co-organizer', { replace: true }); break;
       default: navigate('/dashboard/student', { replace: true }); break;
     }
   };

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const XLSX = require('xlsx');
 const Student = require('../models/Student');
@@ -304,7 +304,7 @@ exports.deleteStudent = async (req, res) => {
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    const allowedRoles = ['super_admin', 'coordinator', 'volunteer'];
+    const allowedRoles = ['super_admin', 'coordinator', 'volunteer', 'co_organizer'];
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ success: false, message: `Role must be one of: ${allowedRoles.join(', ')}` });
     }
@@ -328,10 +328,10 @@ exports.createStaff = async (req, res) => {
 exports.getStaffList = async (req, res) => {
   try {
     if (isDbConnected()) {
-      const staff = await User.find({ role: { $in: ['coordinator', 'volunteer', 'super_admin'] } }).select('-password');
+      const staff = await User.find({ role: { $in: ['coordinator', 'volunteer', 'super_admin', 'co_organizer'] } }).select('-password');
       return res.status(200).json({ success: true, count: staff.length, staff });
     } else {
-      const staff = mockStore.users.filter(u => ['coordinator', 'volunteer', 'super_admin'].includes(u.role));
+      const staff = mockStore.users.filter(u => ['coordinator', 'volunteer', 'super_admin', 'co_organizer'].includes(u.role));
       return res.status(200).json({ success: true, count: staff.length, staff });
     }
   } catch (error) {

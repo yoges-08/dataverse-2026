@@ -979,6 +979,7 @@ const loadContactMessages = async () => {
               <select value={newStaff.role} onChange={e => setNewStaff({...newStaff, role: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white">
                 <option value="coordinator">Event Coordinator</option>
                 <option value="volunteer">Volunteer</option>
+                <option value="co_organizer">Co-Organizer (view-only)</option>
               </select>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowStaffModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>

@@ -27,6 +27,7 @@ const StudentDashboard = lazy(() => import('./pages/dashboards/StudentDashboard'
 const AdminDashboard = lazy(() => import('./pages/dashboards/AdminDashboard'));
 const CoordinatorDashboard = lazy(() => import('./pages/dashboards/CoordinatorDashboard'));
 const VolunteerDashboard = lazy(() => import('./pages/dashboards/VolunteerDashboard'));
+const CoOrganizerDashboard = lazy(() => import('./pages/dashboards/CoOrganizerDashboard'));
 
 const PageLoader = () => (
   <div className="max-w-4xl mx-auto px-4 py-24 text-center text-slate-400">
@@ -39,6 +40,7 @@ const getRoleDashboard = (role) => {
     case 'super_admin': return '/dashboard/admin';
     case 'coordinator': return '/dashboard/coordinator';
     case 'volunteer': return '/dashboard/volunteer';
+    case 'co_organizer': return '/dashboard/co-organizer';
     case 'student': return '/dashboard/student';
     default: return '/login';
   }
@@ -160,6 +162,7 @@ function AnimatedRoutes() {
             <Route path="/dashboard/admin" element={<RoleRoute role="super_admin"><AdminDashboard /></RoleRoute>} />
             <Route path="/dashboard/coordinator" element={<RoleRoute role="coordinator"><CoordinatorDashboard /></RoleRoute>} />
             <Route path="/dashboard/volunteer" element={<RoleRoute role="volunteer"><VolunteerDashboard /></RoleRoute>} />
+            <Route path="/dashboard/co-organizer" element={<RoleRoute role="co_organizer"><CoOrganizerDashboard /></RoleRoute>} />
 
             {/* Legacy team edit-code links now redirect to login (team management
                 moved in-app to the student dashboard; there is no link-based UI). */}
