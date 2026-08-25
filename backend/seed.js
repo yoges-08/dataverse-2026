@@ -29,7 +29,8 @@ const syncStaffAccounts = async () => {
   const accounts = [
     { role: 'super_admin', key: 'ADMIN', defaultName: 'Dr. R. K. Varma (Convener)', defaultUsername: 'admin', defaultEmail: 'dataverse2k26ai@gmail.com' },
     { role: 'coordinator', key: 'COORDINATOR', defaultName: 'Prof. S. Meenakshi (CSE Coord)', defaultUsername: 'coordinator', defaultEmail: 'coordinator@aamec.edu.in' },
-    { role: 'volunteer', key: 'VOLUNTEER', defaultName: 'Karthik Subramanian (Student Vol)', defaultUsername: 'volunteer', defaultEmail: 'volunteer@aamec.edu.in' }
+    { role: 'volunteer', key: 'VOLUNTEER', defaultName: 'Karthik Subramanian (Student Vol)', defaultUsername: 'volunteer', defaultEmail: 'volunteer@aamec.edu.in' },
+    { role: 'co_organizer', key: 'CO_ORGANIZER', defaultName: 'Co-Organizer (AAMEC)', defaultUsername: 'coorganizer', defaultEmail: 'coorganizer@aamec.edu.in' }
   ];
 
   for (const acc of accounts) {
