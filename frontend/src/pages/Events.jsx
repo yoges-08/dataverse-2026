@@ -135,36 +135,8 @@ export default function Events() {
                   loading="lazy"
                   className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                 />
-
-                {/* Top Notice Overlay directly on top of the thumbnail */}
-                <div className={`absolute top-0 inset-x-0 z-20 px-3 py-1.5 text-[11px] font-bold flex items-center justify-between backdrop-blur-md border-b shadow-sm ${
-                  ev.teamLimit && ev.teamLimit > 1
-                    ? 'bg-slate-950/85 text-cyan-200 border-cyan-500/30'
-                    : 'bg-slate-950/85 text-amber-200 border-amber-500/30'
-                }`}>
-                  <span className="flex items-center space-x-1.5 truncate">
-                    {ev.teamLimit && ev.teamLimit > 1 ? (
-                      <>
-                        <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                        <span className="truncate"><strong className="text-white font-extrabold">Top Notice:</strong> Team Limit: Up to {ev.teamLimit} Members</span>
-                      </>
-                    ) : (
-                      <>
-                        <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate"><strong className="text-white font-extrabold">Top Notice:</strong> no team mates solo performance</span>
-                      </>
-                    )}
-                  </span>
-                  <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-md shrink-0 ml-2 ${
-                    ev.teamLimit && ev.teamLimit > 1 ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/40' : 'bg-amber-500/25 text-amber-300 border border-amber-500/40'
-                  }`}>
-                    {ev.teamLimit && ev.teamLimit > 1 ? `Team of ${ev.teamLimit}` : 'Solo'}
-                  </span>
-                </div>
-
-                {/* Category Badge on Thumbnail */}
-                <div className="absolute bottom-3 left-3 z-10">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-lg ${
+                <div className="absolute top-3 left-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
                   }`}>
                     {ev.category}
