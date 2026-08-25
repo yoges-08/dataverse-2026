@@ -60,8 +60,6 @@
       0 20px 50px -20px rgba(0, 0, 0, 0.55);
     transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out);
     overflow: hidden;
-    content-visibility: auto;
-    contain-intrinsic-size: auto 420px;
   }
 
   @media (max-width: 767px) {

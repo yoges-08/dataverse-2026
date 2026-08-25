@@ -126,14 +126,14 @@ export default function Events() {
           {filteredEvents.map((ev) => (
             <div
               key={ev._id}
-              className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col group"
+              className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full group"
             >
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
                 <img
                   src={ev.bannerImage}
                   alt={ev.title}
                   loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-3 left-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
@@ -144,7 +144,7 @@ export default function Events() {
                 </div>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors mb-1">
                     {ev.title}
@@ -153,9 +153,18 @@ export default function Events() {
                   <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{ev.description}</p>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[10px] text-slate-400">
-                    <Calendar className="w-3 h-3 text-indigo-400 inline" />
-                    {ev.date && <span className="inline-flex items-center space-x-1"><Calendar className="w-3 h-3 text-indigo-400" /><span>{ev.date.split('-').reverse().join('/')}</span></span>}
-                    {ev.venue && <span className="inline-flex items-center space-x-1"><MapPin className="w-3 h-3 text-pink-400" /><span>{ev.venue}</span></span>}
+                    {ev.date && (
+                      <span className="inline-flex items-center space-x-1">
+                        <Calendar className="w-3 h-3 text-indigo-400" />
+                        <span>{ev.date.split('-').reverse().join('/')}</span>
+                      </span>
+                    )}
+                    {ev.venue && (
+                      <span className="inline-flex items-center space-x-1">
+                        <MapPin className="w-3 h-3 text-pink-400" />
+                        <span>{ev.venue}</span>
+                      </span>
+                    )}
                     {ev.facultyCoordinator?.name && (
                       <span className="inline-flex items-center space-x-1">
                         <span className="text-emerald-400 font-bold">Faculty: {ev.facultyCoordinator.name}</span>
