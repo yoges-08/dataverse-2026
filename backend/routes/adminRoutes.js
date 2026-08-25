@@ -4,6 +4,7 @@ const { protect, authorize } = require('../middleware/auth');
 const {
   getAnalytics,
   getAllStudents,
+  getRegistrants,
   updateStudentStatus,
   deleteStudent,
   createStaff,
@@ -16,6 +17,7 @@ router.use(protect);
 // Read-only routes (allow both super_admin and co_organizer)
 router.get('/analytics', authorize('super_admin', 'co_organizer'), getAnalytics);
 router.get('/students', authorize('super_admin', 'co_organizer'), getAllStudents);
+router.get('/registrants', authorize('super_admin', 'co_organizer'), getRegistrants);
 
 // Write/admin-only routes (keep locked to super_admin only, do NOT allow co_organizer)
 router.get('/students/export', authorize('super_admin'), exportStudentsExcel);

@@ -174,21 +174,43 @@ exports.getAllStudents = async (req, res) => {
 
       let students = await Student.find(query).populate('user', 'name email role').sort({ createdAt: -1 });
 
+      const studentIds = students.map(s => s._id);
+      const allRegs = await Registration.find({ student: { $in: studentIds } }).populate('event', 'title category venue date time').lean();
+      const regMap = {};
+      allRegs.forEach(r => {
+        const sid = String(r.student);
+        if (!regMap[sid]) regMap[sid] = [];
+        regMap[sid].push(r);
+      });
+
+      let studentList = students.map(s => {
+        const sObj = s.toObject ? s.toObject() : s;
+        sObj.registeredEvents = regMap[String(s._id)] || [];
+        return sObj;
+      });
+
       if (search) {
         const term = search.toLowerCase();
-        students = students.filter(s => 
+        studentList = studentList.filter(s => 
           (s.user && s.user.name && s.user.name.toLowerCase().includes(term)) ||
           (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
           (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
           (s.email && s.email.toLowerCase().includes(term)) ||
-          (s.collegeName && s.collegeName.toLowerCase().includes(term))
+          (s.collegeName && s.collegeName.toLowerCase().includes(term)) ||
+          (s.registeredEvents && s.registeredEvents.some(r => r.event && r.event.title && r.event.title.toLowerCase().includes(term)))
         );
       }
-      return res.status(200).json({ success: true, count: students.length, students });
+      return res.status(200).json({ success: true, count: studentList.length, students: studentList });
     } else {
       let list = mockStore.students.map(s => {
         const u = mockStore.users.find(usr => usr._id === s.user);
-        return { ...s, user: u ? { name: u.name, email: u.email, role: u.role } : { name: s.email } };
+        const sRegs = mockStore.registrations
+          .filter(r => String(r.student) === String(s._id))
+          .map(r => {
+            const ev = mockStore.events.find(e => String(e._id) === String(r.event));
+            return { ...r, event: ev };
+          });
+        return { ...s, user: u ? { name: u.name, email: u.email, role: u.role } : { name: s.email }, registeredEvents: sRegs };
       });
 
       if (status) list = list.filter(s => s.verificationStatus === status);
@@ -202,7 +224,8 @@ exports.getAllStudents = async (req, res) => {
           (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
           (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
           (s.email && s.email.toLowerCase().includes(term)) ||
-          (s.collegeName && s.collegeName.toLowerCase().includes(term))
+          (s.collegeName && s.collegeName.toLowerCase().includes(term)) ||
+          (s.registeredEvents && s.registeredEvents.some(r => r.event && r.event.title && r.event.title.toLowerCase().includes(term)))
         );
       }
 
@@ -210,6 +233,133 @@ exports.getAllStudents = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching students' });
+  }
+};
+
+exports.getRegistrants = async (req, res) => {
+  try {
+    const { search, status, eventId, department, college } = req.query;
+
+    if (isDbConnected()) {
+      let regQuery = {};
+      if (eventId) regQuery.event = eventId;
+
+      let registrations = await Registration.find(regQuery)
+        .populate({
+          path: 'student',
+          populate: { path: 'user', select: 'name email' }
+        })
+        .populate('event', 'title category venue date time')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      let list = registrations
+        .filter(r => r.student && r.event)
+        .map(r => {
+          const student = r.student;
+          const user = student.user || {};
+          const rawName = (user.name || '').trim();
+          const name = rawName && rawName !== '.' ? rawName : (student.email || 'Student');
+
+          return {
+            _id: r._id,
+            registrationId: r._id,
+            studentId: student._id,
+            symposiumCode: student.symposiumCode || '',
+            studentName: name,
+            email: student.email || user.email || '',
+            phone: student.phone || '',
+            collegeName: student.collegeName || '',
+            department: student.department || '',
+            year: student.year || '',
+            verificationStatus: student.verificationStatus || 'Pending',
+            registrationStatus: r.status || student.verificationStatus || 'Registered',
+            isCheckedIn: !!student.isCheckedIn,
+            event: {
+              _id: r.event._id,
+              title: r.event.title,
+              category: r.event.category,
+              venue: r.event.venue,
+              date: r.event.date
+            },
+            language: r.language || null,
+            teamMembers: r.teamMembers || [],
+            registeredAt: r.createdAt || r.registrationDate
+          };
+        });
+
+      if (status) list = list.filter(r => r.verificationStatus === status || r.registrationStatus === status);
+      if (department) list = list.filter(r => r.department === department);
+      if (college) list = list.filter(r => r.collegeName.toLowerCase().includes(college.toLowerCase()));
+
+      if (search) {
+        const term = search.toLowerCase();
+        list = list.filter(r =>
+          r.studentName.toLowerCase().includes(term) ||
+          r.symposiumCode.toLowerCase().includes(term) ||
+          r.email.toLowerCase().includes(term) ||
+          r.collegeName.toLowerCase().includes(term) ||
+          (r.event && r.event.title.toLowerCase().includes(term))
+        );
+      }
+
+      return res.status(200).json({ success: true, count: list.length, registrants: list });
+    } else {
+      let registrations = mockStore.registrations.map(r => {
+        const student = mockStore.students.find(s => String(s._id) === String(r.student));
+        const event = mockStore.events.find(e => String(e._id) === String(r.event));
+        const user = student ? mockStore.users.find(u => String(u._id) === String(student.user)) : null;
+        const rawName = (user?.name || '').trim();
+        const name = rawName && rawName !== '.' ? rawName : (student?.email || 'Student');
+
+        return {
+          _id: r._id,
+          registrationId: r._id,
+          studentId: student?._id,
+          symposiumCode: student?.symposiumCode || '',
+          studentName: name,
+          email: student?.email || user?.email || '',
+          phone: student?.phone || '',
+          collegeName: student?.collegeName || '',
+          department: student?.department || '',
+          year: student?.year || '',
+          verificationStatus: student?.verificationStatus || 'Pending',
+          registrationStatus: r.status || student?.verificationStatus || 'Registered',
+          isCheckedIn: !!student?.isCheckedIn,
+          event: event ? {
+            _id: event._id,
+            title: event.title,
+            category: event.category,
+            venue: event.venue,
+            date: event.date
+          } : null,
+          language: r.language || null,
+          teamMembers: r.teamMembers || [],
+          registeredAt: r.createdAt || r.registrationDate
+        };
+      }).filter(r => r.studentId && r.event);
+
+      if (eventId) registrations = registrations.filter(r => String(r.event._id) === String(eventId));
+      if (status) registrations = registrations.filter(r => r.verificationStatus === status || r.registrationStatus === status);
+      if (department) registrations = registrations.filter(r => r.department === department);
+      if (college) registrations = registrations.filter(r => r.collegeName.toLowerCase().includes(college.toLowerCase()));
+
+      if (search) {
+        const term = search.toLowerCase();
+        registrations = registrations.filter(r =>
+          r.studentName.toLowerCase().includes(term) ||
+          r.symposiumCode.toLowerCase().includes(term) ||
+          r.email.toLowerCase().includes(term) ||
+          r.collegeName.toLowerCase().includes(term) ||
+          (r.event && r.event.title.toLowerCase().includes(term))
+        );
+      }
+
+      return res.status(200).json({ success: true, count: registrations.length, registrants: registrations });
+    }
+  } catch (error) {
+    console.error('Error fetching registrants:', error);
+    res.status(500).json({ success: false, message: 'Error fetching registrants' });
   }
 };
 
