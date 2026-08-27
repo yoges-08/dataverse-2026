@@ -9,6 +9,7 @@ const seedData = require('./seed');
 const Event = require('./models/Event');
 const mongoose = require('mongoose');
 const mockStore = require('./utils/mockStore');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config();
 
@@ -205,6 +206,9 @@ const syncEventTeamLimits = async () => {
   if (updated > 0) console.log(`Applied event team limits to ${updated} event(s).`);
   return updated;
 };
+
+// Rate Limiting (General API protection)
+app.use('/api', apiLimiter);
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
