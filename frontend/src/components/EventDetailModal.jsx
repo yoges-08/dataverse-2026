@@ -117,27 +117,27 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           <div className="p-4 sm:p-6 space-y-5">
 
             {/* Top Notice Bar */}
-            <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+            <div className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
               event.teamLimit && event.teamLimit > 1
                 ? 'bg-cyan-950/40 border-cyan-500/30 text-cyan-200'
                 : 'bg-amber-950/40 border-amber-500/30 text-amber-200'
             }`}>
-              <div className="flex items-center space-x-2.5 min-w-0">
+              <div className="flex items-start sm:items-center space-x-2.5 min-w-0">
                 {event.teamLimit && event.teamLimit > 1 ? (
-                  <Users className="w-5 h-5 text-cyan-400 shrink-0" />
+                  <Users className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5 sm:mt-0" />
                 ) : (
-                  <User className="w-5 h-5 text-amber-400 shrink-0" />
+                  <User className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
                 )}
                 <div className="min-w-0">
                   <span className="text-[10px] uppercase font-black tracking-wider block opacity-80">Top Notice</span>
-                  <span className="text-xs font-bold text-white block truncate">
+                  <span className="text-xs font-bold text-white block">
                     {event.teamLimit && event.teamLimit > 1
-                      ? `Team Event: Up to ${event.teamLimit} Members Allowed per Team`
-                      : 'no team mates solo performance'}
+                      ? `Team Event (Up to ${event.teamLimit} Members): After registering, add or join your classmates in the Team Management tab.`
+                      : 'Solo Event: Individual performance (no teammates required).'}
                   </span>
                 </div>
               </div>
-              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 ${
+              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 self-start sm:self-auto ${
                 event.teamLimit && event.teamLimit > 1
                   ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
                   : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
@@ -270,15 +270,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 </div>
               </>
             )}
-
-            {/* Team Management notice */}
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-300 flex items-start space-x-2">
-              <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                <span className="font-bold">Team Management:</span> After registering, you can join or create a team for this event with registered classmates from your college in the{' '}
-                <Link to="/team-management" className="font-bold underline hover:text-indigo-200">Team Management</Link> tab.
-              </span>
-            </div>
 
             {/* Programming Language Selection (for Bug Hunt / language-enabled events) */}
             {event.requiresLanguageChoice && (

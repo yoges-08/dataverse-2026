@@ -5,7 +5,7 @@ import StudentBadgeModal from '../../components/StudentBadgeModal';
 import CertificateModal from '../../components/CertificateModal';
 import {
   User, QrCode, CheckCircle2, AlertCircle, Award,
-  Calendar, Bell, Download, ShieldCheck, Home
+  Calendar, Bell, Download, ShieldCheck, Home, Users
 } from 'lucide-react';
 import API from '../../services/api';
 
@@ -194,24 +194,53 @@ export default function StudentDashboard() {
               {registeredEvents.map((reg) => {
                 const ev = reg.event;
                 if (!ev) return null;
+                const isTeamEvent = ev.teamLimit && ev.teamLimit > 1;
                 return (
-                  <div key={reg._id} className="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={ev.bannerImage}
-                        alt={ev.title}
-                        loading="lazy"
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-700"
-                      />
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>
-                        <h4 className="text-base font-bold text-white">{ev.title}</h4>
+                  <div key={reg._id} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+                    {/* Top Notice on Event Registered Card */}
+                    {isTeamEvent ? (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 text-xs">
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <Users className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="font-semibold truncate">
+                            Team Event (Max {ev.teamLimit} Members): Add or join your teammates in Team Management!
+                          </span>
+                        </div>
+                        <Link
+                          to="/team-management"
+                          className="px-3 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-colors self-start sm:self-auto shrink-0 shadow-sm"
+                        >
+                          Manage Team →
+                        </Link>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-xs">
+                        <User className="w-4 h-4 text-slate-500 shrink-0" />
+                        <span>Solo Event • Individual performance (no teammates required)</span>
+                      </div>
+                    )}
 
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
-                      {reg.status}
-                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={ev.bannerImage}
+                          alt={ev.title}
+                          loading="lazy"
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-700 shrink-0"
+                        />
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-indigo-400 block">{ev.category}</span>
+                          <h4 className="text-base font-bold text-white">{ev.title}</h4>
+                          {reg.language && (
+                            <span className="text-[11px] text-indigo-300 font-mono mt-0.5 block">Language: {reg.language}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
+                        {reg.status}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

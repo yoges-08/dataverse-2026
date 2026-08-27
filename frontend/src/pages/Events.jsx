@@ -142,6 +142,15 @@ export default function Events() {
                     {ev.category}
                   </span>
                 </div>
+                <div className="absolute top-3 right-3">
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md border ${
+                    ev.teamLimit && ev.teamLimit > 1
+                      ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/50'
+                      : 'bg-slate-950/80 text-slate-300 border-slate-700/70'
+                  }`}>
+                    {ev.teamLimit && ev.teamLimit > 1 ? `Team (${ev.teamLimit})` : 'Solo'}
+                  </span>
+                </div>
               </div>
 
               <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
