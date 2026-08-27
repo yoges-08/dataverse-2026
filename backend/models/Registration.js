@@ -20,5 +20,8 @@ const registrationSchema = new mongoose.Schema({
 
 // Prevent duplicate student registration for the same event
 registrationSchema.index({ student: 1, event: 1 }, { unique: true });
+registrationSchema.index({ event: 1 });
+registrationSchema.index({ student: 1 });
 
 module.exports = mongoose.model('Registration', registrationSchema);
+

@@ -38,7 +38,8 @@ exports.getAllCertificates = async (req, res) => {
       const certificates = await Certificate.find()
         .populate({ path: 'student', populate: { path: 'user', select: 'name' } })
         .populate('event', 'title category')
-        .sort({ issuedAt: -1 });
+        .sort({ issuedAt: -1 })
+        .lean();
       return res.status(200).json({ success: true, count: certificates.length, certificates });
     } else {
       const certificates = mockStore.certificates

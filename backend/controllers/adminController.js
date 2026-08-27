@@ -172,7 +172,7 @@ exports.getAllStudents = async (req, res) => {
       if (department) query.department = department;
       if (college) query.collegeName = { $regex: college, $options: 'i' };
 
-      let students = await Student.find(query).populate('user', 'name email role').sort({ createdAt: -1 });
+      let students = await Student.find(query).populate('user', 'name email role').sort({ createdAt: -1 }).lean();
 
       const studentIds = students.map(s => s._id);
       const allRegs = await Registration.find({ student: { $in: studentIds } }).populate('event', 'title category venue date time').lean();
@@ -478,7 +478,7 @@ exports.createStaff = async (req, res) => {
 exports.getStaffList = async (req, res) => {
   try {
     if (isDbConnected()) {
-      const staff = await User.find({ role: { $in: ['coordinator', 'volunteer', 'super_admin', 'co_organizer'] } }).select('-password');
+      const staff = await User.find({ role: { $in: ['coordinator', 'volunteer', 'super_admin', 'co_organizer'] } }).select('-password').lean();
       return res.status(200).json({ success: true, count: staff.length, staff });
     } else {
       const staff = mockStore.users.filter(u => ['coordinator', 'volunteer', 'super_admin', 'co_organizer'].includes(u.role));

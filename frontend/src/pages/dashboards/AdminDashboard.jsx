@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
@@ -22,6 +22,17 @@ export default function AdminDashboard() {
   // Contact form messages (inbox)
   const [contactMessages, setContactMessages] = useState([]);
   const [messagesBusy, setMessagesBusy] = useState(false);
+
+  // Lazy tab loading tracking
+  const [loadedTabs, setLoadedTabs] = useState({ students: true, events: true });
+
+  // Action busy states
+  const [actionBusyId, setActionBusyId] = useState(null);
+  const [eventBusy, setEventBusy] = useState(false);
+  const [deletingEventId, setDeletingEventId] = useState(null);
+  const [staffBusy, setStaffBusy] = useState(false);
+  const [annBusy, setAnnBusy] = useState(false);
+  const [deletingAnnId, setDeletingAnnId] = useState(null);
 
   // Certificate generation state
   const [certStudentId, setCertStudentId] = useState('');
@@ -103,13 +114,10 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      const [analyticsRes, studentRes, eventRes, staffRes, annRes, certRes] = await Promise.all([
+      const [analyticsRes, studentRes, eventRes] = await Promise.all([
         API.get('/admin/analytics'),
         API.get('/admin/students'),
-        API.get('/events'),
-        API.get('/admin/staff'),
-        API.get('/announcements'),
-        API.get('/certificates/all')
+        API.get('/events')
       ]);
 
       if (analyticsRes.data.success) {
@@ -118,18 +126,14 @@ export default function AdminDashboard() {
       }
       if (studentRes.data.success) setStudents(studentRes.data.students);
       if (eventRes.data.success) setEvents(eventRes.data.events);
-      if (staffRes.data.success) setStaffList(staffRes.data.staff);
-      if (annRes.data.success) setAnnouncements(annRes.data.announcements);
-      if (certRes.data.success) setCertificates(certRes.data.certificates);
     } catch (err) {
       console.error('Error loading admin dashboard:', err);
     } finally {
       setLoading(false);
     }
-    loadContactMessages();
   };
 
-const loadContactMessages = async () => {
+  const loadContactMessages = async () => {
     try {
       setMessagesBusy(true);
       const res = await API.get('/contact/messages');
@@ -141,32 +145,108 @@ const loadContactMessages = async () => {
     }
   };
 
+  const ensureTabDataLoaded = useCallback(async (tabId) => {
+    if (loadedTabs[tabId]) return;
+    try {
+      if (tabId === 'certificates') {
+        const res = await API.get('/certificates/all');
+        if (res.data.success) setCertificates(res.data.certificates);
+      } else if (tabId === 'staff') {
+        const res = await API.get('/admin/staff');
+        if (res.data.success) setStaffList(res.data.staff);
+      } else if (tabId === 'announcements') {
+        const res = await API.get('/announcements');
+        if (res.data.success) setAnnouncements(res.data.announcements);
+      } else if (tabId === 'messages') {
+        await loadContactMessages();
+      }
+      setLoadedTabs(prev => ({ ...prev, [tabId]: true }));
+    } catch (err) {
+      console.error(`Error loading tab data for ${tabId}:`, err);
+    }
+  }, [loadedTabs]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    ensureTabDataLoaded(tabId);
+  };
+
   const handleStatusChange = async (studentId, newStatus) => {
     try {
+      setActionBusyId(studentId);
       const res = await API.put(`/admin/students/${studentId}/status`, { status: newStatus });
       if (res.data.success) {
-        loadAdminData();
+        const updatedStudent = res.data.student;
+        setStudents(prev => prev.map(s => {
+          if (s._id === studentId) {
+            return {
+              ...s,
+              verificationStatus: newStatus,
+              rejectionReason: newStatus === 'Rejected' ? (updatedStudent?.rejectionReason || 'Rejected by Admin') : ''
+            };
+          }
+          return s;
+        }));
+        setStats(prev => {
+          if (!prev || !prev.totalStudents) return prev;
+          const oldStatus = students.find(s => s._id === studentId)?.verificationStatus;
+          if (oldStatus === newStatus) return prev;
+          const next = { ...prev };
+          if (oldStatus === 'Pending') next.pendingStudents = Math.max(0, (next.pendingStudents || 1) - 1);
+          if (oldStatus === 'Approved') next.approvedStudents = Math.max(0, (next.approvedStudents || 1) - 1);
+          if (oldStatus === 'Rejected') next.rejectedStudents = Math.max(0, (next.rejectedStudents || 1) - 1);
+          if (newStatus === 'Pending') next.pendingStudents = (next.pendingStudents || 0) + 1;
+          if (newStatus === 'Approved') next.approvedStudents = (next.approvedStudents || 0) + 1;
+          if (newStatus === 'Rejected') next.rejectedStudents = (next.rejectedStudents || 0) + 1;
+          return next;
+        });
       }
     } catch (err) {
       console.error('Error updating status:', err);
+      alert(err.response?.data?.message || 'Failed to update student status.');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
   const handleDeleteStudent = async (studentId) => {
     if (!window.confirm('Are you sure you want to delete this student record?')) return;
     try {
+      setActionBusyId(studentId);
       const res = await API.delete(`/admin/students/${studentId}`);
       if (res.data.success) {
-        loadAdminData();
+        const targetStudent = students.find(s => s._id === studentId);
+        setStudents(prev => prev.filter(s => s._id !== studentId));
+        setStats(prev => {
+          if (!prev) return prev;
+          const next = { ...prev };
+          next.totalStudents = Math.max(0, (next.totalStudents || 1) - 1);
+          if (targetStudent?.verificationStatus === 'Pending') {
+            next.pendingStudents = Math.max(0, (next.pendingStudents || 1) - 1);
+          } else if (targetStudent?.verificationStatus === 'Approved') {
+            next.approvedStudents = Math.max(0, (next.approvedStudents || 1) - 1);
+          } else if (targetStudent?.verificationStatus === 'Rejected') {
+            next.rejectedStudents = Math.max(0, (next.rejectedStudents || 1) - 1);
+          }
+          if (targetStudent?.isCheckedIn) {
+            next.checkedInCount = Math.max(0, (next.checkedInCount || 1) - 1);
+          }
+          next.attendancePercentage = next.totalStudents > 0 ? Math.round(((next.checkedInCount || 0) / next.totalStudents) * 100) : 0;
+          return next;
+        });
       }
     } catch (err) {
       console.error('Error deleting student:', err);
+      alert(err.response?.data?.message || 'Failed to delete student.');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
+      setEventBusy(true);
       const res = await API.post('/events', {
         ...newEvent,
         teamLimit: Number(newEvent.teamLimit) || 0,
@@ -176,64 +256,111 @@ const loadContactMessages = async () => {
         studentCoordinator: { name: newEvent.studentName, phone: newEvent.studentPhone },
         prizes: { first: newEvent.firstPrize, second: newEvent.secondPrize, third: newEvent.thirdPrize }
       });
-      if (res.data.success) {
+      if (res.data.success && res.data.event) {
+        setEvents(prev => [...prev, res.data.event]);
         setShowEventModal(false);
-        loadAdminData();
+        setNewEvent({
+          title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, requiresLanguageChoice: false, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
+        });
+        setStats(prev => {
+          if (!prev) return prev;
+          const next = { ...prev };
+          if (res.data.event.category === 'Technical') {
+            next.technicalEvents = (next.technicalEvents || 0) + 1;
+          } else {
+            next.nonTechnicalEvents = (next.nonTechnicalEvents || 0) + 1;
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error('Error creating event:', err);
+      alert(err.response?.data?.message || 'Failed to create event.');
+    } finally {
+      setEventBusy(false);
     }
   };
 
   const handleCreateStaff = async (e) => {
     e.preventDefault();
     try {
+      setStaffBusy(true);
       const res = await API.post('/admin/staff', newStaff);
       if (res.data.success) {
+        if (res.data.user) {
+          setStaffList(prev => [...prev, res.data.user]);
+        }
         setShowStaffModal(false);
         setNewStaff({ name: '', email: '', password: '', role: 'coordinator' });
-        loadAdminData();
       }
     } catch (err) {
       console.error('Error creating staff:', err);
+      alert(err.response?.data?.message || 'Failed to create staff.');
+    } finally {
+      setStaffBusy(false);
     }
   };
 
   const handleCreateAnnouncement = async (e) => {
     e.preventDefault();
     try {
+      setAnnBusy(true);
       const res = await API.post('/announcements', newAnn);
       if (res.data.success) {
+        if (res.data.announcement) {
+          setAnnouncements(prev => [res.data.announcement, ...prev]);
+        }
         setShowAnnModal(false);
         setNewAnn({ title: '', content: '', category: 'General', priority: 'Normal' });
-        loadAdminData();
       }
     } catch (err) {
       console.error('Error creating announcement:', err);
+      alert(err.response?.data?.message || 'Failed to publish announcement.');
+    } finally {
+      setAnnBusy(false);
     }
   };
 
   const handleDeleteAnnouncement = async (annId) => {
     if (!window.confirm('Are you sure you want to delete this announcement?')) return;
     try {
+      setDeletingAnnId(annId);
       const res = await API.delete(`/announcements/${annId}`);
       if (res.data.success) {
-        loadAdminData();
+        setAnnouncements(prev => prev.filter(a => a._id !== annId));
       }
     } catch (err) {
       console.error('Error deleting announcement:', err);
+      alert(err.response?.data?.message || 'Failed to delete announcement.');
+    } finally {
+      setDeletingAnnId(null);
     }
   };
 
   const handleDeleteEvent = async (eventId, title) => {
     if (!window.confirm(`Are you sure you want to delete "${title}"? This will remove all its registrations too.`)) return;
     try {
+      setDeletingEventId(eventId);
       const res = await API.delete(`/events/${eventId}`);
       if (res.data.success) {
-        loadAdminData();
+        const targetEvent = events.find(e => e._id === eventId);
+        setEvents(prev => prev.filter(ev => ev._id !== eventId));
+        setStats(prev => {
+          if (!prev) return prev;
+          const next = { ...prev };
+          if (targetEvent?.category === 'Technical') {
+            next.technicalEvents = Math.max(0, (next.technicalEvents || 1) - 1);
+          } else if (targetEvent?.category === 'Non-Technical') {
+            next.nonTechnicalEvents = Math.max(0, (next.nonTechnicalEvents || 1) - 1);
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error('Error deleting event:', err);
+      alert(err.response?.data?.message || 'Failed to delete event.');
+    } finally {
+      setDeletingEventId(null);
     }
   };
 
@@ -254,6 +381,11 @@ const loadContactMessages = async () => {
       setCertMsg({ type: 'success', text: res.data.message || 'Certificate generated successfully!' });
       setCertStudentId('');
       setCertEventId('');
+      const certRes = await API.get('/certificates/all');
+      if (certRes.data.success) {
+        setCertificates(certRes.data.certificates);
+      }
+      setStats(prev => ({ ...prev, certificatesCount: (prev?.certificatesCount || 0) + 1 }));
     } catch (err) {
       setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to generate certificate.' });
     } finally {
@@ -269,6 +401,7 @@ const loadContactMessages = async () => {
       if (res.data.success) {
         setCertificates(prev => prev.filter(c => c._id !== certId));
         setCertMsg({ type: 'success', text: res.data.message || 'Certificate deleted successfully.' });
+        setStats(prev => ({ ...prev, certificatesCount: Math.max(0, (prev?.certificatesCount || 1) - 1) }));
       }
     } catch (err) {
       setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to delete certificate.' });
@@ -280,6 +413,7 @@ const loadContactMessages = async () => {
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
     try {
+      setEventBusy(true);
       const res = await API.put(`/events/${editEvent.id}`, {
         title: editEvent.title,
         category: editEvent.category,
@@ -297,12 +431,15 @@ const loadContactMessages = async () => {
         studentCoordinator: { name: editEvent.studentName, phone: editEvent.studentPhone },
         prizes: { first: editEvent.firstPrize, second: editEvent.secondPrize, third: editEvent.thirdPrize }
       });
-      if (res.data.success) {
+      if (res.data.success && res.data.event) {
+        setEvents(prev => prev.map(ev => ev._id === editEvent.id ? res.data.event : ev));
         setShowEditEventModal(false);
-        loadAdminData();
       }
     } catch (err) {
       console.error('Error updating event:', err);
+      alert(err.response?.data?.message || 'Failed to update event.');
+    } finally {
+      setEventBusy(false);
     }
   };
 
@@ -345,26 +482,34 @@ const loadContactMessages = async () => {
     }
   };
 
-  const filteredStudents = students.filter(s => {
-    const matchesSearch = (s.symposiumCode && s.symposiumCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (s.collegeName && s.collegeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (s.user && s.user.name && s.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredStudents = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return students.filter(s => {
+      const matchesSearch = !term ||
+        (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
+        (s.email && s.email.toLowerCase().includes(term)) ||
+        (s.collegeName && s.collegeName.toLowerCase().includes(term)) ||
+        (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
+        (s.user && s.user.name && s.user.name.toLowerCase().includes(term));
+      const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [students, searchTerm, statusFilter]);
 
   // Students filtered by the search box inside the Certificates tab
-  const certFilteredStudents = students.filter(s => {
-    if (!certSearch) return true;
-    const q = certSearch.toLowerCase();
-    const name = (s.user && s.user.name) || s.name || s.email || '';
-    return (s.symposiumCode && s.symposiumCode.toLowerCase().includes(q)) ||
-           (s.email && s.email.toLowerCase().includes(q)) ||
-           (name && name.toLowerCase().includes(q)) ||
-           (s.registerNumber && s.registerNumber.toLowerCase().includes(q)) ||
-           (s.collegeName && s.collegeName.toLowerCase().includes(q));
-  });
+  const certFilteredStudents = useMemo(() => {
+    if (!certSearch.trim()) return students;
+    const q = certSearch.trim().toLowerCase();
+    return students.filter(s => {
+      const name = (s.user && s.user.name) || s.name || s.email || '';
+      return (s.symposiumCode && s.symposiumCode.toLowerCase().includes(q)) ||
+             (s.email && s.email.toLowerCase().includes(q)) ||
+             (name && name.toLowerCase().includes(q)) ||
+             (s.registerNumber && s.registerNumber.toLowerCase().includes(q)) ||
+             (s.collegeName && s.collegeName.toLowerCase().includes(q));
+    });
+  }, [students, certSearch]);
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -430,7 +575,7 @@ const loadContactMessages = async () => {
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
               activeTab === tab.id
                 ? 'bg-indigo-600 text-white shadow-md'
@@ -532,7 +677,7 @@ const loadContactMessages = async () => {
                           )}
                         </td>
 
-                        <td className="p-4 text-right space-x-1.5">
+                        <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                           <button
                             onClick={() => setSelectedStudentForBadge(s)}
                             className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
@@ -544,26 +689,32 @@ const loadContactMessages = async () => {
                           {s.verificationStatus !== 'Approved' && (
                             <button
                               onClick={() => handleStatusChange(s._id, 'Approved')}
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-[11px]"
+                              disabled={actionBusyId === s._id}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
                             >
-                              Approve
+                              {actionBusyId === s._id ? <Loader className="w-3 h-3 animate-spin" /> : null}
+                              <span>Approve</span>
                             </button>
                           )}
 
                           {s.verificationStatus !== 'Rejected' && (
                             <button
                               onClick={() => handleStatusChange(s._id, 'Rejected')}
-                              className="px-2.5 py-1.5 rounded-lg bg-amber-600/30 text-amber-300 font-bold text-[11px]"
+                              disabled={actionBusyId === s._id}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 font-bold text-[11px] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
                             >
-                              Reject
+                              {actionBusyId === s._id ? <Loader className="w-3 h-3 animate-spin" /> : null}
+                              <span>Reject</span>
                             </button>
                           )}
 
                           <button
                             onClick={() => handleDeleteStudent(s._id)}
-                            className="p-2 rounded-lg text-red-400 hover:bg-red-500/20"
+                            disabled={actionBusyId === s._id}
+                            className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete student"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {actionBusyId === s._id ? <Loader className="w-4 h-4 animate-spin text-red-400" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </td>
                       </tr>
@@ -632,10 +783,11 @@ const loadContactMessages = async () => {
                     </button>
                     <button
                       onClick={() => handleDeleteEvent(ev._id, ev.title)}
-                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs border border-red-500/30 transition-colors flex items-center justify-center space-x-1.5"
+                      disabled={deletingEventId === ev._id}
+                      className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-red-600 text-red-400 hover:text-white font-bold text-xs border border-red-500/30 transition-colors flex items-center justify-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete</span>
+                      {deletingEventId === ev._id ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      <span>{deletingEventId === ev._id ? 'Deleting...' : 'Delete'}</span>
                     </button>
                   </div>
                 </div>
@@ -857,10 +1009,11 @@ const loadContactMessages = async () => {
                 </div>
                 <button
                   onClick={() => handleDeleteAnnouncement(ann._id)}
-                  className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors shrink-0"
+                  disabled={deletingAnnId === ann._id}
+                  className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Delete announcement"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  {deletingAnnId === ann._id ? <Loader className="w-4 h-4 animate-spin text-red-400" /> : <Trash2 className="w-4 h-4" />}
                 </button>
               </div>
             ))}
@@ -959,7 +1112,10 @@ const loadContactMessages = async () => {
               <textarea placeholder="Rules & Guidelines (one per line)" value={newEvent.rules} onChange={e => setNewEvent({...newEvent, rules: e.target.value})} rows={4} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white font-mono" />
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowEventModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="w-1/2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold">Save Event</button>
+                <button type="submit" disabled={eventBusy} className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5">
+                  {eventBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>{eventBusy ? 'Saving...' : 'Save Event'}</span>
+                </button>
               </div>
             </form>
           </div>
@@ -983,7 +1139,10 @@ const loadContactMessages = async () => {
               </select>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowStaffModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="w-1/2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold">Create User</button>
+                <button type="submit" disabled={staffBusy} className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5">
+                  {staffBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>{staffBusy ? 'Creating...' : 'Create User'}</span>
+                </button>
               </div>
             </form>
           </div>
@@ -1001,7 +1160,10 @@ const loadContactMessages = async () => {
               <textarea placeholder="Announcement Content" required value={newAnn.content} onChange={e => setNewAnn({...newAnn, content: e.target.value})} className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white" />
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowAnnModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="w-1/2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold">Publish</button>
+                <button type="submit" disabled={annBusy} className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5">
+                  {annBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>{annBusy ? 'Publishing...' : 'Publish'}</span>
+                </button>
               </div>
             </form>
           </div>
@@ -1053,7 +1215,10 @@ const loadContactMessages = async () => {
               </label>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setShowEditEventModal(false)} className="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="w-1/2 py-2.5 bg-indigo-600 text-white rounded-xl font-bold">Update Event</button>
+                <button type="submit" disabled={eventBusy} className="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5">
+                  {eventBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>{eventBusy ? 'Updating...' : 'Update Event'}</span>
+                </button>
               </div>
             </form>
           </div>

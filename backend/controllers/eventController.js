@@ -24,7 +24,7 @@ exports.getEvents = async (req, res) => {
     if (isDbConnected()) {
       let query = {};
       if (category) query.category = category;
-      const events = await Event.find(query).sort({ date: 1, title: 1 });
+      const events = await Event.find(query).sort({ date: 1, title: 1 }).lean();
       return res.status(200).json({ success: true, count: events.length, events });
     } else {
       let list = [...mockStore.events];

@@ -25,4 +25,11 @@ const studentSchema = new mongoose.Schema({
   isSpotRegistration: { type: Boolean, default: false }
 }, { timestamps: true });
 
+studentSchema.index({ verificationStatus: 1 });
+studentSchema.index({ department: 1 });
+studentSchema.index({ collegeName: 1 });
+studentSchema.index({ isCheckedIn: 1 });
+studentSchema.index({ user: 1 });
+
 module.exports = mongoose.model('Student', studentSchema);
+
