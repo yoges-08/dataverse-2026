@@ -167,7 +167,12 @@ exports.createTeamForRegistration = async ({ event, leaderStudent, session }) =>
   let team;
   try {
     if (isDbConnected()) {
-      team = await Team.create(doc, session ? { session } : undefined);
+      if (session) {
+        const [createdTeam] = await Team.create([doc], { session });
+        team = createdTeam;
+      } else {
+        team = await Team.create(doc);
+      }
     } else {
       // Mirror the DB's unique (event, member) constraint in the mock so the
       // two stores can't diverge: a student already on ANY team for this event
