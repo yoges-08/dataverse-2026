@@ -1,6 +1,6 @@
- #                                                             🌐 DATAVERSE 2026
+# 🌐 DATAVERSE 2026
 
-                                            ### 🚀 Full-Stack Symposium Registration & Event Management Platform
+### 🚀 Full-Stack Symposium Registration & Event Management Platform
 
 <p align="center">
   <strong>A modern digital platform built to manage symposium registration, event participation, QR verification, team management, announcements, analytics, and on-ground event operations.</strong>
@@ -94,8 +94,14 @@ The current repository is structured as a dedicated **React/Vite frontend + Node
 
 A modern public-facing symposium portal containing:
 
+* 🎬 Hero section
+* ⏳ Live countdown
+* 🏆 Prize information
 * 🎯 Technical events
 * 🎉 Non-technical events
+* 📅 Symposium timeline
+* 🖼️ Event/media gallery
+* 🤝 Sponsors section
 * ❓ FAQ section
 * 📍 Campus/location information
 * 📞 Contact section
