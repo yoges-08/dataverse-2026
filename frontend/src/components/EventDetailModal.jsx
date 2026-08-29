@@ -64,7 +64,14 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
         if (onRegisterSuccess) onRegisterSuccess(event._id);
       }
     } catch (err) {
-      setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to register for event.' });
+      if (err.code === 'ECONNABORTED' || (err.message && err.message.toLowerCase().includes('timeout'))) {
+        setMsg({
+          type: 'error',
+          text: 'The request timed out due to a slow connection. Your registration may have already gone through — please check your Student Dashboard ("My Events") before trying again.'
+        });
+      } else {
+        setMsg({ type: 'error', text: err.response?.data?.message || 'Failed to register for event.' });
+      }
     } finally {
       setLoading(false);
     }

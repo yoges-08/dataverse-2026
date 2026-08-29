@@ -392,15 +392,13 @@ exports.registerForEvent = async (req, res) => {
         // If team creation fails the registration still stands; students can
         // recover via auto-creation on first visit to Team Management.
         const declaredTeamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
-        let teamCreated = false;
-        try {
-          const createdTeam = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize });
-          teamCreated = !!createdTeam;
-        } catch (teamErr) {
-          console.error('Team auto-creation failed (registration still saved):', teamErr.message);
-        }
+        const teamLimit = (teamController.getEffectiveTeamLimit ? teamController.getEffectiveTeamLimit(event) : event.teamLimit) || 0;
+        const teamEnabled = teamLimit > 1;
 
-        // Notify the student about their new event booking.
+        // Auto-create team and send confirmation email in the background to keep registration fast
+        teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize })
+          .catch((teamErr) => console.error('Team auto-creation failed (registration still saved):', teamErr.message));
+
         sendEventRegistrationMail({
           to: student.email,
           name: req.user?.name || student.email?.split('@')[0] || 'there',
@@ -408,7 +406,7 @@ exports.registerForEvent = async (req, res) => {
           eventVenue: event.venue,
           eventDate: event.date,
           eventTime: event.time,
-          teamEnabled: teamCreated
+          teamEnabled
         }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
         return res.status(201).json({
@@ -496,13 +494,11 @@ exports.registerForEvent = async (req, res) => {
       event.currentRegistrations += 1;
 
       const declaredTeamSize = Number(req.body.teamSize) > 0 ? Number(req.body.teamSize) : 1;
-      let teamCreated = false;
-      try {
-        const createdTeam = await teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize });
-        teamCreated = !!createdTeam;
-      } catch (teamErr) {
-        console.error('Team auto-creation failed (registration still saved):', teamErr.message);
-      }
+      const teamLimit = (teamController.getEffectiveTeamLimit ? teamController.getEffectiveTeamLimit(event) : event.teamLimit) || 0;
+      const teamEnabled = teamLimit > 1;
+
+      teamController.createTeamForRegistration({ event, leaderStudent: student, declaredTeamSize })
+        .catch((teamErr) => console.error('Team auto-creation failed (registration still saved):', teamErr.message));
 
       sendEventRegistrationMail({
         to: student.email,
@@ -511,7 +507,7 @@ exports.registerForEvent = async (req, res) => {
         eventVenue: event.venue,
         eventDate: event.date,
         eventTime: event.time,
-        teamEnabled: teamCreated
+        teamEnabled
       }).catch((mailErr) => console.error('Event registration email failed:', mailErr.message));
 
       return res.status(201).json({
@@ -521,6 +517,7 @@ exports.registerForEvent = async (req, res) => {
       });
     }
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ success: false, message: 'Error registering for event' });
   }
 };
