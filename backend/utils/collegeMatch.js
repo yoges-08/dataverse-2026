@@ -126,6 +126,27 @@ const editDistance = (a, b, max) => {
 // order are identical, only where the word boundaries fall differs.
 const normSquash = (s) => normStrict(s).replace(/\s+/g, '');
 
+// Known aliases and squashed canonical forms for the host college of this symposium.
+// Guarantees every common way a student might type "Anjalai Ammal Mahalingam Engineering
+// College Kovilvenni" (including merged words e.g. "Anjalaiammal Mahalingam..." or
+// short form "AAMEC") is recognized as the SAME college — without loosening the
+// general-purpose matcher used for every other college.
+const HOST_COLLEGE_ALIASES = new Set(
+  ['AAMEC', 'AAMEC KOVILVENNI', 'AAMEC KOVILVEENI'].map(normStrict)
+);
+
+const HOST_CANONICAL_SQUASHES = new Set([
+  normSquash('Anjalai Ammal Mahalingam Engineering College'),
+  normSquash('Anjalai Ammal Mahalingam Engineering College Kovilvenni'),
+  normSquash('Anjalai Ammal Mahalingam Engineering College Kovilveeni')
+]);
+
+const isHostCollege = (s) => {
+  const strict = normStrict(s);
+  const squash = normSquash(s);
+  return HOST_COLLEGE_ALIASES.has(strict) || HOST_CANONICAL_SQUASHES.has(squash);
+};
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -135,6 +156,9 @@ const collegesMatch = (a, b) => {
   const strictA = normStrict(a);
   const strictB = normStrict(b);
   if (strictA === strictB) return true;
+
+  // Host-college alias check: fast resolution for symposium host institution
+  if (isHostCollege(a) && isHostCollege(b)) return true;
 
   // Split/merged-word tier: same letters, same order, only the spacing
   // differs. Guarded on length so two short, generic names typed with
@@ -193,4 +217,4 @@ const collegesMatch = (a, b) => {
   return editDistance(fuzzyA, fuzzyB, budget) <= budget;
 };
 
-module.exports = { normStrict, normCore, collegesMatch };
+module.exports = { normStrict, normCore, collegesMatch, isHostCollege };
