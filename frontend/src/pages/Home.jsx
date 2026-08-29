@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import Reveal from '../components/Reveal';
+import EventCard from '../components/EventCard';
 import {
   Sparkles, Calendar, Users, Award, ShieldCheck,
   ArrowRight, Code, Flame, MapPin, CheckCircle2, ChevronRight, Zap, Building2, ChevronLeft, Trophy,
@@ -196,48 +197,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {events.map((ev, idx) => (
             <Reveal key={ev._id} delay={idx * 60}>
-              <div className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all group flex flex-col h-full">
-                <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
-                  <img
-                    src={ev.bannerImage}
-                    alt={ev.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
-                    }`}>
-                      {ev.category}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5 sm:p-6 space-y-3 flex-1 flex flex-col justify-between">
-                <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors">{ev.title}</h3>
-                <p className="text-xs text-slate-400 line-clamp-2">{ev.description}</p>
-                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-                  {ev.date && (
-                    <span className="inline-flex items-center space-x-1">
-                      <Calendar className="w-3 h-3 text-indigo-400" />
-                      <span>{ev.date.split('-').reverse().join('/')}</span>
-                    </span>
-                  )}
-                  {ev.venue && (
-                    <span className="inline-flex items-center space-x-1">
-                      <MapPin className="w-3 h-3 text-pink-400" />
-                      <span className="truncate max-w-[120px]">{ev.venue}</span>
-                    </span>
-                  )}
-                </div>
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-end text-xs">
-                  <Link to="/events" className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1">
-                    <span>View Details</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
+              <EventCard event={ev} />
             </Reveal>
           ))}
         </div>
