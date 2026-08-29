@@ -1,6 +1,6 @@
-# 🌐 DATAVERSE 2026
+ #                                                             🌐 DATAVERSE 2026
 
-### 🚀 Full-Stack Symposium Registration & Event Management Platform
+                                            ### 🚀 Full-Stack Symposium Registration & Event Management Platform
 
 <p align="center">
   <strong>A modern digital platform built to manage symposium registration, event participation, QR verification, team management, announcements, analytics, and on-ground event operations.</strong>
