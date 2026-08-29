@@ -278,6 +278,77 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </>
             )}
 
+            {/* Code Sprint Rounds Structure */}
+            {event.title === 'Code Sprint' && (
+              <div className="p-4 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
+                    <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <span>Competition Format • 3 Rounds</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                    Scramble • Reverse • Solve
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {/* Round 1 */}
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-white flex items-center gap-1.5">
+                        <span>🧩</span>
+                        <span>ROUND 1 – CODE SCRAMBLING</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded-md">
+                        Language: C
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Arrange the shuffled lines of C code in the correct sequence and complete the program.
+                    </p>
+                  </div>
+
+                  {/* Round 2 */}
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-white flex items-center gap-1.5">
+                        <span>🔄</span>
+                        <span>ROUND 2 – REVERSE CODING</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-md">
+                        Any Language
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Recreate the program from the given output using your preferred programming language.
+                    </p>
+                  </div>
+
+                  {/* Round 3 */}
+                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-white flex items-center gap-1.5">
+                        <span>🎯</span>
+                        <span>ROUND 3 – CODE PICK & SOLVE</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                        Any Language
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      Choose a coding problem and solve it using your preferred programming language to earn points.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-1 text-center">
+                  <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
+                    ⚡ Think Smart. Code Fast. Score Big!
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Programming Language Selection (for Bug Hunt / language-enabled events) */}
             {event.requiresLanguageChoice && (
               <div className="p-4 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-3">

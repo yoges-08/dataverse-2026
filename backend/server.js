@@ -149,14 +149,17 @@ const syncDefaultEvents = async () => {
     {
       title: 'Code Sprint',
       category: 'Technical',
-      tagline: 'Reconstruct code, arrange scrambled programs, and solve coding challenges',
-      description: 'Participants will reconstruct code, arrange scrambled programs, and tackle selected coding problems. Each round tests logical thinking, coding skills, and problem-solving ability.',
+      tagline: 'Scramble • Reverse • Solve',
+      description: 'A fun coding challenge that tests your logic, coding skills, creativity, and speed through three exciting rounds!',
       rules: [
-        'No Team participation only solo performance.',
-        'The event consists of 3 rounds.',
+        'No Team participation — only solo performance.',
+        'ROUND 1 – CODE SCRAMBLING (Language: C): Arrange the shuffled lines of C code in the correct sequence and complete the program.',
+        'ROUND 2 – REVERSE CODING (Language: Participant\'s Preference): Recreate the program from the given output using your preferred programming language.',
+        'ROUND 3 – CODE PICK & SOLVE (Language: Participant\'s Preference): Choose a coding problem and solve it using your preferred programming language to earn points.',
         'Time Limit: 15 minutes for each round.',
         'Participants must submit working and error-free solutions within the given time.',
-        'Scoring: Points are awarded based on correctness, completion and difficulty level.',
+        'Scoring: Points are awarded based on correctness, completion, and difficulty level.',
+        '⚡ Think Smart. Code Fast. Score Big!',
         'Malpractice is strictly prohibited.'
       ],
       venue: 'CC1 Lab',
@@ -190,10 +193,27 @@ const syncEventTeamLimits = async () => {
     { title: { $regex: /^Bug Hunt$/i } },
     { $set: { requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80' } }
   );
-  // Ensure Code Sprint has distinct speed-coding thumbnail set in existing databases
+  // Ensure Code Sprint has updated tagline, description, rules and speed-coding thumbnail set in existing databases
   await Event.updateMany(
     { title: { $regex: /^Code Sprint$/i } },
-    { $set: { bannerImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80' } }
+    {
+      $set: {
+        tagline: 'Scramble • Reverse • Solve',
+        description: 'A fun coding challenge that tests your logic, coding skills, creativity, and speed through three exciting rounds!',
+        rules: [
+          'No Team participation — only solo performance.',
+          'ROUND 1 – CODE SCRAMBLING (Language: C): Arrange the shuffled lines of C code in the correct sequence and complete the program.',
+          'ROUND 2 – REVERSE CODING (Language: Participant\'s Preference): Recreate the program from the given output using your preferred programming language.',
+          'ROUND 3 – CODE PICK & SOLVE (Language: Participant\'s Preference): Choose a coding problem and solve it using your preferred programming language to earn points.',
+          'Time Limit: 15 minutes for each round.',
+          'Participants must submit working and error-free solutions within the given time.',
+          'Scoring: Points are awarded based on correctness, completion, and difficulty level.',
+          '⚡ Think Smart. Code Fast. Score Big!',
+          'Malpractice is strictly prohibited.'
+        ],
+        bannerImage: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=800&q=80'
+      }
+    }
   );
   let updated = 0;
   for (const spec of EVENT_TEAM_LIMITS) {
