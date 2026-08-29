@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import EventCard from '../components/EventCard';
 import EventDetailModal from '../components/EventDetailModal';
 import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2, Users, User } from 'lucide-react';
 import API from '../services/api';
@@ -119,17 +118,77 @@ export default function Events() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-96 rounded-3xl bg-slate-900 animate-pulse border border-slate-800"></div>
+            <div key={i} className="h-80 rounded-2xl bg-slate-900 animate-pulse border border-slate-800"></div>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
           {filteredEvents.map((ev) => (
-            <EventCard
+            <div
               key={ev._id}
-              event={ev}
-              onSelect={setSelectedEvent}
-            />
+              className="glass-card rounded-2xl overflow-hidden border border-slate-800 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1 flex flex-col h-full group"
+            >
+              <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-slate-900 shrink-0">
+                <img
+                  src={ev.bannerImage}
+                  alt={ev.title}
+                  loading="lazy"
+                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-3 left-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    ev.category === 'Technical' ? 'bg-indigo-600 text-white' : 'bg-pink-600 text-white'
+                  }`}>
+                    {ev.category}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors mb-1">
+                    {ev.title}
+                  </h3>
+                  <p className="text-xs text-indigo-300 font-medium mb-2">{ev.tagline}</p>
+                  <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{ev.description}</p>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[10px] text-slate-400">
+                    {ev.date && (
+                      <span className="inline-flex items-center space-x-1">
+                        <Calendar className="w-3 h-3 text-indigo-400" />
+                        <span>{ev.date.split('-').reverse().join('/')}</span>
+                      </span>
+                    )}
+                    {ev.venue && (
+                      <span className="inline-flex items-center space-x-1">
+                        <MapPin className="w-3 h-3 text-pink-400" />
+                        <span>{ev.venue}</span>
+                      </span>
+                    )}
+                    {ev.facultyCoordinator?.name && (
+                      <span className="inline-flex items-center space-x-1">
+                        <span className="text-emerald-400 font-bold">Faculty: {ev.facultyCoordinator.name}</span>
+                      </span>
+                    )}
+                    {ev.studentCoordinator?.name && (
+                      <span className="inline-flex items-center space-x-1">
+                        <span className="text-cyan-400 font-bold">Coord: {ev.studentCoordinator.name}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-slate-800">
+                  <button
+                    onClick={() => setSelectedEvent(ev)}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-purple-600/40 hover:shadow-purple-500/60 hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <Zap className="w-4 h-4" />
+                    <span>View Rules & Register</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
