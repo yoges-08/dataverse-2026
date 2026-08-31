@@ -22,7 +22,18 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
   if (!event) return null;
 
+  const maxParticipants = typeof event.maxParticipants === 'number' && event.maxParticipants > 0 ? event.maxParticipants : 0;
+  const currentRegistrations = typeof event.currentRegistrations === 'number' ? event.currentRegistrations : 0;
+  const seatsLeft = maxParticipants > 0 ? Math.max(0, maxParticipants - currentRegistrations) : null;
+  const isFull = maxParticipants > 0 && currentRegistrations >= maxParticipants;
+  const fillPercent = maxParticipants > 0 ? Math.min(100, Math.round((currentRegistrations / maxParticipants) * 100)) : 0;
+
   const handleRegister = async () => {
+    if (isFull) {
+      setMsg({ type: 'error', text: 'This event has reached its maximum participant capacity. Registration is closed.' });
+      return;
+    }
+
     if (!user) {
       navigate('/login', { state: { from: '/events', reason: 'register' } });
       return;
@@ -164,6 +175,48 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                   <span className="text-xs font-bold text-emerald-200">100% Free • ₹0 Fee</span>
                 </div>
               </div>
+
+              {/* Event Capacity / Available Seats */}
+              {maxParticipants > 0 && (
+                <div className={`p-3 rounded-xl border flex flex-col justify-between space-y-1.5 ${
+                  isFull
+                    ? 'bg-rose-950/40 border-rose-500/40'
+                    : fillPercent >= 80
+                    ? 'bg-amber-950/40 border-amber-500/30'
+                    : 'bg-slate-900/70 border-slate-800'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center space-x-1.5">
+                      <Users className={`w-3.5 h-3.5 ${isFull ? 'text-rose-400' : fillPercent >= 80 ? 'text-amber-400' : 'text-cyan-400'}`} />
+                      <span>Event Capacity</span>
+                    </span>
+                    <span className={`text-xs font-black ${
+                      isFull ? 'text-rose-400' : fillPercent >= 80 ? 'text-amber-300' : 'text-emerald-400'
+                    }`}>
+                      {isFull ? 'Event Full' : `${seatsLeft} seats left`}
+                    </span>
+                  </div>
+
+                  {/* Slim Progress Bar */}
+                  <div className="w-full h-1.5 bg-slate-950/80 rounded-full overflow-hidden border border-slate-800/80">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        isFull
+                          ? 'bg-rose-500'
+                          : fillPercent >= 80
+                          ? 'bg-amber-500'
+                          : 'bg-gradient-to-r from-cyan-500 to-indigo-500'
+                      }`}
+                      style={{ width: `${Math.max(4, fillPercent)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
+                    <span>{currentRegistrations} registered</span>
+                    <span>{maxParticipants} max</span>
+                  </div>
+                </div>
+              )}
               {event.date && (
                 <div className="p-3 bg-slate-900/70 rounded-xl border border-slate-800 flex items-start space-x-2.5">
                   <Calendar className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
@@ -422,11 +475,24 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
           )}
           <button
             onClick={handleRegister}
-            disabled={loading}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition-[opacity,transform] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-2"
+            disabled={loading || isFull}
+            className={`w-full py-4 rounded-xl font-extrabold text-sm shadow-xl transition-[opacity,transform,background-color] duration-200 flex items-center justify-center space-x-2 ${
+              isFull
+                ? 'bg-slate-900 text-slate-500 border border-slate-800 cursor-not-allowed shadow-none'
+                : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-90 text-white shadow-indigo-600/30 active:scale-[0.98] disabled:opacity-50'
+            }`}
           >
-            <Sparkles className="w-4 h-4" />
-            <span>{loading ? 'Processing Registration...' : 'Register For Event'}</span>
+            {isFull ? (
+              <>
+                <AlertCircle className="w-4 h-4 text-rose-400" />
+                <span>Event Full — Registration Closed</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                <span>{loading ? 'Processing Registration...' : 'Register For Event'}</span>
+              </>
+            )}
           </button>
         </div>
 

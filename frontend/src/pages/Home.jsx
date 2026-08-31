@@ -230,6 +230,45 @@ export default function Home() {
                     </span>
                   )}
                 </div>
+
+                {/* Event Capacity Indicator */}
+                {ev.maxParticipants > 0 && (() => {
+                  const cur = ev.currentRegistrations || 0;
+                  const max = ev.maxParticipants;
+                  const left = Math.max(0, max - cur);
+                  const isFull = cur >= max;
+                  const fillPct = Math.min(100, Math.round((cur / max) * 100));
+
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-400 font-medium flex items-center space-x-1">
+                          <Users className="w-3 h-3 text-slate-500" />
+                          <span>Seats:</span>
+                          <span className="text-slate-300 font-bold">{cur}/{max}</span>
+                        </span>
+                        <span className={`font-black ${
+                          isFull ? 'text-rose-400' : fillPct >= 80 ? 'text-amber-400' : 'text-emerald-400'
+                        }`}>
+                          {isFull ? 'Event Full' : `${left} left`}
+                        </span>
+                      </div>
+                      <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            isFull
+                              ? 'bg-rose-500'
+                              : fillPct >= 80
+                              ? 'bg-amber-500'
+                              : 'bg-gradient-to-r from-cyan-500 to-indigo-500'
+                          }`}
+                          style={{ width: `${Math.max(4, fillPct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-end text-xs">
                   <Link to="/events" className="text-indigo-400 hover:text-indigo-300 font-bold flex items-center space-x-1">
                     <span>View Details</span>
