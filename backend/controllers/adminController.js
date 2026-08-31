@@ -538,3 +538,158 @@ exports.exportStudentsExcel = async (req, res) => {
   }
 };
 
+// Export event-wise registrations as a multi-sheet Excel (.xlsx) file
+exports.exportStudentsByEventExcel = async (req, res) => {
+  try {
+    let events = [];
+    const registrationsByEvent = new Map();
+
+    if (isDbConnected()) {
+      events = await Event.find().sort({ category: 1, title: 1 }).lean();
+      const allRegs = await Registration.find()
+        .populate({
+          path: 'student',
+          populate: { path: 'user', select: 'name email' }
+        })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      allRegs.forEach(r => {
+        if (!r.student || !r.event) return;
+        const eventId = String(r.event._id || r.event);
+        if (!registrationsByEvent.has(eventId)) {
+          registrationsByEvent.set(eventId, []);
+        }
+        registrationsByEvent.get(eventId).push(r);
+      });
+    } else {
+      events = [...mockStore.events];
+      mockStore.registrations.forEach(r => {
+        const student = mockStore.students.find(s => String(s._id) === String(r.student));
+        if (!student) return;
+        const user = mockStore.users.find(u => String(u._id) === String(student.user));
+        const eventId = String(r.event);
+        if (!registrationsByEvent.has(eventId)) {
+          registrationsByEvent.set(eventId, []);
+        }
+        registrationsByEvent.get(eventId).push({
+          ...r,
+          student: {
+            ...student,
+            user: user ? { name: user.name, email: user.email } : { name: student.email }
+          }
+        });
+      });
+    }
+
+    const headers = [
+      'Symposium Code',
+      'Name',
+      'Email',
+      'Phone',
+      'College',
+      'Department',
+      'Year',
+      'Register Number',
+      'Registration Status',
+      'Team Members',
+      'Language',
+      'Checked In',
+      'Registered At'
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const usedSheetNames = new Set();
+
+    events.forEach((event, idx) => {
+      const eventRegs = registrationsByEvent.get(String(event._id)) || [];
+
+      const rows = eventRegs.map(r => {
+        const student = r.student || {};
+        const user = student.user || {};
+        const rawName = String((user && user.name) || '').trim();
+        const name = rawName && rawName !== '.' ? rawName : String(student.email || 'Student');
+
+        let teamMembersStr = '';
+        if (Array.isArray(r.teamMembers) && r.teamMembers.length > 0) {
+          teamMembersStr = r.teamMembers
+            .map(m => {
+              const mName = String((m && m.name) || '').trim();
+              const mPhone = String((m && m.phone) || '').trim();
+              if (mName && mPhone) return `${mName} (${mPhone})`;
+              return mName || mPhone || '';
+            })
+            .filter(Boolean)
+            .join(', ');
+        }
+
+        const regDate = r.createdAt || r.registrationDate;
+        const registeredAt = regDate ? new Date(regDate).toLocaleString('en-IN') : '';
+
+        return [
+          student.symposiumCode || '',
+          name,
+          student.email || user.email || '',
+          student.phone || '',
+          student.collegeName || '',
+          student.department || '',
+          student.year || '',
+          student.registerNumber || '',
+          r.status || student.verificationStatus || 'Registered',
+          teamMembersStr,
+          r.language || '',
+          student.isCheckedIn ? 'Yes' : 'No',
+          registeredAt
+        ];
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 14) }));
+
+      // Sanitize sheet name: Excel disallows \ / ? * [ ] : and max length is 31
+      let rawTitle = (event.title || `Event ${idx + 1}`)
+        .replace(/[\\/?*[\]:]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!rawTitle) {
+        rawTitle = `Event ${idx + 1}`;
+      }
+
+      let baseName = rawTitle.substring(0, 31).trim();
+      if (!baseName) {
+        baseName = `Event ${idx + 1}`;
+      }
+
+      let sheetName = baseName;
+      let counter = 1;
+      while (usedSheetNames.has(sheetName.toLowerCase())) {
+        counter++;
+        const suffix = ` (${counter})`;
+        const maxLen = 31 - suffix.length;
+        sheetName = `${baseName.substring(0, maxLen).trim()}${suffix}`;
+      }
+      usedSheetNames.add(sheetName.toLowerCase());
+
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    // If no events exist at all, add an empty informational sheet
+    if (events.length === 0) {
+      const ws = XLSX.utils.aoa_to_sheet([headers]);
+      ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 14) }));
+      XLSX.utils.book_append_sheet(wb, ws, 'No Events');
+    }
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="DATAVERSE_Registrations_By_Event_${Date.now()}.xlsx"`);
+    return res.send(buf);
+  } catch (error) {
+    console.error('Export by event error:', error);
+    return res.status(500).json({ success: false, message: 'Error exporting registrations by event' });
+  }
+};
+
+

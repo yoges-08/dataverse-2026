@@ -101,6 +101,7 @@ export default function AdminDashboard() {
 
   // Excel export of students
   const [exporting, setExporting] = useState(false);
+  const [exportingByEvent, setExportingByEvent] = useState(false);
 
   // New Announcement Form State
   const [newAnn, setNewAnn] = useState({ title: '', content: '', category: 'General', priority: 'Normal' });
@@ -482,6 +483,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleExportByEventExcel = async () => {
+    setExportingByEvent(true);
+    try {
+      const res = await API.get('/admin/students/export-by-event', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DATAVERSE_Registrations_By_Event_${Date.now()}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export by event failed:', err);
+      alert('Could not export registrations by event. Please try again.');
+    } finally {
+      setExportingByEvent(false);
+    }
+  };
+
   const filteredStudents = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return students.filter(s => {
@@ -732,13 +751,23 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h3 className="text-xl font-bold text-white">Manage Symposium Competitions</h3>
-            <button
-              onClick={() => setShowEventModal(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center space-x-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Event</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportByEventExcel}
+                disabled={exportingByEvent}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exportingByEvent ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span>{exportingByEvent ? 'Exporting...' : 'Export by Event'}</span>
+              </button>
+              <button
+                onClick={() => setShowEventModal(true)}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center space-x-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Event</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
