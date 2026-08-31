@@ -12,6 +12,77 @@ const formatDate = (d) => {
   return d;
 };
 
+const CODE_SPRINT_ROUNDS = [
+  {
+    step: 1,
+    title: 'ROUND 1 – CODE SCRAMBLING',
+    badge: 'Language: C',
+    description: 'Arrange the shuffled lines of C code in the correct sequence and complete the program.',
+    badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
+    numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
+    cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+  },
+  {
+    step: 2,
+    title: 'ROUND 2 – REVERSE CODING',
+    badge: 'Any Language',
+    description: 'Recreate the program from the given output using your preferred programming language.',
+    badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+    numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+    cardBorder: 'border-slate-800 hover:border-purple-500/30'
+  },
+  {
+    step: 3,
+    title: 'ROUND 3 – CODE PICK & SOLVE',
+    badge: 'Any Language',
+    description: 'Choose a coding problem and solve it using your preferred programming language to earn points.',
+    badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+    numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
+    cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+  }
+];
+
+function EventRoundsTimeline({ rounds = CODE_SPRINT_ROUNDS }) {
+  return (
+    <div className="relative pl-1 sm:pl-2">
+      {rounds.map((round, idx) => {
+        const isLast = idx === rounds.length - 1;
+        return (
+          <div key={round.step} className="relative flex items-start space-x-3 sm:space-x-4 pb-4 last:pb-0">
+            {/* Connecting Vertical Track Line */}
+            {!isLast && (
+              <div
+                className="absolute left-[13px] sm:left-[15px] top-7 bottom-0 w-0.5 bg-gradient-to-b from-slate-700 via-slate-800 to-slate-800"
+                aria-hidden="true"
+              />
+            )}
+
+            {/* Step Number Badge */}
+            <div className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center font-black text-xs shrink-0 shadow-md ${round.numberStyle}`}>
+              {round.step}
+            </div>
+
+            {/* Step Content Card */}
+            <div className={`flex-1 p-3 bg-slate-950/75 rounded-xl border ${round.cardBorder} transition-all space-y-1.5 min-w-0`}>
+              <div className="flex items-center justify-between flex-wrap gap-1.5">
+                <span className="text-xs font-black text-white tracking-wide">
+                  {round.title}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${round.badgeStyle}`}>
+                  {round.badge}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                {round.description}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function EventDetailModal({ event, onClose, onRegisterSuccess }) {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -333,7 +404,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
             {/* Code Sprint Rounds Structure */}
             {event.title === 'Code Sprint' && (
-              <div className="p-4 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-3">
+              <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
                     <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -344,55 +415,8 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  {/* Round 1 */}
-                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-white flex items-center gap-1.5">
-                        <span>🧩</span>
-                        <span>ROUND 1 – CODE SCRAMBLING</span>
-                      </span>
-                      <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 rounded-md">
-                        Language: C
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300">
-                      Arrange the shuffled lines of C code in the correct sequence and complete the program.
-                    </p>
-                  </div>
-
-                  {/* Round 2 */}
-                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-white flex items-center gap-1.5">
-                        <span>🔄</span>
-                        <span>ROUND 2 – REVERSE CODING</span>
-                      </span>
-                      <span className="text-[10px] font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 rounded-md">
-                        Any Language
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300">
-                      Recreate the program from the given output using your preferred programming language.
-                    </p>
-                  </div>
-
-                  {/* Round 3 */}
-                  <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-white flex items-center gap-1.5">
-                        <span>🎯</span>
-                        <span>ROUND 3 – CODE PICK & SOLVE</span>
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md">
-                        Any Language
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300">
-                      Choose a coding problem and solve it using your preferred programming language to earn points.
-                    </p>
-                  </div>
-                </div>
+                {/* Connected Visual Timeline / Stepper */}
+                <EventRoundsTimeline rounds={CODE_SPRINT_ROUNDS} />
 
                 <div className="pt-1 text-center">
                   <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
