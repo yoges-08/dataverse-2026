@@ -213,7 +213,7 @@ const collegesMatch = (a, b) => {
   const coreSquashB = coreB.replace(/\s+/g, '');
   const fuzzyA = coreSquashA.length <= coreSquashB.length ? coreSquashA : coreSquashB;
   const fuzzyB = coreSquashA.length <= coreSquashB.length ? coreSquashB : coreSquashA;
-  if (fuzzyA.length < 10) return false; // too short to fuzzy-match safely
+  if (fuzzyA.length < 6) return false; // too short to fuzzy-match safely
   const budget = Math.min(2, Math.floor(fuzzyB.length / 14) + 1);
   return editDistance(fuzzyA, fuzzyB, budget) <= budget;
 };

@@ -5,6 +5,7 @@ const Registration = require('../models/Registration');
 const Student = require('../models/Student');
 const mockStore = require('../utils/mockStore');
 const { collegesMatch } = require('../utils/collegeMatch');
+const { collegesMatchWithAI } = require('../utils/aiCollegeMatch');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -503,18 +504,24 @@ exports.getAvailableTeammates = async (req, res) => {
         .filter(Boolean);
     }
 
-    const result = candidates
+    const preliminary = candidates
       .filter(c => String(c._id) !== String(student._id))
       .filter(c => !takenIds.has(String(c._id)))
-      .filter(c => !qCollege || collegesMatch(c.collegeName || '', qCollege))
       .filter(c => !qYear || norm(c.year || '') === qYear)
       .filter(c => {
         if (event.requiresLanguageChoice && myLanguage) {
           return c.language === myLanguage;
         }
         return true;
-      })
-      .map(c => ({
+      });
+
+    const result = [];
+    for (const c of preliminary) {
+      if (qCollege) {
+        const matches = await collegesMatchWithAI(c.collegeName || '', qCollege);
+        if (!matches) continue;
+      }
+      result.push({
         studentId: String(c._id),
         name: c.user?.name || c.name || c.email || '',
         collegeName: c.collegeName || '',
@@ -522,7 +529,8 @@ exports.getAvailableTeammates = async (req, res) => {
         year: c.year || '',
         registerNumber: c.registerNumber || 'N/A',
         language: c.language || null
-      }));
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -571,7 +579,8 @@ exports.addTeamMember = async (req, res) => {
       ? await Student.findById(studentId)
       : resolveStudentMock(studentId);
     if (!teammate) return res.status(400).json({ success: false, message: 'Selected student was not found.' });
-    if (!collegesMatch(teammate.collegeName || '', requester.collegeName || '')) {
+    const isSameCollege = await collegesMatchWithAI(teammate.collegeName || '', requester.collegeName || '');
+    if (!isSameCollege) {
       return res.status(400).json({ success: false, message: `Only students from ${requester.collegeName} can join this team.` });
     }
     if (String(teammate._id) === String(requester._id)) {
