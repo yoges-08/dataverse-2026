@@ -12,37 +12,301 @@ const formatDate = (d) => {
   return d;
 };
 
-const CODE_SPRINT_ROUNDS = [
-  {
-    step: 1,
-    title: 'ROUND 1 – CODE SCRAMBLING',
-    badge: 'Language: C',
-    description: 'Arrange the shuffled lines of C code in the correct sequence and complete the program.',
-    badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
-    numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
-    cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+const EVENT_STRUCTURES = {
+  'Code Sprint': {
+    header: 'Competition Format • 3 Rounds',
+    headerBadge: 'Scramble • Reverse • Solve',
+    tagline: '⚡ Think Smart. Code Fast. Score Big!',
+    rounds: [
+      {
+        step: 1,
+        title: 'ROUND 1 – CODE SCRAMBLING',
+        badge: 'Language: C',
+        description: 'Arrange the shuffled lines of C code in the correct sequence and complete the program.',
+        badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
+        numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
+        cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+      },
+      {
+        step: 2,
+        title: 'ROUND 2 – REVERSE CODING',
+        badge: 'Any Language',
+        description: 'Recreate the program from the given output using your preferred programming language.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'ROUND 3 – CODE PICK & SOLVE',
+        badge: 'Any Language',
+        description: 'Choose a coding problem and solve it using your preferred programming language to earn points.',
+        badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+        numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
+        cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+      }
+    ]
   },
-  {
-    step: 2,
-    title: 'ROUND 2 – REVERSE CODING',
-    badge: 'Any Language',
-    description: 'Recreate the program from the given output using your preferred programming language.',
-    badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
-    numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
-    cardBorder: 'border-slate-800 hover:border-purple-500/30'
+  'Bug Hunt': {
+    header: 'Competition Format • 3 Rounds',
+    headerBadge: 'Find • Fix • Defeat',
+    tagline: '⚡ Find Fast. Fix Smart. Win Big!',
+    rounds: [
+      {
+        step: 1,
+        title: 'ROUND 1 – BUG BASICS',
+        badge: 'Syntax & Logic',
+        description: 'Find and fix simple syntax and logical errors in the given code snippet.',
+        badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
+        numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
+        cardBorder: 'border-slate-800 hover:border-amber-500/30'
+      },
+      {
+        step: 2,
+        title: 'ROUND 2 – BUG BREAKER',
+        badge: 'Multiple Hidden Bugs',
+        description: 'Hunt and fix multiple hidden bugs including syntax, logic & runtime errors. Each bug = Points.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'ROUND 3 – DEBUGGING BATTLE',
+        badge: 'Pass Test Cases',
+        description: 'Solve a complex program with interconnected bugs and pass all test cases within the time limit.',
+        badgeStyle: 'text-rose-300 bg-rose-500/15 border-rose-500/30',
+        numberStyle: 'bg-rose-500/20 text-rose-300 border-rose-400/50 shadow-rose-500/20',
+        cardBorder: 'border-slate-800 hover:border-rose-500/30'
+      }
+    ]
   },
-  {
-    step: 3,
-    title: 'ROUND 3 – CODE PICK & SOLVE',
-    badge: 'Any Language',
-    description: 'Choose a coding problem and solve it using your preferred programming language to earn points.',
-    badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
-    numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
-    cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+  'Agentic AI': {
+    header: 'Competition Format • 4 Rounds',
+    headerBadge: 'AI Logic • Autonomous Problem Solving',
+    tagline: '⚡ Think Autonomous. Build Smart. Lead the AI Future!',
+    rounds: [
+      {
+        step: 1,
+        title: 'ROUND 1 – AI PROMPT & LOGIC',
+        badge: '15 - 20 Mins',
+        description: 'Test your foundational AI concepts, prompt engineering, and logical problem decomposition.',
+        badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
+        numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
+        cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+      },
+      {
+        step: 2,
+        title: 'ROUND 2 – TASK AUTOMATION',
+        badge: '15 - 20 Mins',
+        description: 'Design and structure autonomous workflows and multi-step agent solutions.',
+        badgeStyle: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30',
+        numberStyle: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-indigo-500/20',
+        cardBorder: 'border-slate-800 hover:border-indigo-500/30'
+      },
+      {
+        step: 3,
+        title: 'ROUND 3 – MULTI-STEP REASONING',
+        badge: '15 - 20 Mins',
+        description: 'Apply creative thinking, recursive reasoning, and autonomous error correction.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 4,
+        title: 'ROUND 4 – GRAND AGENTIC SHOWDOWN',
+        badge: '15 - 20 Mins',
+        description: 'Complete the final comprehensive challenge within the specified time to claim victory.',
+        badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+        numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
+        cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+      }
+    ]
+  },
+  'Knowledge Knockout': {
+    header: 'Competition Format • 4 Levels',
+    headerBadge: '10 Mins / Level',
+    tagline: '⚡ Test Your Mind. Beat the Clock. Knock Out the Rest!',
+    rounds: [
+      {
+        step: 1,
+        title: 'LEVEL 01 – GENERAL KNOWLEDGE',
+        badge: '15 Questions',
+        description: 'Assess your general awareness, science trivia, and foundational concepts within 10 minutes.',
+        badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
+        numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
+        cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+      },
+      {
+        step: 2,
+        title: 'LEVEL 02 – TECHNICAL TOPICS',
+        badge: '15 Questions',
+        description: 'Deep dive into computer science, data structures, algorithms, and core tech topics.',
+        badgeStyle: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30',
+        numberStyle: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-indigo-500/20',
+        cardBorder: 'border-slate-800 hover:border-indigo-500/30'
+      },
+      {
+        step: 3,
+        title: 'LEVEL 03 – RAPID FIRE',
+        badge: 'Speed Round',
+        description: 'High-speed rapid-fire round testing mental agility, precision, and quick reflexes.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 4,
+        title: 'LEVEL 04 – BUZZER CHALLENGE',
+        badge: 'Final Showdown',
+        description: 'Head-to-head buzzer face-off where speed and accurate answers determine the victor.',
+        badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
+        numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
+        cardBorder: 'border-slate-800 hover:border-amber-500/30'
+      }
+    ]
+  },
+  'NovaSpeak': {
+    header: 'Presentation Stages & Flow',
+    headerBadge: '15 Mins Duration',
+    tagline: '⚡ Present with Clarity. Speak with Confidence. Inspire All!',
+    rounds: [
+      {
+        step: 1,
+        title: 'STAGE 1 – ABSTRACT SUBMISSION',
+        badge: 'Prior to Event',
+        description: 'Submit your presentation abstract or paper to novaspeak.aamec26@gmail.com after registering.',
+        badgeStyle: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30',
+        numberStyle: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-indigo-500/20',
+        cardBorder: 'border-slate-800 hover:border-indigo-500/30'
+      },
+      {
+        step: 2,
+        title: 'STAGE 2 – ORAL PRESENTATION',
+        badge: '15 Mins in English',
+        description: 'Deliver your live technical presentation clearly, persuasively, and articulately in English.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'STAGE 3 – JURY Q&A & EVALUATION',
+        badge: 'Expert Review',
+        description: 'Defend your technical methodology, answer judges queries, and score points on depth and clarity.',
+        badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+        numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
+        cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+      }
+    ]
+  },
+  'Layman Vibes': {
+    header: 'Performance Format • 3 Rounds',
+    headerBadge: 'Creative Showcase',
+    tagline: '⚡ Express Freely. Act Boldly. Steal the Spotlight!',
+    rounds: [
+      {
+        step: 1,
+        title: 'ROUND 1 – CREATIVE ACTING & WIT',
+        badge: 'Expression',
+        description: 'Showcase spontaneity, humor, and theatrical talent on given real-world themes.',
+        badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
+        numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
+        cardBorder: 'border-slate-800 hover:border-cyan-500/30'
+      },
+      {
+        step: 2,
+        title: 'ROUND 2 – SITUATIONAL IMPROV',
+        badge: 'Teamwork',
+        description: 'Navigate hilarious and unexpected on-the-spot scenarios seamlessly with your teammates.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'ROUND 3 – FINAL SPOTLIGHT',
+        badge: 'Grand Finale',
+        description: 'Deliver your highest-energy performance to captivate the judges and audience.',
+        badgeStyle: 'text-pink-300 bg-pink-500/15 border-pink-500/30',
+        numberStyle: 'bg-pink-500/20 text-pink-300 border-pink-400/50 shadow-pink-500/20',
+        cardBorder: 'border-slate-800 hover:border-pink-500/30'
+      }
+    ]
+  },
+  "Lumina's Fest": {
+    header: 'Event Format • 3 Rounds',
+    headerBadge: 'Fun • Logic • Coordination',
+    tagline: '⚡ Illuminate Your Talent. Celebrate the Vibe. Win Big!',
+    rounds: [
+      {
+        step: 1,
+        title: 'ROUND 1 – SENSE & CONNECTIONS',
+        badge: 'Observation',
+        description: 'Solve visual puzzles, audio clues, and thematic links with sharp observation.',
+        badgeStyle: 'text-pink-300 bg-pink-500/15 border-pink-500/30',
+        numberStyle: 'bg-pink-500/20 text-pink-300 border-pink-400/50 shadow-pink-500/20',
+        cardBorder: 'border-slate-800 hover:border-pink-500/30'
+      },
+      {
+        step: 2,
+        title: 'ROUND 2 – TEAM SYNERGY',
+        badge: 'Agility',
+        description: 'Fast-paced interactive challenges testing team coordination, strategy, and agility.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'ROUND 3 – ULTIMATE SHOWDOWN',
+        badge: 'Final Stage',
+        description: 'Grand finale round combining high-energy challenges for maximum points and victory.',
+        badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
+        numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
+        cardBorder: 'border-slate-800 hover:border-amber-500/30'
+      }
+    ]
+  },
+  'Viral Vision': {
+    header: 'Reel Creation & Submission Flow',
+    headerBadge: 'Social Media',
+    tagline: '⚡ Create Viral Content. Capture Hearts. Trending Now!',
+    rounds: [
+      {
+        step: 1,
+        title: 'STEP 1 – CHOOSE REEL TOPIC',
+        badge: 'Select Theme',
+        description: 'Pick an official symposium theme (Engineering Life, Degree vs Skills, Last Bench, etc.).',
+        badgeStyle: 'text-pink-300 bg-pink-500/15 border-pink-500/30',
+        numberStyle: 'bg-pink-500/20 text-pink-300 border-pink-400/50 shadow-pink-500/20',
+        cardBorder: 'border-slate-800 hover:border-pink-500/30'
+      },
+      {
+        step: 2,
+        title: 'STEP 2 – SHOOT & EDIT REEL',
+        badge: 'Originality',
+        description: 'Create an engaging, high-quality, creative reel showcasing storytelling and editing.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'STEP 3 – SUBMIT ON WHATSAPP',
+        badge: '7845204654',
+        description: 'Send your completed reel to 7845204654 with your Registration Code for jury grading.',
+        badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
+        numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
+        cardBorder: 'border-slate-800 hover:border-emerald-500/30'
+      }
+    ]
   }
-];
+};
 
-function EventRoundsTimeline({ rounds = CODE_SPRINT_ROUNDS }) {
+function EventRoundsTimeline({ rounds = [] }) {
+  if (!rounds || rounds.length === 0) return null;
   return (
     <div className="relative pl-1 sm:pl-2">
       {rounds.map((round, idx) => {
@@ -402,29 +666,37 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </>
             )}
 
-            {/* Code Sprint Rounds Structure */}
-            {event.title === 'Code Sprint' && (
-              <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
-                    <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Competition Format • 3 Rounds</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">
-                    Scramble • Reverse • Solve
-                  </span>
-                </div>
+            {/* Dynamic Event Rounds / Format Stepper Structure */}
+            {(() => {
+              const struct = EVENT_STRUCTURES[event.title];
+              if (!struct) return null;
+              return (
+                <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
+                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>{struct.header}</span>
+                    </span>
+                    {struct.headerBadge && (
+                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        {struct.headerBadge}
+                      </span>
+                    )}
+                  </div>
 
-                {/* Connected Visual Timeline / Stepper */}
-                <EventRoundsTimeline rounds={CODE_SPRINT_ROUNDS} />
+                  {/* Connected Visual Timeline / Stepper */}
+                  <EventRoundsTimeline rounds={struct.rounds} />
 
-                <div className="pt-1 text-center">
-                  <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
-                    ⚡ Think Smart. Code Fast. Score Big!
-                  </span>
+                  {struct.tagline && (
+                    <div className="pt-1 text-center">
+                      <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
+                        {struct.tagline}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Programming Language Selection (for Bug Hunt / language-enabled events) */}
             {event.requiresLanguageChoice && (
