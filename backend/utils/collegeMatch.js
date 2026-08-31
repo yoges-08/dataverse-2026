@@ -142,10 +142,23 @@ const HOST_CANONICAL_SQUASHES = new Set([
   normSquash('Anjalai Ammal Mahalingam Engineering College Kovilveeni')
 ]);
 
-const isHostCollege = (s) => {
+const isHostAlias = (s) => {
   const strict = normStrict(s);
   const squash = normSquash(s);
   return HOST_COLLEGE_ALIASES.has(strict) || HOST_CANONICAL_SQUASHES.has(squash);
+};
+
+const isHostCollege = (s) => {
+  const strict = normStrict(s);
+  const squash = normSquash(s);
+  if (HOST_COLLEGE_ALIASES.has(strict) || HOST_CANONICAL_SQUASHES.has(squash)) return true;
+  // Merged word "Anjalaiammal" + Mahalingam check
+  if ((squash.includes('ANJALAIAMMAL') || squash.includes('ANJALAI')) && squash.includes('MAHALINGAM')) return true;
+  // Acronym AAMEC check
+  if (squash.startsWith('AAMEC')) return true;
+  // Fallback: general matcher already tolerates location suffixes,
+  // acronyms, spacing and small typos against the canonical full name.
+  return collegesMatch(s, 'Anjalai Ammal Mahalingam Engineering College') || collegesMatch(s, 'AAMEC');
 };
 
 // Public comparator: exact strict match first; only fall back to the core
@@ -159,7 +172,7 @@ const collegesMatch = (a, b) => {
   if (strictA === strictB) return true;
 
   // Host-college alias check: fast resolution for symposium host institution
-  if (isHostCollege(a) && isHostCollege(b)) return true;
+  if (isHostAlias(a) && isHostAlias(b)) return true;
 
   // Split/merged-word tier: same letters, same order, only the spacing
   // differs. Guarded on length so two short, generic names typed with

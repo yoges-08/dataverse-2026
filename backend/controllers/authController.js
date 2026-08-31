@@ -8,6 +8,7 @@ const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
 const sendEmail = require('../utils/sendEmail');
 const { sendRegistrationMail } = require('../utils/mailer');
+const { isHostCollege } = require('../utils/collegeMatch');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -60,6 +61,13 @@ exports.registerStudent = async (req, res) => {
     }
     if (phone && !isValidPhone(phone)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid phone number' });
+    }
+
+    if (isHostCollege(collegeName)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration slots for this college are full.'
+      });
     }
 
     if (isDbConnected()) {
