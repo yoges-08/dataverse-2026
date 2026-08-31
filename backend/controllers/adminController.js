@@ -692,4 +692,90 @@ exports.exportStudentsByEventExcel = async (req, res) => {
   }
 };
 
+// Remove a single student's registration from a specific event
+exports.removeRegistration = async (req, res) => {
+  try {
+    const { id } = req.params; // this is the Registration _id, NOT the student id
+
+    if (isDbConnected()) {
+      const registration = await Registration.findById(id);
+      if (!registration) {
+        return res.status(404).json({ success: false, message: 'Registration not found' });
+      }
+
+      const { student: studentId, event: eventId } = registration;
+
+      // Optional confirmation safety: verify eventId if passed in query
+      if (req.query.eventId && String(eventId) !== String(req.query.eventId)) {
+        return res.status(400).json({ success: false, message: 'Registration/event mismatch' });
+      }
+
+      // 1. Delete only this one registration document
+      await Registration.deleteOne({ _id: id });
+
+      // 2. Decrement the event's counter (never below 0)
+      await Event.updateOne(
+        { _id: eventId, currentRegistrations: { $gt: 0 } },
+        { $inc: { currentRegistrations: -1 } }
+      );
+
+      // 3. Remove the student from the Team for THIS event only (if it's a team event).
+      //    Do NOT call removeStudentFromAllTeams() here — scope removal to eventId only.
+      const team = await Team.findOne({ event: eventId, 'members.student': studentId });
+      if (team) {
+        team.members = (team.members || []).filter(m => String(m.student) !== String(studentId));
+        if (team.members.length === 0) {
+          await Team.deleteOne({ _id: team._id });
+        } else {
+          if (String(team.leader) === String(studentId)) {
+            const oldest = [...team.members].sort(
+              (a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0)
+            )[0];
+            team.leader = oldest.student;
+          }
+          await team.save();
+        }
+      }
+
+      return res.status(200).json({ success: true, message: 'Registration removed successfully' });
+    } else {
+      // MockStore fallback
+      const regIdx = mockStore.registrations.findIndex(r => String(r._id) === String(id));
+      if (regIdx === -1) {
+        return res.status(404).json({ success: false, message: 'Registration not found' });
+      }
+      const reg = mockStore.registrations[regIdx];
+      const studentId = reg.student;
+      const eventId = reg.event;
+
+      if (req.query.eventId && String(eventId) !== String(req.query.eventId)) {
+        return res.status(400).json({ success: false, message: 'Registration/event mismatch' });
+      }
+
+      mockStore.registrations.splice(regIdx, 1);
+
+      const ev = mockStore.events.find(e => String(e._id) === String(eventId));
+      if (ev && ev.currentRegistrations > 0) {
+        ev.currentRegistrations -= 1;
+      }
+
+      const teamIdx = mockStore.teams.findIndex(t => String(t.event) === String(eventId) && (t.members || []).some(m => String(m.student) === String(studentId)));
+      if (teamIdx !== -1) {
+        const team = mockStore.teams[teamIdx];
+        team.members = (team.members || []).filter(m => String(m.student) !== String(studentId));
+        if (team.members.length === 0) {
+          mockStore.teams.splice(teamIdx, 1);
+        } else if (String(team.leader) === String(studentId)) {
+          team.leader = team.members[0].student;
+        }
+      }
+
+      return res.status(200).json({ success: true, message: 'Registration removed successfully' });
+    }
+  } catch (error) {
+    console.error('removeRegistration error:', error);
+    res.status(500).json({ success: false, message: 'Error removing registration' });
+  }
+};
+
 

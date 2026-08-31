@@ -244,6 +244,45 @@ export default function AdminDashboard() {
     }
   };
 
+  const [removingRegId, setRemovingRegId] = useState(null);
+
+  const handleRemoveRegistration = async (registrationId, studentName, eventTitle, eventId) => {
+    const confirmed = window.confirm(
+      `Remove ${studentName}'s registration from "${eventTitle}"?\n\nThis only removes this one registration — the student's account and their other event registrations stay untouched.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setRemovingRegId(registrationId);
+      const targetEventId = eventId || eventDetail?.event?._id;
+      const res = await API.delete(`/admin/registrations/${registrationId}${targetEventId ? `?eventId=${targetEventId}` : ''}`);
+      if (res.data.success) {
+        // Refresh this event's registration details in the modal
+        if (targetEventId) {
+          const detailRes = await API.get(`/events/${targetEventId}`);
+          if (detailRes.data.success) {
+            setEventDetail(detailRes.data);
+          }
+        }
+        // Update the event card's live counter in the events state list
+        setEvents(prev => prev.map(ev => {
+          if (ev._id === targetEventId) {
+            return {
+              ...ev,
+              currentRegistrations: Math.max(0, (ev.currentRegistrations || 1) - 1)
+            };
+          }
+          return ev;
+        }));
+      }
+    } catch (err) {
+      console.error('Error removing registration:', err);
+      alert(err.response?.data?.message || 'Failed to remove registration.');
+    } finally {
+      setRemovingRegId(null);
+    }
+  };
+
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
@@ -1330,8 +1369,8 @@ export default function AdminDashboard() {
                           ))}
                         </div>
                         <div className="mt-2 pt-2 border-t border-cyan-800/50 space-y-1">
-                          {(g.registrations || []).map(r => (
-                            <div key={r._id || idx} className="flex items-center justify-between gap-3 text-[10px]">
+                          {(g.registrations || []).map((r, rIdx) => (
+                            <div key={r._id || rIdx} className="flex items-center justify-between gap-3 text-[10px]">
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="font-bold text-white truncate">{getStudentName(r.student, 'Unknown')}</span>
                                 {r.language && (
@@ -1340,7 +1379,19 @@ export default function AdminDashboard() {
                                   </span>
                                 )}
                               </div>
-                              <span className="font-mono text-indigo-300 shrink-0">{r.student?.symposiumCode || r.student?.registerNumber}</span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="font-mono text-indigo-300">{r.student?.symposiumCode || r.student?.registerNumber}</span>
+                                {r._id && (
+                                  <button
+                                    onClick={() => handleRemoveRegistration(r._id, getStudentName(r.student, 'Unknown'), eventDetail?.event?.title, eventDetail?.event?._id)}
+                                    disabled={removingRegId === r._id}
+                                    className="p-1 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition disabled:opacity-50"
+                                    title="Remove this registration from this event"
+                                  >
+                                    {removingRegId === r._id ? <Loader className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1363,7 +1414,19 @@ export default function AdminDashboard() {
                           </div>
                           <span className="text-[10px] text-slate-400 block">{s?.email} • {s?.collegeName}</span>
                         </div>
-                        <span className="shrink-0 text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] font-bold text-indigo-300 font-mono">{s?.symposiumCode || s?.registerNumber}</span>
+                          {g._id && (
+                            <button
+                              onClick={() => handleRemoveRegistration(g._id, getStudentName(s, 'Unknown'), eventDetail?.event?.title, eventDetail?.event?._id)}
+                              disabled={removingRegId === g._id}
+                              className="p-1 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition disabled:opacity-50"
+                              title="Remove this registration from this event"
+                            >
+                              {removingRegId === g._id ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
                         <span className="text-[10px] uppercase tracking-wide font-bold text-slate-500">No teammates added</span>
