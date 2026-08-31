@@ -25,6 +25,7 @@ const FILLER_WORDS = new Set([
 // .trim().toUpperCase() couldn't catch.
 const normStrict = (s) => String(s || '')
   .normalize('NFKC')
+  .replace(/&/g, ' AND ')
   .replace(/[.,]/g, '')
   .replace(/\s+/g, ' ')
   .trim()
