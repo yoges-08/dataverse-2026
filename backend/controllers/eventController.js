@@ -24,8 +24,27 @@ exports.getEvents = async (req, res) => {
     if (isDbConnected()) {
       let query = {};
       if (category) query.category = category;
-      const events = await Event.find(query).sort({ date: 1, title: 1 }).lean();
-      return res.status(200).json({ success: true, count: events.length, events });
+      const [events, regs] = await Promise.all([
+        Event.find(query).sort({ date: 1, title: 1 }).lean(),
+        Registration.find({ status: { $ne: 'Cancelled' } }).select('event student').lean()
+      ]);
+
+      const countByEvent = new Map();
+      regs.forEach(r => {
+        if (!r.student || !r.event) return;
+        const key = String(r.event);
+        if (!countByEvent.has(key)) countByEvent.set(key, new Set());
+        countByEvent.get(key).add(String(r.student));
+      });
+
+      const eventsWithLiveCounts = events.map(ev => ({
+        ...ev,
+        currentRegistrations: countByEvent.has(String(ev._id))
+          ? countByEvent.get(String(ev._id)).size
+          : 0
+      }));
+
+      return res.status(200).json({ success: true, count: eventsWithLiveCounts.length, events: eventsWithLiveCounts });
     } else {
       let list = [...mockStore.events];
       if (category) list = list.filter(e => e.category === category);
@@ -133,9 +152,13 @@ exports.getEventById = async (req, res) => {
         });
       }
 
+      const activeRegsCount = enriched.filter(r => r.status !== 'Cancelled').length;
+      const eventObj = event.toObject ? event.toObject() : { ...event };
+      eventObj.currentRegistrations = activeRegsCount;
+
       return res.status(200).json({
         success: true,
-        event,
+        event: eventObj,
         registrations: enriched,
         groups,
         languageBreakdown: event.requiresLanguageChoice ? languageBreakdown : undefined

@@ -7,6 +7,7 @@ const connectDB = require('./config/db');
 const seedIfEmpty = require('./config/seedIfEmpty');
 const seedData = require('./seed');
 const Event = require('./models/Event');
+const Registration = require('./models/Registration');
 const mongoose = require('mongoose');
 const mockStore = require('./utils/mockStore');
 const { apiLimiter } = require('./middleware/rateLimiter');
@@ -224,6 +225,26 @@ const syncEventTeamLimits = async () => {
     updated += (result.modifiedCount || 0) + (result.upsertedCount || 0);
   }
   if (updated > 0) console.log(`Applied event team limits to ${updated} event(s).`);
+
+  // Reconcile and resync Event.currentRegistrations with actual active Registration records
+  const allEvents = await Event.find();
+  const allRegs = await Registration.find({ status: { $ne: 'Cancelled' } }).select('event student').lean();
+  const countByEvent = new Map();
+  allRegs.forEach(r => {
+    if (!r.student || !r.event) return;
+    const key = String(r.event);
+    if (!countByEvent.has(key)) countByEvent.set(key, new Set());
+    countByEvent.get(key).add(String(r.student));
+  });
+
+  for (const ev of allEvents) {
+    const realCount = countByEvent.has(String(ev._id)) ? countByEvent.get(String(ev._id)).size : 0;
+    if (ev.currentRegistrations !== realCount) {
+      await Event.updateOne({ _id: ev._id }, { $set: { currentRegistrations: realCount } });
+      console.log(`Reconciled ${ev.title} registration count: ${ev.currentRegistrations} -> ${realCount}`);
+    }
+  }
+
   return updated;
 };
 
