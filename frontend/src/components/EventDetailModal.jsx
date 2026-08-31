@@ -611,6 +611,38 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
               </span>
             </div>
 
+            {/* Dynamic Event Rounds / Format Stepper Structure */}
+            {(() => {
+              const struct = EVENT_STRUCTURES[event.title];
+              if (!struct) return null;
+              return (
+                <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
+                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <span>{struct.header}</span>
+                    </span>
+                    {struct.headerBadge && (
+                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">
+                        {struct.headerBadge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Connected Visual Timeline / Stepper */}
+                  <EventRoundsTimeline rounds={struct.rounds} />
+
+                  {struct.tagline && (
+                    <div className="pt-1 text-center">
+                      <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
+                        {struct.tagline}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Rules */}
             {event.rules && event.rules.length > 0 && (
               <div>
@@ -665,38 +697,6 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 </div>
               </>
             )}
-
-            {/* Dynamic Event Rounds / Format Stepper Structure */}
-            {(() => {
-              const struct = EVENT_STRUCTURES[event.title];
-              if (!struct) return null;
-              return (
-                <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="font-bold text-indigo-300 flex items-center space-x-1.5 text-xs">
-                      <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span>{struct.header}</span>
-                    </span>
-                    {struct.headerBadge && (
-                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">
-                        {struct.headerBadge}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Connected Visual Timeline / Stepper */}
-                  <EventRoundsTimeline rounds={struct.rounds} />
-
-                  {struct.tagline && (
-                    <div className="pt-1 text-center">
-                      <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-pink-400 to-indigo-400">
-                        {struct.tagline}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
 
             {/* Programming Language Selection (for Bug Hunt / language-enabled events) */}
             {event.requiresLanguageChoice && (
