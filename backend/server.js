@@ -137,7 +137,7 @@ const syncDefaultEvents = async () => {
       date: '2026-09-12',
       time: '',
       registrationDeadline: '2026-09-11',
-      maxParticipants: 60,
+      maxParticipants: 80,
       currentRegistrations: 0,
       teamLimit: 2,
       requiresLanguageChoice: true,
@@ -188,10 +188,10 @@ const syncDefaultEvents = async () => {
 const syncEventTeamLimits = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
   await syncDefaultEvents();
-  // Ensure Bug Hunt has requiresLanguageChoice flag and distinct thumbnail set in existing databases
+  // Ensure Bug Hunt has requiresLanguageChoice flag, maxParticipants: 80, and distinct thumbnail set in existing databases
   await Event.updateMany(
     { title: { $regex: /^Bug Hunt$/i } },
-    { $set: { requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80' } }
+    { $set: { maxParticipants: 80, requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80' } }
   );
   // Ensure Code Sprint has updated tagline, description, rules and speed-coding thumbnail set in existing databases
   await Event.updateMany(
