@@ -138,7 +138,7 @@ const syncDefaultEvents = async () => {
       date: '2026-09-12',
       time: '',
       registrationDeadline: '2026-09-11',
-      maxParticipants: 80,
+      maxParticipants: 100,
       currentRegistrations: 0,
       teamLimit: 2,
       requiresLanguageChoice: true,
@@ -224,6 +224,10 @@ const syncEventTeamLimits = async () => {
     );
     updated += (result.modifiedCount || 0) + (result.upsertedCount || 0);
   }
+  await Event.updateMany(
+    { title: { $regex: /^Bug\s*Hunt$/i } },
+    { $set: { maxParticipants: 100 } }
+  );
   if (updated > 0) console.log(`Applied event team limits to ${updated} event(s).`);
 
   // Reconcile and resync Event.currentRegistrations with actual active Registration records

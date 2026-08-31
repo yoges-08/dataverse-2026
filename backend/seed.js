@@ -230,7 +230,7 @@ const seedData = async () => {
         date: '2026-09-12',
         time: '',
         registrationDeadline: '2026-09-11',
-        maxParticipants: 80,
+        maxParticipants: 100,
         currentRegistrations: 0,
         teamLimit: 2,
         requiresLanguageChoice: true,
