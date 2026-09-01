@@ -260,6 +260,24 @@ const syncEventTeamLimits = async () => {
       }
     }
   );
+  // Ensure Knowledge Knockout has updated rounds and rules
+  await Event.updateMany(
+    { title: { $regex: /^Knowledge\s*Knockout$/i } },
+    {
+      $set: {
+        tagline: 'Technical MCQ • Buzzer Challenge',
+        description: 'A technical quiz challenge testing your mastery in Java, C, and Python through an MCQ round and a rapid 30-second Buzzer Challenge.',
+        rules: [
+          '👥 Each group must have exactly 3 members.',
+          '• Round 1 – Technical Round: Round 1 will consist of technical questions based on Java, C, and Python. The questions will be presented in MCQ format, covering basic and technical concepts.',
+          '• Round 2 – Buzzer Challenge: This round will be a Buzzer Challenge, where each question must be answered within 30 seconds.',
+          '📵 No phones allowed.',
+          'Malpractice is strictly prohibited.',
+          'Judges\' decision will be final and binding.'
+        ]
+      }
+    }
+  );
 
   // Reconcile and resync Event.currentRegistrations with actual active Registration records
   const allEvents = await Event.find();

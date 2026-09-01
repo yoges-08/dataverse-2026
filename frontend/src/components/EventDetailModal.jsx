@@ -116,42 +116,24 @@ const EVENT_STRUCTURES = {
     ]
   },
   'Knowledge Knockout': {
-    header: 'Competition Format • 4 Levels',
-    headerBadge: '10 Mins / Level',
+    header: 'Competition Format • 2 Rounds',
+    headerBadge: 'Technical MCQ • Buzzer Challenge',
     tagline: '⚡ Test Your Mind. Beat the Clock. Knock Out the Rest!',
     rounds: [
       {
         step: 1,
-        title: 'LEVEL 01 – GENERAL KNOWLEDGE',
-        badge: '15 Questions',
-        description: 'Assess your general awareness, science trivia, and foundational concepts within 10 minutes.',
+        title: 'ROUND 1 – TECHNICAL ROUND',
+        badge: 'MCQ (Java, C, Python)',
+        description: 'Round 1 will consist of technical questions based on Java, C, and Python. The questions will be presented in MCQ format, covering basic and technical concepts.',
         badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
         numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
         cardBorder: 'border-slate-800 hover:border-cyan-500/30'
       },
       {
         step: 2,
-        title: 'LEVEL 02 – TECHNICAL TOPICS',
-        badge: '15 Questions',
-        description: 'Deep dive into computer science, data structures, algorithms, and core tech topics.',
-        badgeStyle: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30',
-        numberStyle: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-indigo-500/20',
-        cardBorder: 'border-slate-800 hover:border-indigo-500/30'
-      },
-      {
-        step: 3,
-        title: 'LEVEL 03 – RAPID FIRE',
-        badge: 'Speed Round',
-        description: 'High-speed rapid-fire round testing mental agility, precision, and quick reflexes.',
-        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
-        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
-        cardBorder: 'border-slate-800 hover:border-purple-500/30'
-      },
-      {
-        step: 4,
-        title: 'LEVEL 04 – BUZZER CHALLENGE',
-        badge: 'Final Showdown',
-        description: 'Head-to-head buzzer face-off where speed and accurate answers determine the victor.',
+        title: 'ROUND 2 – BUZZER CHALLENGE',
+        badge: '30s / Question',
+        description: 'This round will be a Buzzer Challenge, where each question must be answered within 30 seconds.',
         badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
         numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
         cardBorder: 'border-slate-800 hover:border-amber-500/30'
