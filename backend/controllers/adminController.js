@@ -419,7 +419,7 @@ exports.deleteStudent = async (req, res) => {
       // Capture student email, name, and optional custom reason before records are deleted
       const user = student.user ? await User.findById(student.user) : null;
       const targetEmail = student.email || user?.email;
-      const targetName = user?.name || student.name || student.email?.split('@')[0] || 'Student';
+      const targetName = user?.name || student.name || (student.email ? student.email.split('@')[0] : 'Student');
       const removalReason = req.body?.reason || req.query?.reason || undefined;
 
       // Decrement each affected event's live counter so admin counts stay real.
@@ -436,11 +436,16 @@ exports.deleteStudent = async (req, res) => {
       await Student.findByIdAndDelete(student._id);
 
       if (targetEmail) {
-        sendAccountRemovalMail({
-          to: targetEmail,
-          name: targetName,
-          reason: removalReason
-        }).catch(err => console.error('Account removal email failed:', err.message));
+        try {
+          await sendAccountRemovalMail({
+            to: targetEmail,
+            name: targetName,
+            reason: removalReason
+          });
+          console.log(`📧 Account removal email successfully sent to ${targetEmail}`);
+        } catch (mailErr) {
+          console.error(`📧 Account removal email failed for ${targetEmail}:`, mailErr.message);
+        }
       }
 
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
@@ -450,7 +455,7 @@ exports.deleteStudent = async (req, res) => {
 
       const mockUser = student.user ? mockStore.users.find(u => String(u._id) === String(student.user)) : null;
       const targetEmail = student.email || mockUser?.email;
-      const targetName = mockUser?.name || student.name || student.email?.split('@')[0] || 'Student';
+      const targetName = mockUser?.name || student.name || (student.email ? student.email.split('@')[0] : 'Student');
       const removalReason = req.body?.reason || req.query?.reason || undefined;
 
       // Decrement the affected events' counters before removing their registrations.
@@ -468,16 +473,22 @@ exports.deleteStudent = async (req, res) => {
       }
 
       if (targetEmail) {
-        sendAccountRemovalMail({
-          to: targetEmail,
-          name: targetName,
-          reason: removalReason
-        }).catch(err => console.error('Account removal email failed (mock mode):', err.message));
+        try {
+          await sendAccountRemovalMail({
+            to: targetEmail,
+            name: targetName,
+            reason: removalReason
+          });
+          console.log(`📧 Account removal email successfully sent to ${targetEmail} (mock mode)`);
+        } catch (mailErr) {
+          console.error(`📧 Account removal email failed for ${targetEmail} (mock mode):`, mailErr.message);
+        }
       }
 
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     }
   } catch (error) {
+    console.error('Error deleting student:', error);
     res.status(500).json({ success: false, message: 'Error deleting student' });
   }
 };
