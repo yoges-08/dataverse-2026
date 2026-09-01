@@ -98,19 +98,6 @@ connectDB().then(async (connected) => {
   }
 });
 
-// Idempotent migration: apply the scheduled teamLimit for each event by title
-// so existing databases get the per-event limits without manual edits.
-const EVENT_TEAM_LIMITS = [
-  { title: 'Agentic AI', teamLimit: 4 },
-  { title: 'NovaSpeak', teamLimit: 4 },
-  { title: 'Knowledge Knockout', teamLimit: 0 },
-  { title: 'Bug Hunt', teamLimit: 2 },
-  { title: 'Code Sprint', teamLimit: 0 },
-  { title: 'Layman Vibes', teamLimit: 3 },
-  { title: 'Luminas Fest', teamLimit: 2 },
-  { title: 'Viral Vision', teamLimit: 8 }
-];
-
 const syncDefaultEvents = async () => {
   if (mongoose.connection.readyState !== 1) return;
   const newEvents = [
@@ -189,10 +176,10 @@ const syncDefaultEvents = async () => {
 const syncEventTeamLimits = async () => {
   if (mongoose.connection.readyState !== 1) return 0;
   await syncDefaultEvents();
-  // Ensure Bug Hunt has requiresLanguageChoice flag, maxParticipants: 100, and distinct thumbnail set in existing databases
+  // Ensure Bug Hunt has requiresLanguageChoice flag and distinct thumbnail set in existing databases without overriding admin-configured maxParticipants
   await Event.updateMany(
     { title: { $regex: /^Bug\s*Hunt$/i } },
-    { $set: { maxParticipants: 100, requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80' } }
+    { $set: { requiresLanguageChoice: true, bannerImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80' } }
   );
   // Ensure Code Sprint has updated tagline, description, rules and speed-coding thumbnail set in existing databases
   await Event.updateMany(
@@ -273,19 +260,6 @@ const syncEventTeamLimits = async () => {
       }
     }
   );
-  let updated = 0;
-  for (const spec of EVENT_TEAM_LIMITS) {
-    const result = await Event.updateMany(
-      { title: { $regex: new RegExp(spec.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') } },
-      { $set: { teamLimit: spec.teamLimit } }
-    );
-    updated += (result.modifiedCount || 0) + (result.upsertedCount || 0);
-  }
-  await Event.updateMany(
-    { title: { $regex: /^Bug\s*Hunt$/i } },
-    { $set: { maxParticipants: 100 } }
-  );
-  if (updated > 0) console.log(`Applied event team limits to ${updated} event(s).`);
 
   // Reconcile and resync Event.currentRegistrations with actual active Registration records
   const allEvents = await Event.find();
@@ -306,7 +280,7 @@ const syncEventTeamLimits = async () => {
     }
   }
 
-  return updated;
+  return 0;
 };
 
 // Rate Limiting (General API protection)
