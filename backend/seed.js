@@ -135,14 +135,16 @@ const seedData = async () => {
       {
         title: 'Agentic AI',
         category: 'Technical',
-        tagline: 'Test your AI knowledge, logic, and creativity',
-        description: 'Agentic AI is a fun and challenging event that tests your AI knowledge, logical thinking, creativity, and problem-solving skills through different rounds.',
+        tagline: 'Prompting • Detective • Pressure',
+        description: 'An AI event that tests your prompt-engineering skills, reasoning ability, and speed across three competition rounds.',
         rules: [
-          'The event consists of 4 rounds.',
-          'Each round lasts between 15 - 20 minutes.',
-          'Four participants compete in each round.',
-          'You must complete the given task within the specified time.',
-          'Cheating is strictly prohibited.'
+          'Team participation limit: 4 members.',
+          '• Round 1 – Prompting Battle: Test your prompt-engineering skills! Create effective and creative prompts to get the best possible output from AI within a limited time.',
+          '• Round 2 – AI Detective: Put your reasoning skills to the test! Analyze AI-generated information, identify clues, spot errors, and find the correct solution.',
+          '• Round 3 – Agent Under Pressure: The ultimate challenge! Solve a real-time problem using AI while facing time limits and unexpected challenges. Think fast, adapt, and make the right decision.',
+          'Time limits and task guidelines must be strictly followed.',
+          'Malpractice is strictly prohibited.',
+          'Judges\' decision will be final and binding.'
         ],
         venue: 'CC1 Lab',
         date: '2026-09-12',
@@ -270,13 +272,16 @@ const seedData = async () => {
       {
         title: 'Layman Vibes',
         category: 'Non-Technical',
-        tagline: 'Explain complex tech concepts the fun way',
-        description: 'A fun non-technical event featuring exciting games that test creativity, observation, logical thinking, communication, and teamwork.',
+        tagline: 'Smart Pick • Pixel Hunt • Sell As Well',
+        description: 'A fun non-technical event featuring exciting challenges testing observation, photography, communication, and product-selling creativity.',
         rules: [
-          'Team size: 3 members.',
-          'Follow the coordinators instructions.',
+          'Team participation limit: 3 members.',
+          '• Round 1 – SMART PICK: A fun Truth or Lie challenge where participants test their observation, confidence, and guessing skills.',
+          '• Round 2 – PIXEL HUNT: A creative Photography Challenge where participants capture the best shot based on the given theme/task.',
+          '• Round 3 – SELL AS WELL: An entertaining Ad-Mad / Product Selling Challenge where participants creatively promote and sell a given object.',
+          'Follow the coordinators\' instructions.',
           'Malpractice is strictly prohibited.',
-          'Judges decision will be final.'
+          'Judges\' decision will be final.'
         ],
         venue: 'A/C Conference Hall',
         date: '2026-09-12',
@@ -293,14 +298,16 @@ const seedData = async () => {
       {
         title: 'Luminas Fest',
         category: 'Non-Technical',
-        tagline: 'Step beyond the technical world into fun and creativity',
-        description: 'A celebration of fun, creativity, and skill-based challenges that test quick thinking, communication, observation, memory, and presence of mind.',
+        tagline: 'Just a Minute • Guess the Character • Memory Rush',
+        description: 'A celebration of skill-based challenges testing reflex, cup-catching agility, character guessing from image links, and rapid memory ordering.',
         rules: [
-          'Registration and punctuality are required - participants must register on time and reach the venue at the scheduled time.',
+          'Team participation limit: 2 members.',
+          '• Game 🎯 1: just a min 1️⃣: Catch the 20 cups with one hand and land the ball inside as many cups as possible within 1 minute.',
+          '• Game 🎯 2: guess the character 🎭: Connect the images and guess the character within the time limit; locked answers cannot be changed.',
+          '• Game 🎯 3: memory rush 🏆: Observe the given images and arrange them in a order within the time limit.',
           'Time and instructions must be followed as given by the coordinators.',
           'Fair play is expected from all participants.',
-          'Participants must maintain discipline throughout the event.',
-          'The coordinators judgement will be final.'
+          'The coordinators\' judgement will be final.'
         ],
         venue: 'A/C Conference Hall',
         date: '2026-09-12',

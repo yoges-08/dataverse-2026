@@ -82,42 +82,33 @@ const EVENT_STRUCTURES = {
     ]
   },
   'Agentic AI': {
-    header: 'Competition Format • 4 Rounds',
-    headerBadge: 'AI Logic • Autonomous Problem Solving',
+    header: 'Competition Format • 3 Rounds',
+    headerBadge: 'Prompting • Detective • Pressure',
     tagline: '⚡ Think Autonomous. Build Smart. Lead the AI Future!',
     rounds: [
       {
         step: 1,
-        title: 'ROUND 1 – AI PROMPT & LOGIC',
-        badge: '15 - 20 Mins',
-        description: 'Test your foundational AI concepts, prompt engineering, and logical problem decomposition.',
+        title: 'ROUND 1 – PROMPTING BATTLE',
+        badge: 'Prompt Engineering',
+        description: 'Test your prompt-engineering skills! Create effective and creative prompts to get the best possible output from AI within a limited time.',
         badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
         numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
         cardBorder: 'border-slate-800 hover:border-cyan-500/30'
       },
       {
         step: 2,
-        title: 'ROUND 2 – TASK AUTOMATION',
-        badge: '15 - 20 Mins',
-        description: 'Design and structure autonomous workflows and multi-step agent solutions.',
+        title: 'ROUND 2 – AI DETECTIVE',
+        badge: 'Reasoning & Analysis',
+        description: 'Put your reasoning skills to the test! Analyze AI-generated information, identify clues, spot errors, and find the correct solution.',
         badgeStyle: 'text-indigo-300 bg-indigo-500/15 border-indigo-500/30',
         numberStyle: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/50 shadow-indigo-500/20',
         cardBorder: 'border-slate-800 hover:border-indigo-500/30'
       },
       {
         step: 3,
-        title: 'ROUND 3 – MULTI-STEP REASONING',
-        badge: '15 - 20 Mins',
-        description: 'Apply creative thinking, recursive reasoning, and autonomous error correction.',
-        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
-        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
-        cardBorder: 'border-slate-800 hover:border-purple-500/30'
-      },
-      {
-        step: 4,
-        title: 'ROUND 4 – GRAND AGENTIC SHOWDOWN',
-        badge: '15 - 20 Mins',
-        description: 'Complete the final comprehensive challenge within the specified time to claim victory.',
+        title: 'ROUND 3 – AGENT UNDER PRESSURE',
+        badge: 'Real-Time Challenge',
+        description: 'The ultimate challenge! Solve a real-time problem using AI while facing time limits and unexpected challenges. Think fast, adapt, and make the right decision.',
         badgeStyle: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
         numberStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-emerald-500/20',
         cardBorder: 'border-slate-800 hover:border-emerald-500/30'
@@ -202,33 +193,33 @@ const EVENT_STRUCTURES = {
     ]
   },
   'Layman Vibes': {
-    header: 'Performance Format • 3 Rounds',
-    headerBadge: 'Creative Showcase',
-    tagline: '⚡ Express Freely. Act Boldly. Steal the Spotlight!',
+    header: 'Competition Format • 3 Rounds',
+    headerBadge: 'Non-Technical Event',
+    tagline: '⚡ Smart Pick • Pixel Hunt • Sell As Well',
     rounds: [
       {
         step: 1,
-        title: 'ROUND 1 – CREATIVE ACTING & WIT',
-        badge: 'Expression',
-        description: 'Showcase spontaneity, humor, and theatrical talent on given real-world themes.',
+        title: 'ROUND 1 – SMART PICK',
+        badge: 'Observation & Guessing',
+        description: 'A fun Truth or Lie challenge where participants test their observation, confidence, and guessing skills.',
         badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
         numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
         cardBorder: 'border-slate-800 hover:border-cyan-500/30'
       },
       {
         step: 2,
-        title: 'ROUND 2 – SITUATIONAL IMPROV',
-        badge: 'Teamwork',
-        description: 'Navigate hilarious and unexpected on-the-spot scenarios seamlessly with your teammates.',
+        title: 'ROUND 2 – PIXEL HUNT',
+        badge: 'Photography Challenge',
+        description: 'A creative Photography Challenge where participants capture the best shot based on the given theme/task.',
         badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
         numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
         cardBorder: 'border-slate-800 hover:border-purple-500/30'
       },
       {
         step: 3,
-        title: 'ROUND 3 – FINAL SPOTLIGHT',
-        badge: 'Grand Finale',
-        description: 'Deliver your highest-energy performance to captivate the judges and audience.',
+        title: 'ROUND 3 – SELL AS WELL',
+        badge: 'Ad-Mad / Selling',
+        description: 'An entertaining Ad-Mad / Product Selling Challenge where participants creatively promote and sell a given object.',
         badgeStyle: 'text-pink-300 bg-pink-500/15 border-pink-500/30',
         numberStyle: 'bg-pink-500/20 text-pink-300 border-pink-400/50 shadow-pink-500/20',
         cardBorder: 'border-slate-800 hover:border-pink-500/30'
@@ -236,33 +227,33 @@ const EVENT_STRUCTURES = {
     ]
   },
   "Lumina's Fest": {
-    header: 'Event Format • 3 Rounds',
-    headerBadge: 'Fun • Logic • Coordination',
-    tagline: '⚡ Illuminate Your Talent. Celebrate the Vibe. Win Big!',
+    header: 'Event Format • 3 Games',
+    headerBadge: 'Fun • Reflexes • Memory',
+    tagline: '⚡ Just a Minute • Guess the Character • Memory Rush',
     rounds: [
       {
         step: 1,
-        title: 'ROUND 1 – SENSE & CONNECTIONS',
-        badge: 'Observation',
-        description: 'Solve visual puzzles, audio clues, and thematic links with sharp observation.',
+        title: 'GAME 🎯 1: JUST A MIN 1️⃣',
+        badge: '20 Cups Challenge',
+        description: 'Catch the 20 cups with one hand and land the ball inside as many cups as possible within 1 minute.',
         badgeStyle: 'text-pink-300 bg-pink-500/15 border-pink-500/30',
         numberStyle: 'bg-pink-500/20 text-pink-300 border-pink-400/50 shadow-pink-500/20',
         cardBorder: 'border-slate-800 hover:border-pink-500/30'
       },
       {
         step: 2,
-        title: 'ROUND 2 – TEAM SYNERGY',
-        badge: 'Agility',
-        description: 'Fast-paced interactive challenges testing team coordination, strategy, and agility.',
+        title: 'GAME 🎯 2: GUESS THE CHARACTER 🎭',
+        badge: 'Image Connect',
+        description: 'Connect the images and guess the character within the time limit; locked answers cannot be changed.',
         badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
         numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
         cardBorder: 'border-slate-800 hover:border-purple-500/30'
       },
       {
         step: 3,
-        title: 'ROUND 3 – ULTIMATE SHOWDOWN',
-        badge: 'Final Stage',
-        description: 'Grand finale round combining high-energy challenges for maximum points and victory.',
+        title: 'GAME 🎯 3: MEMORY RUSH 🏆',
+        badge: 'Order & Recall',
+        description: 'Observe the given images and arrange them in a order within the time limit.',
         badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
         numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
         cardBorder: 'border-slate-800 hover:border-amber-500/30'
@@ -303,6 +294,24 @@ const EVENT_STRUCTURES = {
       }
     ]
   }
+};
+
+const getEventStructure = (title) => {
+  if (!title) return null;
+  if (EVENT_STRUCTURES[title]) return EVENT_STRUCTURES[title];
+  const lower = title.toLowerCase().trim();
+  for (const key of Object.keys(EVENT_STRUCTURES)) {
+    if (key.toLowerCase().trim() === lower) return EVENT_STRUCTURES[key];
+  }
+  if (lower.includes('layman')) return EVENT_STRUCTURES['Layman Vibes'];
+  if (lower.includes('lumina')) return EVENT_STRUCTURES["Lumina's Fest"];
+  if (lower.includes('agentic')) return EVENT_STRUCTURES['Agentic AI'];
+  if (lower.includes('code sprint')) return EVENT_STRUCTURES['Code Sprint'];
+  if (lower.includes('bug hunt')) return EVENT_STRUCTURES['Bug Hunt'];
+  if (lower.includes('knowledge')) return EVENT_STRUCTURES['Knowledge Knockout'];
+  if (lower.includes('nova')) return EVENT_STRUCTURES['NovaSpeak'];
+  if (lower.includes('viral')) return EVENT_STRUCTURES['Viral Vision'];
+  return null;
 };
 
 function EventRoundsTimeline({ rounds = [] }) {
@@ -613,7 +622,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
 
             {/* Dynamic Event Rounds / Format Stepper Structure */}
             {(() => {
-              const struct = EVENT_STRUCTURES[event.title];
+              const struct = getEventStructure(event.title);
               if (!struct) return null;
               return (
                 <div className="p-4 sm:p-5 bg-slate-900/90 rounded-2xl border border-indigo-500/30 space-y-4">
