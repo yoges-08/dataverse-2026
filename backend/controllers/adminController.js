@@ -10,7 +10,7 @@ const Certificate = require('../models/Certificate');
 const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const teamController = require('./teamController');
-const { sendApprovalMail } = require('../utils/mailer');
+const { sendApprovalMail, sendAccountRemovalMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -415,6 +415,13 @@ exports.deleteStudent = async (req, res) => {
     if (isDbConnected()) {
       const student = await Student.findById(req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+      // Capture student email, name, and optional custom reason before records are deleted
+      const user = student.user ? await User.findById(student.user) : null;
+      const targetEmail = student.email || user?.email;
+      const targetName = user?.name || student.name || student.email?.split('@')[0] || 'Student';
+      const removalReason = req.body?.reason || req.query?.reason || undefined;
+
       // Decrement each affected event's live counter so admin counts stay real.
       const regs = await Registration.find({ student: student._id });
       await Registration.deleteMany({ student: student._id });
@@ -427,10 +434,25 @@ exports.deleteStudent = async (req, res) => {
       await teamController.removeStudentFromAllTeams(student._id);
       await User.findByIdAndDelete(student.user);
       await Student.findByIdAndDelete(student._id);
+
+      if (targetEmail) {
+        sendAccountRemovalMail({
+          to: targetEmail,
+          name: targetName,
+          reason: removalReason
+        }).catch(err => console.error('Account removal email failed:', err.message));
+      }
+
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     } else {
       const student = mockStore.students.find(s => s._id === req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+      const mockUser = student.user ? mockStore.users.find(u => String(u._id) === String(student.user)) : null;
+      const targetEmail = student.email || mockUser?.email;
+      const targetName = mockUser?.name || student.name || student.email?.split('@')[0] || 'Student';
+      const removalReason = req.body?.reason || req.query?.reason || undefined;
+
       // Decrement the affected events' counters before removing their registrations.
       mockStore.registrations
         .filter(r => String(r.student) === String(req.params.id))
@@ -444,6 +466,15 @@ exports.deleteStudent = async (req, res) => {
       if (student.user) {
         mockStore.users = mockStore.users.filter(u => String(u._id) !== String(student.user));
       }
+
+      if (targetEmail) {
+        sendAccountRemovalMail({
+          to: targetEmail,
+          name: targetName,
+          reason: removalReason
+        }).catch(err => console.error('Account removal email failed (mock mode):', err.message));
+      }
+
       return res.status(200).json({ success: true, message: 'Student deleted successfully' });
     }
   } catch (error) {

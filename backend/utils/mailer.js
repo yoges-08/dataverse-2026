@@ -251,4 +251,41 @@ const sendLoginMail = async ({ to, name }) => {
   `);
   return sendMail({ to, subject: 'DATAVERSE 2026 - New Sign-in Alert', html });
 };
-module.exports = { sendMail, sendRegistrationMail, sendApprovalMail, sendEventRegistrationMail };
+
+const sendAccountRemovalMail = async ({ to, name, reason }) => {
+  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Student');
+  const defaultReason = 'Registration slot filled — the maximum participant quota for your category or institution has been reached.';
+  const displayReason = reason && String(reason).trim() ? String(reason).trim() : defaultReason;
+
+  const html = mailShell(`
+    <div style="padding:20px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Account Notification, ${safeName}</h2>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
+        We regret to inform you that your <strong style="color:#ffffff;">DATAVERSE 2026</strong> student account has been permanently removed from our system.
+      </p>
+
+      <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+        <div style="color:#fecaca;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Reason for Removal</div>
+        <div style="color:#ffffff;font-size:13px;font-weight:700;line-height:1.5;">${displayReason}</div>
+      </div>
+
+      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0 0 14px;">
+        We appreciate your interest in DATAVERSE 2026 and want to let you know that all event registrations and team memberships tied to your profile have also been cleared.
+      </p>
+
+      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;">
+        If you believe this was done in error, please reach out to the Symposium Desk at
+        <a href="mailto:dataverse26ai@gmail.com" style="color:#818cf8;text-decoration:none;">dataverse26ai@gmail.com</a>. We wish you all the very best in your academic journey and future events.
+      </p>
+    </div>
+  `);
+  return sendMail({ to, subject: 'DATAVERSE 2026 - Your Account Has Been Removed', html });
+};
+
+module.exports = {
+  sendMail,
+  sendRegistrationMail,
+  sendApprovalMail,
+  sendEventRegistrationMail,
+  sendAccountRemovalMail
+};
