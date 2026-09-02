@@ -161,6 +161,35 @@ const isHostCollege = (s) => {
   return collegesMatch(s, 'Anjalai Ammal Mahalingam Engineering College') || collegesMatch(s, 'AAMEC');
 };
 
+// Per-word budget: how many edits we tolerate for a single word, scaled to
+// that word's own length (short words need a tighter budget to stay safe).
+const tokenEditBudget = (len) => (len <= 3 ? 0 : len <= 6 ? 1 : len <= 12 ? 2 : 3);
+
+// Token-level fuzzy containment: every core word of the SHORTER name must
+// closely match some core word of the LONGER name. This is what
+// `collegesMatch`'s existing containment tier does, but tolerating small
+// per-word typos instead of requiring an exact word match — so it also
+// covers the case where a typo AND an extra location word both appear
+// between two entries for the same real college.
+const tokenFuzzyContains = (shortTokens, longTokens) =>
+  shortTokens.every(st =>
+    longTokens.some(lt => {
+      const budget = Math.max(tokenEditBudget(st.length), tokenEditBudget(lt.length));
+      if (Math.min(st.length, lt.length) <= 3) return st === lt;
+      return editDistance(st, lt, budget) <= budget;
+    })
+  );
+
+const tokenFuzzyMatch = (a, b) => {
+  const tokensA = normCore(a).split(' ').filter(Boolean);
+  const tokensB = normCore(b).split(' ').filter(Boolean);
+  const [shortTokens, longTokens] = tokensA.length <= tokensB.length
+    ? [tokensA, tokensB] : [tokensB, tokensA];
+  if (shortTokens.length === 0) return false;
+  if (shortTokens.length === 1 && shortTokens[0].length < 6) return false;
+  return tokenFuzzyContains(shortTokens, longTokens);
+};
+
 // Public comparator: exact strict match first; only fall back to the core
 // (filler-word-stripped) comparison, and only when the core key still has
 // real identifying content (2+ chars) — this avoids two unrelated colleges
@@ -226,9 +255,13 @@ const collegesMatch = (a, b) => {
   const coreSquashB = coreB.replace(/\s+/g, '');
   const fuzzyA = coreSquashA.length <= coreSquashB.length ? coreSquashA : coreSquashB;
   const fuzzyB = coreSquashA.length <= coreSquashB.length ? coreSquashB : coreSquashA;
-  if (fuzzyA.length < 6) return false; // too short to fuzzy-match safely
-  const budget = Math.min(2, Math.floor(fuzzyB.length / 14) + 1);
-  return editDistance(fuzzyA, fuzzyB, budget) <= budget;
+  if (fuzzyA.length >= 6) {
+    const budget = Math.min(2, Math.floor(fuzzyB.length / 14) + 1);
+    if (editDistance(fuzzyA, fuzzyB, budget) <= budget) return true;
+  }
+
+  // Token-level fuzzy containment tier (handles typo in one word + extra location word):
+  return tokenFuzzyMatch(a, b);
 };
 
-module.exports = { normStrict, normCore, collegesMatch, isHostCollege };
+module.exports = { normStrict, normCore, collegesMatch, isHostCollege, tokenFuzzyMatch };
