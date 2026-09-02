@@ -194,18 +194,16 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-3 text-xs font-bold">
+                <span className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 font-extrabold text-[11px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping mr-0.5" />
+                  <span>Slots Full</span>
+                </span>
                 <Link
                   to="/login"
-                  className="px-4 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
                   {...registerMagnetic}
                   className="btn-glow px-5 py-2.5 rounded-xl text-white font-extrabold shadow-lg shadow-indigo-600/30 will-change-transform"
                 >
-                  Register
+                  Sign In
                 </Link>
               </div>
             )}
@@ -277,19 +275,15 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  to="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full py-3 text-center rounded-xl bg-indigo-600 text-white font-bold"
-                >
-                  Register Now
-                </Link>
+                <div className="py-2.5 px-3 text-center rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs">
+                  Registration Closed • All Slots Full
+                </div>
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full py-3 text-center rounded-xl bg-slate-900 text-slate-200 font-bold"
+                  className="block w-full py-3 text-center rounded-xl bg-indigo-600 text-white font-bold"
                 >
-                  Sign In
+                  Sign In to Dashboard
                 </Link>
               </>
             )}

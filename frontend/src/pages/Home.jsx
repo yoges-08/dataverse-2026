@@ -99,11 +99,11 @@ export default function Home() {
                 <span className="text-base sm:text-lg font-black text-white">12 / 09 / 2026</span>
               </div>
             </div>
-            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-600/25 to-sky-600/20 border border-cyan-400/40 shadow-xl">
-              <Sparkles className="w-5 h-5 text-cyan-300" />
+            <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-600/25 to-amber-600/20 border border-rose-400/40 shadow-xl">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
               <div className="text-left">
-                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider block">Registration Deadline</span>
-                <span className="text-base sm:text-lg font-black text-white">07 / 09 / 2026</span>
+                <span className="text-[10px] text-rose-300 uppercase font-bold tracking-wider block">Registration Status</span>
+                <span className="text-base sm:text-lg font-black text-white">Closed • Slots Full</span>
               </div>
             </div>
             <div className="inline-flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600/25 to-teal-600/20 border border-emerald-400/40 shadow-xl">
@@ -115,8 +115,14 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Registration Closed Banner */}
+          <div className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold text-center">
+            <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
+            <span><strong className="text-white font-black">Registrations Closed:</strong> All participant slots for DATAVERSE 2026 are fully booked!</span>
+          </div>
+
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             {user ? (
               <Link
                 to={getDashboardPath()}
@@ -127,11 +133,11 @@ export default function Home() {
               </Link>
             ) : (
               <Link
-                to="/register"
+                to="/login"
                 className="btn-glow w-full sm:w-auto px-8 py-4 rounded-2xl text-white font-extrabold text-base shadow-xl shadow-indigo-600/35 hover:scale-105 transition-transform flex items-center justify-center space-x-2"
               >
                 <Zap className="w-5 h-5 fill-white" />
-                <span>Register Now (Free)</span>
+                <span>Registered? Sign In Here</span>
               </Link>
             )}
 

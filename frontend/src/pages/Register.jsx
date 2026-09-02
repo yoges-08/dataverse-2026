@@ -108,223 +108,81 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="login-canvas-wrap glass-card p-8 sm:p-10 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-8 relative">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="login-canvas-wrap glass-card p-8 sm:p-12 rounded-3xl border border-rose-500/30 shadow-2xl space-y-8 relative text-center">
         <LoginCanvasBackground />
 
-        {/* Success overlay */}
-        <div className={`login-success-overlay ${showSuccess ? 'visible' : ''}`}>
-          <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-          <h2>Account Created</h2>
+        {/* Badge */}
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-2">
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/35 text-rose-300 text-xs font-black uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping mr-1" />
+            <span>Registration Closed</span>
+          </div>
+          <div className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs font-bold">
+            <span>All Slots Full • Housefull</span>
+          </div>
         </div>
 
-        {/* Title */}
-        <div className="relative z-10 text-center space-y-2">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>DATAVERSE 2026 Registration</span>
-            </div>
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-xs font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>No Fee • ₹0 Free Entry</span>
-            </div>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-white">Create Participant Account</h1>
-          <p className="text-xs sm:text-sm text-slate-400">Fill in your contact and college details to register for free and receive your unique DATAVERSE Ticket Code & QR Pass.</p>
+        {/* Title & Description */}
+        <div className="relative z-10 space-y-3">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            Symposium Registrations Are Closed
+          </h1>
+          <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
+            Thank you for the tremendous enthusiasm and overwhelming response! All participant seats for{' '}
+            <strong className="text-indigo-400 font-bold">DATAVERSE 2026</strong> have been completely filled. New registrations are now officially closed.
+          </p>
         </div>
 
-        {/* No Registration Fee Alert Banner */}
-        <div className="relative z-10 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-center space-x-2 font-medium text-center">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span><strong className="font-bold text-emerald-200">No Registration Fee Required:</strong> Registration, food, and event entry are completely free for all participants!</span>
+        {/* Existing Registrations Info Box */}
+        <div className="relative z-10 p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-left space-y-3">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shrink-0 mt-0.5">
+              <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Already Registered? Your Seat is Confirmed!</h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                If you have already registered, your participation is 100% secured. Sign in to access your personal dashboard, view your unique DATAVERSE Ticket Code, download your QR Entry Pass, and view event schedules.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {errorMsg && (
-          <div className="relative z-10 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="relative z-10 space-y-6 text-xs">
-          
-          {/* Section 1: Credentials */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-              1. Personal & Login Details
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g. Balaji S"
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.name ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.name && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.name}</span>
-                )}
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Email Address *</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="student@example.com"
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.email ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.email && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.email}</span>
-                )}
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Password *</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Min 4 characters"
-                    className={`w-full p-3 pr-11 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                      fieldErrors.password ? 'border-red-500' : 'border-slate-700'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-indigo-400 transition-colors"
-                    title={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                  {fieldErrors.password && (
-                    <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.password}</span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Mobile Phone Number *</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  required
-                  maxLength="10"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="9876543210"
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.phone ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.phone && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.phone}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: College Info */}
-          <div className="space-y-4 pt-4">
-            <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-              2. Academic & College Information
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="text-slate-300 font-semibold block mb-1">College Name *</label>
-                <input
-                  type="text"
-                  name="collegeName"
-                  required
-                  value={formData.collegeName}
-                  onChange={handleChange}
-                  placeholder="Type your college name..."
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.collegeName ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                />
-                {fieldErrors.collegeName && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.collegeName}</span>
-                )}
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Department *</label>
-                <select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className={`w-full p-3 rounded-xl bg-slate-900 border text-white focus:outline-none focus:border-indigo-500 ${
-                    fieldErrors.department ? 'border-red-500' : 'border-slate-700'
-                  }`}
-                >
-                  <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-                  <option value="Information Technology">Information Technology</option>
-                  <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
-                  <option value="Artificial Intelligence & Machine Learning">Artificial Intelligence & Machine Learning</option>
-                  <option value="Chemical Engineering">Chemical Engineering</option>
-                  <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
-                  <option value="Electrical & Electronics Engineering">Electrical & Electronics Engineering</option>
-                  <option value="Mechanical Engineering">Mechanical Engineering</option>
-                  <option value="Civil Engineering">Civil Engineering</option>
-                </select>
-                {fieldErrors.department && (
-                  <span className="text-red-400 text-[10px] mt-1 block">{fieldErrors.department}</span>
-                )}
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">Year of Study *</label>
-                <select
-                  name="year"
-                  value={formData.year}
-                  onChange={handleChange}
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="I">I Year</option>
-                  <option value="II">II Year</option>
-                  <option value="III">III Year</option>
-                  <option value="IV">IV Year</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/35 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+        {/* Action Buttons */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
+          <Link
+            to="/login"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/35 transition-all flex items-center justify-center space-x-2"
           >
-            <UserPlus className="w-5 h-5" />
-            <span>{loading ? 'Submitting Registration...' : 'Complete DATAVERSE Registration'}</span>
-          </button>
+            <User className="w-4 h-4" />
+            <span>Sign In to Your Dashboard</span>
+          </Link>
 
-        </form>
+          <Link
+            to="/events"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-sm transition-all flex items-center justify-center space-x-2"
+          >
+            <span>Explore Events</span>
+          </Link>
+        </div>
 
-        <p className="relative z-10 text-center text-slate-400 text-xs">
-          Already registered? <Link to="/login" className="text-indigo-400 font-bold hover:underline">Sign in here</Link>
-        </p>
+        {/* Support Footer */}
+        <div className="relative z-10 pt-4 border-t border-slate-800/80 text-xs text-slate-400 space-y-1">
+          <p>
+            Questions or inquiries? Reach out to us at{' '}
+            <a href="mailto:dataverse2k26ai@gmail.com" className="text-indigo-400 font-bold hover:underline">
+              dataverse2k26ai@gmail.com
+            </a>
+          </p>
+          <p>
+            Or check our{' '}
+            <Link to="/contact" className="text-indigo-400 font-semibold hover:underline">
+              Contact Page
+            </Link>{' '}
+            for student coordinator phone numbers.
+          </p>
+        </div>
 
       </div>
     </div>
