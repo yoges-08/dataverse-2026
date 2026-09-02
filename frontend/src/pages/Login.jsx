@@ -146,10 +146,6 @@ export default function Login() {
             <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
           </button>
         </form>
-
-        <p className="relative z-10 text-center text-slate-400 text-xs">
-          New participant? <Link to="/register" className="text-indigo-400 font-bold hover:underline">Register for DATAVERSE</Link>
-        </p>
       </div>
     </div>
   );
