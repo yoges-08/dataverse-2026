@@ -184,15 +184,16 @@ const seedData = async () => {
       {
         title: 'Knowledge Knockout',
         category: 'Technical',
-        tagline: 'Technical MCQ • Buzzer Challenge',
-        description: 'A technical quiz challenge testing your mastery in Java, C, and Python through an MCQ round and a rapid 30-second Buzzer Challenge.',
+        tagline: 'Technical Topics • Rapid Fire • Buzzer Challenge',
+        description: 'Knowledge knockout is a process of assessing a person\'s knowledge through targeted questions or tests.',
         rules: [
-          '👥 Each group must have exactly 3 members.',
-          '• Round 1 – Technical Round: Round 1 will consist of technical questions based on Java, C, and Python. The questions will be presented in MCQ format, covering basic and technical concepts.',
-          '• Round 2 – Buzzer Challenge: This round will be a Buzzer Challenge, where each question must be answered within 30 seconds.',
-          '📵 No phones allowed.',
-          'Malpractice is strictly prohibited.',
-          'Judges\' decision will be final and binding.'
+          'Each level is ten minutes.',
+          'Team participation is not allowed only individual participation is permitted.',
+          'Each level consists 15 questions.',
+          'Mobile phone is strictly prohibited during the quiz.',
+          'LEVEL 01 - TECHNICAL TOPICS',
+          'LEVEL 02 - RAPID FIRE',
+          'LEVEL 03 - BUZZER CHALLENGE'
         ],
         venue: 'A/C Conference Hall',
         date: '2026-09-12',
@@ -200,7 +201,7 @@ const seedData = async () => {
         registrationDeadline: '2026-09-11',
         maxParticipants: 100,
         currentRegistrations: 0,
-        teamLimit: 3,
+        teamLimit: 0,
         facultyCoordinator: { name: '', phone: '' },
         studentCoordinator: { name: 'Kavipriya', phone: '' },
         prizes: { first: '₹5,000 + Trophy & Certificate', second: '₹3,000 + Trophy & Certificate', third: '₹1,500 + Certificate' },

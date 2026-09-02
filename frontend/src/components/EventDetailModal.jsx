@@ -116,24 +116,33 @@ const EVENT_STRUCTURES = {
     ]
   },
   'Knowledge Knockout': {
-    header: 'Competition Format • 2 Rounds',
-    headerBadge: 'Technical MCQ • Buzzer Challenge',
+    header: 'Competition Format • 3 Levels',
+    headerBadge: '10 Mins / Level • Solo Event',
     tagline: '⚡ Test Your Mind. Beat the Clock. Knock Out the Rest!',
     rounds: [
       {
         step: 1,
-        title: 'ROUND 1 – TECHNICAL ROUND',
-        badge: 'MCQ (Java, C, Python)',
-        description: 'Round 1 will consist of technical questions based on Java, C, and Python. The questions will be presented in MCQ format, covering basic and technical concepts.',
+        title: 'LEVEL 01 – TECHNICAL TOPICS',
+        badge: '15 Questions',
+        description: 'First level consists of 15 technical questions testing foundational and core concepts within 10 minutes.',
         badgeStyle: 'text-cyan-300 bg-cyan-500/15 border-cyan-500/30',
         numberStyle: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50 shadow-cyan-500/20',
         cardBorder: 'border-slate-800 hover:border-cyan-500/30'
       },
       {
         step: 2,
-        title: 'ROUND 2 – BUZZER CHALLENGE',
-        badge: '30s / Question',
-        description: 'This round will be a Buzzer Challenge, where each question must be answered within 30 seconds.',
+        title: 'LEVEL 02 – RAPID FIRE',
+        badge: '15 Questions',
+        description: 'High-speed rapid-fire round with 15 questions testing mental agility, precision, and quick reflexes within 10 minutes.',
+        badgeStyle: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
+        numberStyle: 'bg-purple-500/20 text-purple-300 border-purple-400/50 shadow-purple-500/20',
+        cardBorder: 'border-slate-800 hover:border-purple-500/30'
+      },
+      {
+        step: 3,
+        title: 'LEVEL 03 – BUZZER CHALLENGE',
+        badge: '15 Questions',
+        description: 'Final showdown buzzer challenge testing speed, accuracy, and presence of mind within 10 minutes.',
         badgeStyle: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
         numberStyle: 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-amber-500/20',
         cardBorder: 'border-slate-800 hover:border-amber-500/30'
