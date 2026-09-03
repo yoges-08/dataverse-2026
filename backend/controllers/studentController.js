@@ -163,34 +163,40 @@ exports.spotRegistration = async (req, res) => {
       }
 
       // Register the walk-in student for the selected events (if any)
-      const registerEvents = async (regModelFind, regModelCreate, eventUpdate) => {
-        for (const eventId of eventIds || []) {
-          const exists = await regModelFind(eventId);
-          if (exists) continue;
-          await regModelCreate(eventId);
-          await eventUpdate(eventId);
-        }
-      };
+      const skippedEvents = [];
       if (Array.isArray(eventIds) && eventIds.length) {
-        await registerEvents(
-          (eventId) => Registration.findOne({ student: student._id, event: eventId }),
-          (eventId) => Registration.create({ student: student._id, event: eventId, status: 'Registered' }),
-          async (eventId) => {
-            const ev = await Event.findById(eventId);
-            if (ev) {
-              if (ev.maxParticipants && ev.currentRegistrations >= ev.maxParticipants) return;
-              ev.currentRegistrations += 1;
-              await ev.save();
-            }
+        for (const eventId of eventIds) {
+          const exists = await Registration.findOne({ student: student._id, event: eventId });
+          if (exists) continue;
+
+          const ev = await Event.findById(eventId);
+          if (ev && ev.maxParticipants && ev.currentRegistrations >= ev.maxParticipants) {
+            skippedEvents.push({
+              eventId,
+              title: ev.title || 'Event',
+              reason: 'Event is full'
+            });
+            continue;
           }
-        );
+
+          await Registration.create({ student: student._id, event: eventId, status: 'Registered' });
+          if (ev) {
+            ev.currentRegistrations = (ev.currentRegistrations || 0) + 1;
+            await ev.save();
+          }
+        }
       }
 
-      return res.status(201).json({
+      const responsePayload = {
         success: true,
         message: 'Spot Registration & Check-In completed successfully!',
         student
-      });
+      };
+      if (skippedEvents.length > 0) {
+        responsePayload.skippedEvents = skippedEvents;
+      }
+
+      return res.status(201).json(responsePayload);
     } else {
       let user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
       if (!user) {

@@ -30,7 +30,7 @@ export default function VolunteerDashboard() {
   });
   const [selectedEventIds, setSelectedEventIds] = useState([]);
   const [spotLoading, setSpotLoading] = useState(false);
-  const [spotMsg, setSpotMsg] = useState({ type: '', text: '' });
+  const [spotMsg, setSpotMsg] = useState({ type: '', text: '', warning: '' });
 
   useEffect(() => {
     API.get('/events').then((res) => {
@@ -48,14 +48,24 @@ export default function VolunteerDashboard() {
     e.preventDefault();
     try {
       setSpotLoading(true);
-      setSpotMsg({ type: '', text: '' });
+      setSpotMsg({ type: '', text: '', warning: '' });
 
       const res = await API.post('/student/spot-registration', {
         ...spotForm,
         eventIds: selectedEventIds
       });
       if (res.data.success) {
-        setSpotMsg({ type: 'success', text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}` });
+        let warningText = '';
+        if (Array.isArray(res.data.skippedEvents) && res.data.skippedEvents.length > 0) {
+          const titles = res.data.skippedEvents.map(se => se.title || 'Event').join(', ');
+          warningText = `Student registered, but could not be added to: ${titles} (event is full)`;
+        }
+
+        setSpotMsg({
+          type: 'success',
+          text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}`,
+          warning: warningText
+        });
         setBadgeStudent(res.data.student);
         setSpotForm({
           name: '',
@@ -71,7 +81,7 @@ export default function VolunteerDashboard() {
         setSelectedEventIds([]);
       }
     } catch (err) {
-      setSpotMsg({ type: 'error', text: err.response?.data?.message || 'Spot registration failed' });
+      setSpotMsg({ type: 'error', text: err.response?.data?.message || 'Spot registration failed', warning: '' });
     } finally {
       setSpotLoading(false);
     }
@@ -171,11 +181,23 @@ export default function VolunteerDashboard() {
           </div>
 
           {spotMsg.text && (
-            <div className={`p-4 rounded-xl text-xs flex items-center space-x-2 ${
-              spotMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
-            }`}>
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
-              <span>{spotMsg.text}</span>
+            <div className="space-y-2">
+              <div className={`p-4 rounded-xl text-xs flex items-center space-x-2 ${
+                spotMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
+              }`}>
+                {spotMsg.type === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+                )}
+                <span>{spotMsg.text}</span>
+              </div>
+              {spotMsg.warning && (
+                <div className="p-4 rounded-xl text-xs flex items-center space-x-2 bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-amber-400" />
+                  <span>{spotMsg.warning}</span>
+                </div>
+              )}
             </div>
           )}
 
