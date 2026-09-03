@@ -129,65 +129,67 @@ exports.spotRegistration = async (req, res) => {
     }
 
     if (isDbConnected()) {
-      let user = await User.findOne({ email: cleanEmail });
-      let student;
-      // Repair any previously stored junk name (e.g. ".") from an old entry.
-      if (user && (!String(user.name || '').trim() || String(user.name).trim() === '.')) {
-        user.name = cleanName;
-        await user.save();
-      }
-      if (!user) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(initialPassword, salt);
-        user = await User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' });
-      } else {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(initialPassword, salt);
-        await user.save();
-      }
-
-      student = await Student.findOne({ user: user._id });
-      if (!student) {
-        let symposiumCode = generateSpotCode();
-        let codeExists = await Student.findOne({ symposiumCode });
-        let attempts = 0;
-        while (codeExists && attempts < 20) {
-          symposiumCode = generateSpotCode();
-          codeExists = await Student.findOne({ symposiumCode });
-          attempts += 1;
-        }
-        if (codeExists) {
-          throw new Error('Unable to allocate a unique symposium code. Please try again.');
-        }
-
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
-        const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
-
-        student = await Student.create({
-          user: user._id,
-          symposiumCode,
-          registerNumber: cleanRegisterNumber,
-          collegeName,
-          department,
-          year: year || 'III',
-          email: cleanEmail,
-          phone: phone || '9999999999',
-          verificationStatus: 'Approved',
-          isCheckedIn: true,
-          checkInTime: new Date(),
-          checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
-          qrCodeData: qrCodeDataUrl,
-          foodPreference: foodPreference || 'Veg',
-          accommodationRequired: accommodationRequired || 'No',
-          isSpotRegistration: true
+      // 1. Check if student email is already registered (Reject duplicates)
+      const existingUserByEmail = await User.findOne({ email: cleanEmail });
+      const existingStudentByEmail = await Student.findOne({ email: cleanEmail });
+      if (existingUserByEmail || existingStudentByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: `The email "${cleanEmail}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
         });
-      } else {
-        student.verificationStatus = 'Approved';
-        student.isCheckedIn = true;
-        student.checkInTime = new Date();
-        student.checkedInBy = req.user ? req.user.name : 'Spot Counter Volunteer';
-        await student.save();
       }
+
+      // 2. Check if student mobile phone is already registered (Reject duplicates)
+      const phoneDigits = (cleanPhone || '').replace(/[^0-9]/g, '').slice(-10);
+      if (phoneDigits && phoneDigits.length === 10 && phoneDigits !== '9999999999') {
+        const existingStudentByPhone = await Student.findOne({
+          phone: new RegExp(phoneDigits + '$')
+        });
+        if (existingStudentByPhone) {
+          return res.status(400).json({
+            success: false,
+            message: `The mobile number "${phone}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
+          });
+        }
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(initialPassword, salt);
+      const user = await User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' });
+
+      let symposiumCode = generateSpotCode();
+      let codeExists = await Student.findOne({ symposiumCode });
+      let attempts = 0;
+      while (codeExists && attempts < 20) {
+        symposiumCode = generateSpotCode();
+        codeExists = await Student.findOne({ symposiumCode });
+        attempts += 1;
+      }
+      if (codeExists) {
+        throw new Error('Unable to allocate a unique symposium code. Please try again.');
+      }
+
+      const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
+      const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
+
+      const student = await Student.create({
+        user: user._id,
+        symposiumCode,
+        registerNumber: cleanRegisterNumber,
+        collegeName,
+        department,
+        year: year || 'III',
+        email: cleanEmail,
+        phone: phone || '9999999999',
+        verificationStatus: 'Approved',
+        isCheckedIn: true,
+        checkInTime: new Date(),
+        checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
+        qrCodeData: qrCodeDataUrl,
+        foodPreference: foodPreference || 'Veg',
+        accommodationRequired: accommodationRequired || 'No',
+        isSpotRegistration: true
+      });
 
       // Register the walk-in student for the selected events (if any)
       // Spot registration via Volunteer desk allows walk-ins to register even if event capacity is full
@@ -211,59 +213,68 @@ exports.spotRegistration = async (req, res) => {
         student
       });
     } else {
-      let user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
+      // 1. Check if student email is already registered (Reject duplicates)
+      let existingUser = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
+      let existingStudent = mockStore.students.find(s => s.email && s.email.toLowerCase().trim() === cleanEmail);
+      if (existingUser || existingStudent) {
+        return res.status(400).json({
+          success: false,
+          message: `The email "${cleanEmail}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
+        });
+      }
+
+      // 2. Check if student mobile phone is already registered (Reject duplicates)
+      const phoneDigits = (cleanPhone || '').replace(/[^0-9]/g, '').slice(-10);
+      if (phoneDigits && phoneDigits.length === 10 && phoneDigits !== '9999999999') {
+        let existingPhone = mockStore.students.find(s => String(s.phone || '').replace(/[^0-9]/g, '').endsWith(phoneDigits));
+        if (existingPhone) {
+          return res.status(400).json({
+            success: false,
+            message: `The mobile number "${phone}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
+          });
+        }
+      }
+
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(initialPassword, salt);
-      if (!user) {
-        user = { _id: 'u' + (mockStore.users.length + 1), name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
-        mockStore.users.push(user);
-      } else {
-        user.password = hashedPassword;
+      const user = { _id: 'u' + (mockStore.users.length + 1), name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
+      mockStore.users.push(user);
+
+      let symposiumCode = generateSpotCode();
+      let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+      let attempts = 0;
+      while (codeExists && attempts < 20) {
+        symposiumCode = generateSpotCode();
+        codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
+        attempts += 1;
+      }
+      if (codeExists) {
+        throw new Error('Unable to allocate a unique symposium code. Please try again.');
       }
 
-      let student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));
-      if (!student) {
-        let symposiumCode = generateSpotCode();
-        let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-        let attempts = 0;
-        while (codeExists && attempts < 20) {
-          symposiumCode = generateSpotCode();
-          codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-          attempts += 1;
-        }
-        if (codeExists) {
-          throw new Error('Unable to allocate a unique symposium code. Please try again.');
-        }
+      const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
+      const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
-        const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
-
-        student = {
-          _id: 's' + (mockStore.students.length + 1),
-          user: user._id,
-          symposiumCode,
-          registerNumber: cleanRegisterNumber,
-          collegeName,
-          department,
-          year: year || 'III',
-          email: cleanEmail,
-          phone: phone || '9999999999',
-          verificationStatus: 'Approved',
-          isCheckedIn: true,
-          checkInTime: new Date().toISOString(),
-          checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
-          qrCodeData: qrCodeDataUrl,
-          foodPreference: foodPreference || 'Veg',
-          accommodationRequired: accommodationRequired || 'No',
-          isSpotRegistration: true
-        };
-        mockStore.students.push(student);
-      } else {
-        student.verificationStatus = 'Approved';
-        student.isCheckedIn = true;
-        student.checkInTime = new Date().toISOString();
-        student.checkedInBy = req.user ? req.user.name : 'Spot Counter Volunteer';
-      }
+      const student = {
+        _id: 's' + (mockStore.students.length + 1),
+        user: user._id,
+        symposiumCode,
+        registerNumber: cleanRegisterNumber,
+        collegeName,
+        department,
+        year: year || 'III',
+        email: cleanEmail,
+        phone: phone || '9999999999',
+        verificationStatus: 'Approved',
+        isCheckedIn: true,
+        checkInTime: new Date().toISOString(),
+        checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
+        qrCodeData: qrCodeDataUrl,
+        foodPreference: foodPreference || 'Veg',
+        accommodationRequired: accommodationRequired || 'No',
+        isSpotRegistration: true
+      };
+      mockStore.students.push(student);
 
       // Register walk-in for selected events (mock branch)
       if (Array.isArray(eventIds) && eventIds.length) {
