@@ -30,12 +30,6 @@ const FeedbackSchema = new mongoose.Schema({
     required: [true, 'Name is required'],
     trim: true
   },
-  phone: {
-    type: String,
-    required: [true, 'Phone number is required'],
-    trim: true,
-    unique: true
-  },
   email: {
     type: String,
     required: [true, 'Email is required'],

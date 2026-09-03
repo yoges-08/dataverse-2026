@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackSearch, setFeedbackSearch] = useState('');
   const [exportingDocx, setExportingDocx] = useState(false);
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState(null);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,6 +187,26 @@ export default function AdminDashboard() {
       alert('Failed to export feedback Word document.');
     } finally {
       setExportingDocx(false);
+    }
+  };
+
+  const handleDeleteFeedback = async (id, submitterName) => {
+    if (!window.confirm(`Are you sure you want to delete the feedback entry from "${submitterName || 'this participant'}"?`)) {
+      return;
+    }
+    try {
+      setDeletingFeedbackId(id);
+      const res = await API.delete(`/admin/feedback/${id}`);
+      if (res.data.success) {
+        setFeedbackList(prev => prev.filter(f => (f._id || f.id) !== id));
+      } else {
+        alert(res.data.message || 'Failed to delete feedback entry.');
+      }
+    } catch (err) {
+      console.error('Error deleting feedback:', err);
+      alert(err.response?.data?.message || 'Failed to delete feedback entry.');
+    } finally {
+      setDeletingFeedbackId(null);
     }
   };
 
@@ -619,14 +640,13 @@ export default function AdminDashboard() {
     const q = feedbackSearch.trim().toLowerCase();
     return feedbackList.filter(fb => {
       const nameMatch = (fb.name || '').toLowerCase().includes(q);
-      const phoneMatch = (fb.phone || '').toLowerCase().includes(q);
       const emailMatch = (fb.email || '').toLowerCase().includes(q);
       const collegeMatch = (fb.collegeName || '').toLowerCase().includes(q);
       const eventMatch = (fb.eventRatings || []).some(er =>
         (er.eventTitle || '').toLowerCase().includes(q) ||
         (er.comment || '').toLowerCase().includes(q)
       );
-      return nameMatch || phoneMatch || emailMatch || collegeMatch || eventMatch;
+      return nameMatch || emailMatch || collegeMatch || eventMatch;
     });
   }, [feedbackList, feedbackSearch]);
 
@@ -1271,15 +1291,10 @@ export default function AdminDashboard() {
 
                 return (
                   <div key={fb._id || idx} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-bold text-white text-sm">{fb.name || 'Participant'}</span>
-                          {fb.phone && (
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono">
-                              {fb.phone}
-                            </span>
-                          )}
                           <span className="text-xs text-indigo-300 font-mono">
                             {fb.email}
                           </span>
@@ -1288,7 +1303,21 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                       </div>
-                      <span className="text-[11px] text-slate-400 font-medium shrink-0">{dateStr}</span>
+                      <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+                        <span className="text-[11px] text-slate-400 font-medium">{dateStr}</span>
+                        <button
+                          onClick={() => handleDeleteFeedback(fb._id || fb.id, fb.name)}
+                          disabled={deletingFeedbackId === (fb._id || fb.id)}
+                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete feedback entry"
+                        >
+                          {deletingFeedbackId === (fb._id || fb.id) ? (
+                            <Loader className="w-4 h-4 animate-spin text-red-400" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Rated Events Grid */}

@@ -9,7 +9,6 @@ import {
   Send,
   Building,
   Mail,
-  Phone,
   User,
   Loader,
   ArrowRight,
@@ -28,7 +27,6 @@ const STAR_LABELS = {
 
 export default function Feedback() {
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [collegeName, setCollegeName] = useState('');
 
@@ -69,7 +67,7 @@ export default function Feedback() {
   };
 
   // ----------------------------------------------------
-  // Early Duplicate Check (Step 1 -> Step 2 transition)
+  // Early Duplicate Check by Email (Step 1 -> Step 2 transition)
   // ----------------------------------------------------
   const handleProceedToRatings = async (e) => {
     if (e) e.preventDefault();
@@ -78,12 +76,6 @@ export default function Feedback() {
 
     if (!name.trim()) {
       setErrorMsg('Please enter your full name.');
-      return;
-    }
-
-    const cleanPhone = phone.replace(/[\s\-()]/g, '').trim();
-    if (!cleanPhone || cleanPhone.length < 7 || cleanPhone.length > 15) {
-      setErrorMsg('Please enter a valid mobile phone number (10 digits).');
       return;
     }
 
@@ -102,15 +94,12 @@ export default function Feedback() {
       setCheckingDuplicate(true);
       const res = await API.get('/feedback/check', {
         params: {
-          email: email.trim(),
-          phone: cleanPhone
+          email: email.trim()
         }
       });
 
       if (res.data.alreadySubmitted) {
-        const msg = res.data.matchedField === 'phone'
-          ? "You've already submitted feedback with this phone number."
-          : "You've already submitted feedback with this email.";
+        const msg = res.data.message || "You've already submitted feedback with this email.";
         setDuplicateMessage(msg);
         setAlreadySubmitted(true);
         setStep1Verified(false);
@@ -204,7 +193,6 @@ export default function Feedback() {
       setSubmitting(true);
       const res = await API.post('/feedback', {
         name: name.trim(),
-        phone: phone.replace(/[\s\-()]/g, '').trim(),
         email: email.trim(),
         collegeName: collegeName.trim(),
         eventRatings: eventRatingsPayload
@@ -249,7 +237,6 @@ export default function Feedback() {
 
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 max-w-sm mx-auto text-left space-y-1">
             <p><strong>Participant:</strong> <span className="text-white">{name}</span></p>
-            <p><strong>Phone:</strong> <span className="text-emerald-400 font-mono">{phone}</span></p>
             <p><strong>Email:</strong> <span className="text-indigo-300 font-mono">{email}</span></p>
             <p><strong>College:</strong> <span className="text-slate-200">{collegeName}</span></p>
           </div>
@@ -290,13 +277,12 @@ export default function Feedback() {
             </span>
             <h1 className="text-3xl sm:text-4xl font-black text-white">Feedback Already Submitted</h1>
             <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed pt-2">
-              {duplicateMessage || "You've already submitted feedback for DATAVERSE 2026. Thank you!"}
+              {duplicateMessage || "You've already submitted feedback for this email. Thank you!"}
             </p>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 max-w-sm mx-auto">
             <p>Email: <strong className="text-indigo-300 font-mono">{email || '—'}</strong></p>
-            <p className="mt-1">Phone: <strong className="text-emerald-400 font-mono">{phone || '—'}</strong></p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
@@ -312,13 +298,12 @@ export default function Feedback() {
                 setDuplicateMessage('');
                 setStep1Verified(false);
                 setEmail('');
-                setPhone('');
                 setRatings({});
               }}
               className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-sm font-semibold transition-all flex items-center justify-center space-x-2"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Try Another Email / Phone</span>
+              <span>Try Another Email</span>
             </button>
           </div>
         </div>
@@ -327,7 +312,7 @@ export default function Feedback() {
   }
 
   // ----------------------------------------------------
-  // Main Form Flow
+  // Main Form Flow (3 Fields in Step 1)
   // ----------------------------------------------------
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
@@ -354,7 +339,7 @@ export default function Feedback() {
         </div>
       )}
 
-      {/* STEP 1: Participant Information Card (4 Fields) */}
+      {/* STEP 1: Participant Information Card (3 Fields: Name, Email, College) */}
       <div className={`glass-card p-6 sm:p-8 rounded-3xl border transition-all space-y-5 ${
         step1Verified ? 'border-emerald-500/30 bg-slate-900/50' : 'border-indigo-500/25'
       }`}>
@@ -376,7 +361,7 @@ export default function Feedback() {
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-slate-400">All four fields are required before rating events.</p>
+              <p className="text-xs text-slate-400">All three fields are required before rating events.</p>
             </div>
           </div>
 
@@ -391,7 +376,7 @@ export default function Feedback() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Full Name */}
           <div>
             <label className="text-slate-300 font-semibold block mb-1 text-xs">
@@ -409,28 +394,6 @@ export default function Feedback() {
                   setErrorMsg('');
                 }}
                 className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          {/* Mobile Phone Number */}
-          <div>
-            <label className="text-slate-300 font-semibold block mb-1 text-xs">
-              Mobile Phone Number <span className="text-rose-400">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type="tel"
-                required
-                maxLength="15"
-                disabled={step1Verified}
-                placeholder="e.g. 9876543210"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  setErrorMsg('');
-                }}
-                className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-60 font-mono"
               />
             </div>
           </div>
@@ -459,7 +422,7 @@ export default function Feedback() {
           {/* College Name */}
           <div>
             <label className="text-slate-300 font-semibold block mb-1 text-xs">
-              College / Institution Name <span className="text-rose-400">*</span>
+              College / Institution <span className="text-rose-400">*</span>
             </label>
             <div className="relative">
               <input

@@ -24,47 +24,30 @@ const formatStars = (rating) => {
   return '★'.repeat(r) + '☆'.repeat(5 - r);
 };
 
-// @desc    Fast check for existing feedback by email or phone (Instant UX check)
-// @route   GET /api/feedback/check?email=...&phone=...
+// @desc    Fast check for existing feedback by email (Instant UX pre-check)
+// @route   GET /api/feedback/check?email=...
 // @access  Public
 exports.checkFeedback = async (req, res) => {
   try {
     const rawEmail = String(req.query.email || '').trim();
-    const rawPhone = String(req.query.phone || '').trim();
-
     const normalizedEmail = rawEmail.toLowerCase();
-    const normalizedPhone = rawPhone.replace(/[\s\-()]/g, '');
 
-    if (!normalizedEmail && !normalizedPhone) {
+    if (!normalizedEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and/or phone number to check.'
+        message: 'Please provide an email address to check.'
       });
     }
 
     if (isDbConnected()) {
-      if (normalizedEmail) {
-        const matchEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
-        if (matchEmail) {
-          return res.status(200).json({
-            success: true,
-            alreadySubmitted: true,
-            matchedField: 'email',
-            message: "You've already submitted feedback with this email."
-          });
-        }
-      }
-
-      if (normalizedPhone) {
-        const matchPhone = await Feedback.findOne({ phone: normalizedPhone }).lean();
-        if (matchPhone) {
-          return res.status(200).json({
-            success: true,
-            alreadySubmitted: true,
-            matchedField: 'phone',
-            message: "You've already submitted feedback with this phone number."
-          });
-        }
+      const matchEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
+      if (matchEmail) {
+        return res.status(200).json({
+          success: true,
+          alreadySubmitted: true,
+          matchedField: 'email',
+          message: "You've already submitted feedback with this email."
+        });
       }
 
       return res.status(200).json({
@@ -76,32 +59,16 @@ exports.checkFeedback = async (req, res) => {
       // MockStore fallback
       if (!mockStore.feedbacks) mockStore.feedbacks = [];
 
-      if (normalizedEmail) {
-        const matchEmail = mockStore.feedbacks.find(
-          f => String(f.email || '').toLowerCase() === normalizedEmail
-        );
-        if (matchEmail) {
-          return res.status(200).json({
-            success: true,
-            alreadySubmitted: true,
-            matchedField: 'email',
-            message: "You've already submitted feedback with this email."
-          });
-        }
-      }
-
-      if (normalizedPhone) {
-        const matchPhone = mockStore.feedbacks.find(
-          f => String(f.phone || '').replace(/[\s\-()]/g, '') === normalizedPhone
-        );
-        if (matchPhone) {
-          return res.status(200).json({
-            success: true,
-            alreadySubmitted: true,
-            matchedField: 'phone',
-            message: "You've already submitted feedback with this phone number."
-          });
-        }
+      const matchEmail = mockStore.feedbacks.find(
+        f => String(f.email || '').toLowerCase() === normalizedEmail
+      );
+      if (matchEmail) {
+        return res.status(200).json({
+          success: true,
+          alreadySubmitted: true,
+          matchedField: 'email',
+          message: "You've already submitted feedback with this email."
+        });
       }
 
       return res.status(200).json({
@@ -124,7 +91,7 @@ exports.checkFeedback = async (req, res) => {
 // @access  Public
 exports.submitFeedback = async (req, res) => {
   try {
-    const { name, phone, email, collegeName, eventRatings } = req.body;
+    const { name, email, collegeName, eventRatings } = req.body;
 
     // 1. Validate full name
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -134,22 +101,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 2. Validate and normalize phone
-    if (!phone || typeof phone !== 'string') {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid mobile phone number.'
-      });
-    }
-    const normalizedPhone = phone.replace(/[\s\-()]/g, '').trim();
-    if (normalizedPhone.length < 7 || normalizedPhone.length > 15) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid mobile phone number.'
-      });
-    }
-
-    // 3. Validate email
+    // 2. Validate email
     if (!email || typeof email !== 'string') {
       return res.status(400).json({
         success: false,
@@ -165,7 +117,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 4. Validate collegeName
+    // 3. Validate collegeName
     if (!collegeName || typeof collegeName !== 'string' || !collegeName.trim()) {
       return res.status(400).json({
         success: false,
@@ -173,7 +125,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 5. Validate eventRatings array
+    // 4. Validate eventRatings array
     if (!Array.isArray(eventRatings) || eventRatings.length === 0) {
       return res.status(400).json({
         success: false,
@@ -198,7 +150,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 6. Authoritative Duplicate Check (by Email OR Phone)
+    // 5. Authoritative Duplicate Check (by Email ONLY)
     if (isDbConnected()) {
       const existingEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
       if (existingEmail) {
@@ -208,18 +160,9 @@ exports.submitFeedback = async (req, res) => {
         });
       }
 
-      const existingPhone = await Feedback.findOne({ phone: normalizedPhone }).lean();
-      if (existingPhone) {
-        return res.status(400).json({
-          success: false,
-          message: "You've already submitted feedback with this phone number."
-        });
-      }
-
       try {
         const feedback = await Feedback.create({
           name: name.trim(),
-          phone: normalizedPhone,
           email: normalizedEmail,
           collegeName: collegeName.trim(),
           eventRatings: sanitizedRatings
@@ -233,12 +176,9 @@ exports.submitFeedback = async (req, res) => {
       } catch (saveErr) {
         // Handle race conditions or mongo duplicate key index error (E11000)
         if (saveErr.code === 11000 || (saveErr.message && saveErr.message.includes('duplicate key'))) {
-          const isPhoneDuplicate = saveErr.keyPattern?.phone || (saveErr.message && saveErr.message.includes('phone'));
           return res.status(400).json({
             success: false,
-            message: isPhoneDuplicate
-              ? "You've already submitted feedback with this phone number."
-              : "You've already submitted feedback with this email."
+            message: "You've already submitted feedback with this email."
           });
         }
         throw saveErr;
@@ -257,20 +197,9 @@ exports.submitFeedback = async (req, res) => {
         });
       }
 
-      const matchPhone = mockStore.feedbacks.find(
-        f => String(f.phone || '').replace(/[\s\-()]/g, '') === normalizedPhone
-      );
-      if (matchPhone) {
-        return res.status(400).json({
-          success: false,
-          message: "You've already submitted feedback with this phone number."
-        });
-      }
-
       const newFeedback = {
         _id: new mongoose.Types.ObjectId(),
         name: name.trim(),
-        phone: normalizedPhone,
         email: normalizedEmail,
         collegeName: collegeName.trim(),
         eventRatings: sanitizedRatings,
@@ -292,6 +221,58 @@ exports.submitFeedback = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to submit feedback. Please try again later.'
+    });
+  }
+};
+
+// @desc    Delete a feedback entry (Admin only)
+// @route   DELETE /api/admin/feedback/:id or /api/feedback/:id
+// @access  Private (Super Admin)
+exports.deleteFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid feedback ID format.'
+      });
+    }
+
+    if (isDbConnected()) {
+      const deletedFeedback = await Feedback.findByIdAndDelete(id);
+      if (!deletedFeedback) {
+        return res.status(404).json({
+          success: false,
+          message: 'Feedback entry not found.'
+        });
+      }
+    } else {
+      if (!mockStore.feedbacks) mockStore.feedbacks = [];
+      const initialLength = mockStore.feedbacks.length;
+      mockStore.feedbacks = mockStore.feedbacks.filter(
+        f => String(f._id || f.id) !== String(id)
+      );
+
+      if (mockStore.feedbacks.length === initialLength) {
+        return res.status(404).json({
+          success: false,
+          message: 'Feedback entry not found.'
+        });
+      }
+
+      if (typeof mockStore.persist === 'function') mockStore.persist();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Feedback entry deleted successfully.'
+    });
+  } catch (error) {
+    console.error('Error deleting feedback entry:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete feedback entry.'
     });
   }
 };
@@ -427,7 +408,6 @@ exports.exportFeedbackDocx = async (req, res) => {
             children: [
               new Paragraph({ children: [new TextRun({ text: item.name || 'Participant', bold: true, size: 20, color: '1E1B4B' })] }),
               new Paragraph({ children: [new TextRun({ text: `Email: ${item.email || '—'}`, size: 18, color: '4338CA' })] }),
-              new Paragraph({ children: [new TextRun({ text: `Phone: ${item.phone || '—'}`, size: 18, color: '059669' })] }),
               new Paragraph({ children: [new TextRun({ text: `College: ${item.collegeName || '—'}`, size: 18, color: '374151', italics: true })] })
             ]
           }),
