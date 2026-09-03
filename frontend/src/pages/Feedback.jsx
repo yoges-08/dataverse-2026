@@ -49,8 +49,16 @@ export default function Feedback() {
   const step2Ref = useRef(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchEvents();
   }, []);
+
+  // When switching to Success or Already Submitted screen, ensure page scrolls to top
+  useEffect(() => {
+    if (submittedSuccess || alreadySubmitted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [submittedSuccess, alreadySubmitted]);
 
   const fetchEvents = async () => {
     try {
@@ -108,11 +116,6 @@ export default function Feedback() {
 
       // Pre-check passed! Proceed to Step 2
       setStep1Verified(true);
-      setTimeout(() => {
-        if (step2Ref.current) {
-          step2Ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
     } catch (err) {
       console.error('Error checking duplicate feedback:', err);
       setErrorMsg(err.response?.data?.message || 'Failed to verify submission status. Please try again.');
@@ -200,12 +203,14 @@ export default function Feedback() {
 
       if (res.data.success) {
         setSubmittedSuccess(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to submit feedback. Please try again.';
       if (msg.toLowerCase().includes('already submitted')) {
         setDuplicateMessage(msg);
         setAlreadySubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setErrorMsg(msg);
       }
