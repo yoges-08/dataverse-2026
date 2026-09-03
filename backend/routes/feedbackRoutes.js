@@ -6,8 +6,13 @@ const {
   submitFeedback,
   deleteFeedback,
   getAllFeedback,
-  exportFeedbackDocx
+  exportFeedbackDocx,
+  cleanupFeedbackIndexes
 } = require('../controllers/feedbackController');
+
+// Maintenance & index cleanup
+router.get('/feedback/cleanup-indexes', cleanupFeedbackIndexes);
+router.get('/cleanup-indexes', cleanupFeedbackIndexes);
 
 // Public route: instant duplicate check by email
 router.get('/feedback/check', checkFeedback);

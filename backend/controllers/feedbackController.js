@@ -179,12 +179,18 @@ exports.submitFeedback = async (req, res) => {
       } catch (saveErr) {
         // Handle race conditions or mongo duplicate key index error (E11000)
         if (saveErr.code === 11000 || (saveErr.message && saveErr.message.includes('duplicate key'))) {
-          // If the error was caused by the legacy phone_1 index, drop it immediately and retry
-          const isPhoneIndexErr = saveErr.keyPattern?.phone || (saveErr.message && (saveErr.message.includes('phone_1') || saveErr.message.includes('phone')));
-          if (isPhoneIndexErr) {
+          // If the error was caused by the legacy phone_1 index or non-email index, drop it immediately and retry
+          const isEmailDup = saveErr.keyPattern?.email || (saveErr.message && saveErr.message.includes('email_1'));
+          
+          if (!isEmailDup) {
             try {
-              await Feedback.collection.dropIndex('phone_1');
-              console.log('✅ Dropped legacy phone_1 index on duplicate collision; retrying create.');
+              const indexes = await Feedback.collection.indexes();
+              for (const idx of indexes) {
+                if (idx.name !== '_id_' && idx.name !== 'email_1' && !idx.key?.email) {
+                  await Feedback.collection.dropIndex(idx.name).catch(() => {});
+                  console.log(`✅ Dropped legacy index ${idx.name} on collision`);
+                }
+              }
               const retryFeedback = await Feedback.create({
                 name: name.trim(),
                 email: normalizedEmail,
@@ -197,7 +203,11 @@ exports.submitFeedback = async (req, res) => {
                 feedbackId: retryFeedback._id
               });
             } catch (dropErr) {
-              console.error('Failed to drop legacy phone_1 index or retry save:', dropErr);
+              console.error('Failed to auto-clean legacy indexes or retry save:', dropErr);
+              return res.status(400).json({
+                success: false,
+                message: `Database constraint error: ${dropErr.message || saveErr.message}`
+              });
             }
           }
 
@@ -501,5 +511,37 @@ exports.exportFeedbackDocx = async (req, res) => {
       success: false,
       message: 'Failed to export feedback Word document.'
     });
+  }
+};
+
+// @desc    Utility to inspect and clean up legacy indexes on feedbacks collection
+// @route   GET /api/feedback/cleanup-indexes
+// @access  Public
+exports.cleanupFeedbackIndexes = async (req, res) => {
+  try {
+    if (!isDbConnected()) {
+      return res.json({ success: true, message: 'Database operates in in-memory mode' });
+    }
+    const indexesBefore = await Feedback.collection.indexes();
+    const dropped = [];
+    for (const idx of indexesBefore) {
+      if (idx.name !== '_id_' && idx.name !== 'email_1' && !idx.key?.email) {
+        try {
+          await Feedback.collection.dropIndex(idx.name);
+          dropped.push(idx.name);
+        } catch (e) {
+          dropped.push(`${idx.name} (failed: ${e.message})`);
+        }
+      }
+    }
+    const indexesAfter = await Feedback.collection.indexes();
+    return res.json({
+      success: true,
+      indexesBefore,
+      dropped,
+      indexesAfter
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 };
