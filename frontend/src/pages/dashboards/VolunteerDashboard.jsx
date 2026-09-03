@@ -20,7 +20,6 @@ export default function VolunteerDashboard() {
   const [spotForm, setSpotForm] = useState({
     name: '',
     email: '',
-    registerNumber: '',
     collegeName: 'Anjalai Ammal Mahalingam Engineering College',
     department: 'Computer Science & Engineering',
     year: 'III',
@@ -63,7 +62,6 @@ export default function VolunteerDashboard() {
         setSpotForm({
           name: '',
           email: '',
-          registerNumber: '',
           collegeName: 'Anjalai Ammal Mahalingam Engineering College',
           department: 'Computer Science & Engineering',
           year: 'III',
@@ -253,18 +251,6 @@ export default function VolunteerDashboard() {
                   onChange={(e) => setSpotForm({ ...spotForm, email: e.target.value })}
                   placeholder="student@gmail.com"
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-slate-300 font-semibold block mb-1">College Register Number *</label>
-                <input
-                  type="text"
-                  required
-                  value={spotForm.registerNumber}
-                  onChange={(e) => setSpotForm({ ...spotForm, registerNumber: e.target.value })}
-                  placeholder="820421104088"
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono focus:outline-none focus:border-teal-500"
                 />
               </div>
 

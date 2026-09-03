@@ -100,8 +100,9 @@ exports.spotRegistration = async (req, res) => {
 
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
+    const cleanRegisterNumber = (registerNumber || '').trim() || 'N/A';
 
-    if (!cleanName || cleanName === '.' || cleanName.length < 3 || !cleanEmail || !registerNumber || !collegeName || !department) {
+    if (!cleanName || cleanName === '.' || cleanName.length < 3 || !cleanEmail || !collegeName || !department) {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
     }
 
@@ -133,13 +134,13 @@ exports.spotRegistration = async (req, res) => {
           throw new Error('Unable to allocate a unique symposium code. Please try again.');
         }
 
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, type: 'Spot Registration' });
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = await Student.create({
           user: user._id,
           symposiumCode,
-          registerNumber,
+          registerNumber: cleanRegisterNumber,
           collegeName,
           department,
           year: year || 'III',
@@ -206,14 +207,14 @@ exports.spotRegistration = async (req, res) => {
           throw new Error('Unable to allocate a unique symposium code. Please try again.');
         }
 
-        const qrPayload = JSON.stringify({ symposiumCode, registerNumber, type: 'Spot Registration' });
+        const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
         const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
         student = {
           _id: 's' + (mockStore.students.length + 1),
           user: user._id,
           symposiumCode,
-          registerNumber,
+          registerNumber: cleanRegisterNumber,
           collegeName,
           department,
           year: year || 'III',
