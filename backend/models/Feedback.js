@@ -53,4 +53,27 @@ const FeedbackSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Feedback', FeedbackSchema);
+const FeedbackModel = mongoose.model('Feedback', FeedbackSchema);
+
+// Automatically clean up legacy phone_1 unique index in MongoDB if present
+const dropLegacyPhoneIndex = async () => {
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      const indexes = await FeedbackModel.collection.indexes();
+      const hasPhoneIdx = indexes.some(idx => idx.name === 'phone_1' || (idx.key && idx.key.phone));
+      if (hasPhoneIdx) {
+        await FeedbackModel.collection.dropIndex('phone_1');
+        console.log('✅ Successfully dropped legacy phone_1 index from feedbacks collection.');
+      }
+    }
+  } catch (err) {
+    // Ignore if index doesn't exist or collection hasn't been created yet
+  }
+};
+
+mongoose.connection.on('connected', dropLegacyPhoneIndex);
+if (mongoose.connection.readyState === 1) {
+  dropLegacyPhoneIndex();
+}
+
+module.exports = FeedbackModel;

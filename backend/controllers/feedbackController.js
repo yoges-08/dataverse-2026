@@ -40,6 +40,9 @@ exports.checkFeedback = async (req, res) => {
     }
 
     if (isDbConnected()) {
+      // Auto-cleanup legacy phone_1 index from MongoDB if lingering
+      Feedback.collection.dropIndex('phone_1').catch(() => {});
+
       const matchEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
       if (matchEmail) {
         return res.status(200).json({
@@ -176,6 +179,28 @@ exports.submitFeedback = async (req, res) => {
       } catch (saveErr) {
         // Handle race conditions or mongo duplicate key index error (E11000)
         if (saveErr.code === 11000 || (saveErr.message && saveErr.message.includes('duplicate key'))) {
+          // If the error was caused by the legacy phone_1 index, drop it immediately and retry
+          const isPhoneIndexErr = saveErr.keyPattern?.phone || (saveErr.message && (saveErr.message.includes('phone_1') || saveErr.message.includes('phone')));
+          if (isPhoneIndexErr) {
+            try {
+              await Feedback.collection.dropIndex('phone_1');
+              console.log('✅ Dropped legacy phone_1 index on duplicate collision; retrying create.');
+              const retryFeedback = await Feedback.create({
+                name: name.trim(),
+                email: normalizedEmail,
+                collegeName: collegeName.trim(),
+                eventRatings: sanitizedRatings
+              });
+              return res.status(201).json({
+                success: true,
+                message: 'Thank you for your feedback!',
+                feedbackId: retryFeedback._id
+              });
+            } catch (dropErr) {
+              console.error('Failed to drop legacy phone_1 index or retry save:', dropErr);
+            }
+          }
+
           return res.status(400).json({
             success: false,
             message: "You've already submitted feedback with this email."
