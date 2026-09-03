@@ -618,13 +618,15 @@ export default function AdminDashboard() {
     if (!feedbackSearch.trim()) return feedbackList;
     const q = feedbackSearch.trim().toLowerCase();
     return feedbackList.filter(fb => {
+      const nameMatch = (fb.name || '').toLowerCase().includes(q);
+      const phoneMatch = (fb.phone || '').toLowerCase().includes(q);
       const emailMatch = (fb.email || '').toLowerCase().includes(q);
       const collegeMatch = (fb.collegeName || '').toLowerCase().includes(q);
       const eventMatch = (fb.eventRatings || []).some(er =>
         (er.eventTitle || '').toLowerCase().includes(q) ||
         (er.comment || '').toLowerCase().includes(q)
       );
-      return emailMatch || collegeMatch || eventMatch;
+      return nameMatch || phoneMatch || emailMatch || collegeMatch || eventMatch;
     });
   }, [feedbackList, feedbackSearch]);
 
@@ -1271,14 +1273,22 @@ export default function AdminDashboard() {
                   <div key={fb._id || idx} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-bold text-white text-sm">{fb.email}</span>
-                          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-white text-sm">{fb.name || 'Participant'}</span>
+                          {fb.phone && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono">
+                              {fb.phone}
+                            </span>
+                          )}
+                          <span className="text-xs text-indigo-300 font-mono">
+                            {fb.email}
+                          </span>
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                             {fb.collegeName}
                           </span>
                         </div>
                       </div>
-                      <span className="text-[11px] text-slate-400 font-medium">{dateStr}</span>
+                      <span className="text-[11px] text-slate-400 font-medium shrink-0">{dateStr}</span>
                     </div>
 
                     {/* Rated Events Grid */}

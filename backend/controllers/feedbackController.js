@@ -24,24 +24,140 @@ const formatStars = (rating) => {
   return '★'.repeat(r) + '☆'.repeat(5 - r);
 };
 
+// @desc    Fast check for existing feedback by email or phone (Instant UX check)
+// @route   GET /api/feedback/check?email=...&phone=...
+// @access  Public
+exports.checkFeedback = async (req, res) => {
+  try {
+    const rawEmail = String(req.query.email || '').trim();
+    const rawPhone = String(req.query.phone || '').trim();
+
+    const normalizedEmail = rawEmail.toLowerCase();
+    const normalizedPhone = rawPhone.replace(/[\s\-()]/g, '');
+
+    if (!normalizedEmail && !normalizedPhone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and/or phone number to check.'
+      });
+    }
+
+    if (isDbConnected()) {
+      if (normalizedEmail) {
+        const matchEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
+        if (matchEmail) {
+          return res.status(200).json({
+            success: true,
+            alreadySubmitted: true,
+            matchedField: 'email',
+            message: "You've already submitted feedback with this email."
+          });
+        }
+      }
+
+      if (normalizedPhone) {
+        const matchPhone = await Feedback.findOne({ phone: normalizedPhone }).lean();
+        if (matchPhone) {
+          return res.status(200).json({
+            success: true,
+            alreadySubmitted: true,
+            matchedField: 'phone',
+            message: "You've already submitted feedback with this phone number."
+          });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        alreadySubmitted: false,
+        matchedField: null
+      });
+    } else {
+      // MockStore fallback
+      if (!mockStore.feedbacks) mockStore.feedbacks = [];
+
+      if (normalizedEmail) {
+        const matchEmail = mockStore.feedbacks.find(
+          f => String(f.email || '').toLowerCase() === normalizedEmail
+        );
+        if (matchEmail) {
+          return res.status(200).json({
+            success: true,
+            alreadySubmitted: true,
+            matchedField: 'email',
+            message: "You've already submitted feedback with this email."
+          });
+        }
+      }
+
+      if (normalizedPhone) {
+        const matchPhone = mockStore.feedbacks.find(
+          f => String(f.phone || '').replace(/[\s\-()]/g, '') === normalizedPhone
+        );
+        if (matchPhone) {
+          return res.status(200).json({
+            success: true,
+            alreadySubmitted: true,
+            matchedField: 'phone',
+            message: "You've already submitted feedback with this phone number."
+          });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        alreadySubmitted: false,
+        matchedField: null
+      });
+    }
+  } catch (error) {
+    console.error('Error checking feedback duplicate:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify feedback submission status.'
+    });
+  }
+};
+
 // @desc    Submit public symposium event feedback
 // @route   POST /api/feedback or /feedback
 // @access  Public
 exports.submitFeedback = async (req, res) => {
   try {
-    const { email, collegeName, eventRatings } = req.body;
+    const { name, phone, email, collegeName, eventRatings } = req.body;
 
-    // 1. Basic field validation
+    // 1. Validate full name
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter your full name.'
+      });
+    }
+
+    // 2. Validate and normalize phone
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid mobile phone number.'
+      });
+    }
+    const normalizedPhone = phone.replace(/[\s\-()]/g, '').trim();
+    if (normalizedPhone.length < 7 || normalizedPhone.length > 15) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid mobile phone number.'
+      });
+    }
+
+    // 3. Validate email
     if (!email || typeof email !== 'string') {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid email address.'
       });
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const normalizedEmail = email.trim().toLowerCase();
-
     if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({
         success: false,
@@ -49,6 +165,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
+    // 4. Validate collegeName
     if (!collegeName || typeof collegeName !== 'string' || !collegeName.trim()) {
       return res.status(400).json({
         success: false,
@@ -56,7 +173,7 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 2. Validate eventRatings array
+    // 5. Validate eventRatings array
     if (!Array.isArray(eventRatings) || eventRatings.length === 0) {
       return res.status(400).json({
         success: false,
@@ -81,18 +198,28 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 3. Prevent duplicate submission per email (case-insensitive check)
+    // 6. Authoritative Duplicate Check (by Email OR Phone)
     if (isDbConnected()) {
-      const existing = await Feedback.findOne({ email: normalizedEmail });
-      if (existing) {
+      const existingEmail = await Feedback.findOne({ email: normalizedEmail }).lean();
+      if (existingEmail) {
         return res.status(400).json({
           success: false,
-          message: "You've already submitted feedback. Thank you!"
+          message: "You've already submitted feedback with this email."
+        });
+      }
+
+      const existingPhone = await Feedback.findOne({ phone: normalizedPhone }).lean();
+      if (existingPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "You've already submitted feedback with this phone number."
         });
       }
 
       try {
         const feedback = await Feedback.create({
+          name: name.trim(),
+          phone: normalizedPhone,
           email: normalizedEmail,
           collegeName: collegeName.trim(),
           eventRatings: sanitizedRatings
@@ -106,9 +233,12 @@ exports.submitFeedback = async (req, res) => {
       } catch (saveErr) {
         // Handle race conditions or mongo duplicate key index error (E11000)
         if (saveErr.code === 11000 || (saveErr.message && saveErr.message.includes('duplicate key'))) {
+          const isPhoneDuplicate = saveErr.keyPattern?.phone || (saveErr.message && saveErr.message.includes('phone'));
           return res.status(400).json({
             success: false,
-            message: "You've already submitted feedback. Thank you!"
+            message: isPhoneDuplicate
+              ? "You've already submitted feedback with this phone number."
+              : "You've already submitted feedback with this email."
           });
         }
         throw saveErr;
@@ -116,19 +246,31 @@ exports.submitFeedback = async (req, res) => {
     } else {
       // MockStore fallback
       if (!mockStore.feedbacks) mockStore.feedbacks = [];
-      const existing = mockStore.feedbacks.find(
-        f => String(f.email).toLowerCase() === normalizedEmail
-      );
 
-      if (existing) {
+      const matchEmail = mockStore.feedbacks.find(
+        f => String(f.email || '').toLowerCase() === normalizedEmail
+      );
+      if (matchEmail) {
         return res.status(400).json({
           success: false,
-          message: "You've already submitted feedback. Thank you!"
+          message: "You've already submitted feedback with this email."
+        });
+      }
+
+      const matchPhone = mockStore.feedbacks.find(
+        f => String(f.phone || '').replace(/[\s\-()]/g, '') === normalizedPhone
+      );
+      if (matchPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "You've already submitted feedback with this phone number."
         });
       }
 
       const newFeedback = {
         _id: new mongoose.Types.ObjectId(),
+        name: name.trim(),
+        phone: normalizedPhone,
         email: normalizedEmail,
         collegeName: collegeName.trim(),
         eventRatings: sanitizedRatings,
@@ -221,9 +363,9 @@ exports.exportFeedbackDocx = async (req, res) => {
           children: [new Paragraph({ children: [new TextRun({ text: 'S.No', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
-          width: { size: 28, type: WidthType.PERCENTAGE },
+          width: { size: 30, type: WidthType.PERCENTAGE },
           shading: { fill: '4F46E5', type: ShadingType.CLEAR },
-          children: [new Paragraph({ children: [new TextRun({ text: 'Participant & College', bold: true, color: 'FFFFFF', size: 20 })] })]
+          children: [new Paragraph({ children: [new TextRun({ text: 'Participant Details', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
           width: { size: 16, type: WidthType.PERCENTAGE },
@@ -231,7 +373,7 @@ exports.exportFeedbackDocx = async (req, res) => {
           children: [new Paragraph({ children: [new TextRun({ text: 'Submitted Date', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
-          width: { size: 50, type: WidthType.PERCENTAGE },
+          width: { size: 48, type: WidthType.PERCENTAGE },
           shading: { fill: '4F46E5', type: ShadingType.CLEAR },
           children: [new Paragraph({ children: [new TextRun({ text: 'Event Ratings & Feedback Comments', bold: true, color: 'FFFFFF', size: 20 })] })]
         })
@@ -281,10 +423,12 @@ exports.exportFeedbackDocx = async (req, res) => {
             children: [new Paragraph({ children: [new TextRun({ text: String(index + 1), size: 18, bold: true })] })]
           }),
           new TableCell({
-            width: { size: 28, type: WidthType.PERCENTAGE },
+            width: { size: 30, type: WidthType.PERCENTAGE },
             children: [
-              new Paragraph({ children: [new TextRun({ text: item.email || '', bold: true, size: 19, color: '4338CA' })] }),
-              new Paragraph({ children: [new TextRun({ text: item.collegeName || '', size: 18, color: '374151' })] })
+              new Paragraph({ children: [new TextRun({ text: item.name || 'Participant', bold: true, size: 20, color: '1E1B4B' })] }),
+              new Paragraph({ children: [new TextRun({ text: `Email: ${item.email || '—'}`, size: 18, color: '4338CA' })] }),
+              new Paragraph({ children: [new TextRun({ text: `Phone: ${item.phone || '—'}`, size: 18, color: '059669' })] }),
+              new Paragraph({ children: [new TextRun({ text: `College: ${item.collegeName || '—'}`, size: 18, color: '374151', italics: true })] })
             ]
           }),
           new TableCell({
@@ -292,7 +436,7 @@ exports.exportFeedbackDocx = async (req, res) => {
             children: [new Paragraph({ children: [new TextRun({ text: dateStr, size: 17, color: '4B5563' })] })]
           }),
           new TableCell({
-            width: { size: 50, type: WidthType.PERCENTAGE },
+            width: { size: 48, type: WidthType.PERCENTAGE },
             children: eventParagraphs
           })
         ]
