@@ -20,7 +20,7 @@ export default function VolunteerDashboard() {
   const [spotForm, setSpotForm] = useState({
     name: '',
     email: '',
-    collegeName: 'Anjalai Ammal Mahalingam Engineering College',
+    collegeName: '',
     department: 'Computer Science & Engineering',
     year: 'III',
     phone: '',
@@ -38,9 +38,36 @@ export default function VolunteerDashboard() {
   }, []);
 
   const toggleEvent = (id) => {
-    setSelectedEventIds(prev =>
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
+    if (selectedEventIds.includes(id)) {
+      setSelectedEventIds(prev => prev.filter(e => e !== id));
+      setSpotMsg({ type: '', text: '' });
+      return;
+    }
+
+    const target = events.find(e => e._id === id);
+    if (!target) return;
+
+    const selectedEvents = events.filter(e => selectedEventIds.includes(e._id));
+    if (selectedEvents.length >= 4) {
+      setSpotMsg({ type: 'error', text: 'Limit reached: Maximum 4 events total allowed (max 2 Tech & 2 Non-Tech).' });
+      return;
+    }
+
+    const techCount = selectedEvents.filter(e => e.category === 'Technical').length;
+    const nonTechCount = selectedEvents.filter(e => e.category === 'Non-Technical').length;
+
+    if (target.category === 'Technical' && techCount >= 2) {
+      setSpotMsg({ type: 'error', text: 'Category limit reached: Maximum 2 Technical events allowed.' });
+      return;
+    }
+
+    if (target.category === 'Non-Technical' && nonTechCount >= 2) {
+      setSpotMsg({ type: 'error', text: 'Category limit reached: Maximum 2 Non-Technical events allowed.' });
+      return;
+    }
+
+    setSpotMsg({ type: '', text: '' });
+    setSelectedEventIds(prev => [...prev, id]);
   };
 
   const handleSpotSubmit = async (e) => {
@@ -63,7 +90,7 @@ export default function VolunteerDashboard() {
         setSpotForm({
           name: '',
           email: '',
-          collegeName: 'Anjalai Ammal Mahalingam Engineering College',
+          collegeName: '',
           department: 'Computer Science & Engineering',
           year: 'III',
           phone: '',
@@ -190,44 +217,71 @@ export default function VolunteerDashboard() {
 
               {/* Register the walk-in student to events */}
               <div className="sm:col-span-2">
-                <label className="text-slate-300 font-semibold block mb-1 flex items-center space-x-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                  <span>Register for Events (optional — select one or more)</span>
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                  <label className="text-slate-300 font-semibold flex items-center space-x-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Register for Events (optional — select up to 4)</span>
+                  </label>
+                  <span className="text-[10px] text-teal-400 font-medium">
+                    Limit: Up to 4 events total (max 2 Tech &amp; 2 Non-Tech)
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto p-2 rounded-xl bg-slate-900 border border-slate-700">
                   {events.length === 0 ? (
                     <span className="text-[10px] text-slate-500 col-span-2 p-2">Loading events...</span>
                   ) : (
                     events.map(ev => {
                       const isFull = ev.maxParticipants > 0 && ev.currentRegistrations >= ev.maxParticipants;
+                      const isSelected = selectedEventIds.includes(ev._id);
                       return (
                         <button
                           key={ev._id}
                           type="button"
                           onClick={() => toggleEvent(ev._id)}
                           className={`text-left p-2.5 rounded-lg border text-[10px] font-semibold transition-all ${
-                            selectedEventIds.includes(ev._id)
-                              ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                            isSelected
+                              ? 'bg-teal-600/20 border-teal-500 text-teal-300 shadow-sm'
                               : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-teal-500/50'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-1">
-                            <span className="block font-bold truncate">{ev.title}</span>
+                            <span className="block font-bold truncate">
+                              <span className={`inline-block px-1.5 py-0.5 mr-1.5 rounded text-[9px] font-bold ${
+                                ev.category === 'Technical' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30'
+                              }`}>
+                                {ev.category === 'Technical' ? 'Tech' : 'Non-Tech'}
+                              </span>
+                              {ev.title}
+                            </span>
                             {isFull && (
                               <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shrink-0">
                                 Full (Spot OK)
                               </span>
                             )}
                           </div>
-                          <span className="block text-[9px] opacity-70">{ev.venue}{ev.date ? ` • ${ev.date}` : ''}</span>
+                          <span className="block text-[9px] opacity-70 mt-0.5">{ev.venue}{ev.date ? ` • ${ev.date}` : ''}</span>
                         </button>
                       );
                     })
                   )}
                 </div>
-                {selectedEventIds.length > 0 && (
-                  <span className="text-[9px] text-teal-300 mt-1 block">Selected: {selectedEventIds.length} event(s)</span>
-                )}
+                {(() => {
+                  const selectedEvents = events.filter(e => selectedEventIds.includes(e._id));
+                  const techCount = selectedEvents.filter(e => e.category === 'Technical').length;
+                  const nonTechCount = selectedEvents.filter(e => e.category === 'Non-Technical').length;
+                  return (
+                    <div className="flex items-center justify-between text-[10px] mt-1.5 text-slate-400">
+                      <span>
+                        Selected: <strong className="text-teal-300">{selectedEventIds.length}/4</strong>{' '}
+                        (Tech: <strong className={techCount >= 2 ? 'text-amber-300' : 'text-slate-200'}>{techCount}/2</strong>,{' '}
+                        Non-Tech: <strong className={nonTechCount >= 2 ? 'text-amber-300' : 'text-slate-200'}>{nonTechCount}/2</strong>)
+                      </span>
+                      {selectedEventIds.length === 4 && (
+                        <span className="text-teal-400 font-bold">Max 4 events selected</span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>
@@ -262,19 +316,29 @@ export default function VolunteerDashboard() {
                   required
                   value={spotForm.collegeName}
                   onChange={(e) => setSpotForm({ ...spotForm, collegeName: e.target.value })}
+                  placeholder="e.g. Anjalai Ammal Mahalingam Engineering College"
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
                 <label className="text-slate-300 font-semibold block mb-1">Department *</label>
-                <input
-                  type="text"
+                <select
                   required
                   value={spotForm.department}
                   onChange={(e) => setSpotForm({ ...spotForm, department: e.target.value })}
-                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
-                />
+                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                  <option value="Artificial Intelligence & Machine Learning">Artificial Intelligence & Machine Learning</option>
+                  <option value="Chemical Engineering">Chemical Engineering</option>
+                  <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                  <option value="Electrical & Electronics Engineering">Electrical & Electronics Engineering</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                </select>
               </div>
 
               <div>

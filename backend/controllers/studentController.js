@@ -108,6 +108,26 @@ exports.spotRegistration = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
     }
 
+    if (Array.isArray(eventIds) && eventIds.length) {
+      if (eventIds.length > 4) {
+        return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
+      }
+
+      const eventsToCheck = isDbConnected()
+        ? await Event.find({ _id: { $in: eventIds } })
+        : mockStore.events.filter(e => eventIds.includes(e._id) || eventIds.includes(String(e._id)));
+
+      const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
+      const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
+
+      if (techCount > 2) {
+        return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
+      }
+      if (nonTechCount > 2) {
+        return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
+      }
+    }
+
     if (isDbConnected()) {
       let user = await User.findOne({ email: cleanEmail });
       let student;
