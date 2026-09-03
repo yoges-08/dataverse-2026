@@ -129,28 +129,18 @@ exports.spotRegistration = async (req, res) => {
     }
 
     if (isDbConnected()) {
-      // 1. Check if student email is already registered (Reject duplicates)
-      const existingUserByEmail = await User.findOne({ email: cleanEmail });
-      const existingStudentByEmail = await Student.findOne({ email: cleanEmail });
-      if (existingUserByEmail || existingStudentByEmail) {
-        return res.status(400).json({
-          success: false,
-          message: `The email "${cleanEmail}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
-        });
-      }
+      const existingStudent = await Student.findOne({
+        $or: [
+          { email: cleanEmail },
+          { phone: cleanPhone }
+        ]
+      });
 
-      // 2. Check if student mobile phone is already registered (Reject duplicates)
-      const phoneDigits = (cleanPhone || '').replace(/[^0-9]/g, '').slice(-10);
-      if (phoneDigits && phoneDigits.length === 10 && phoneDigits !== '9999999999') {
-        const existingStudentByPhone = await Student.findOne({
-          phone: new RegExp(phoneDigits + '$')
+      if (existingStudent) {
+        return res.status(409).json({
+          success: false,
+          message: "A student with this email or phone number is already registered."
         });
-        if (existingStudentByPhone) {
-          return res.status(400).json({
-            success: false,
-            message: `The mobile number "${phone}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
-          });
-        }
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -213,26 +203,16 @@ exports.spotRegistration = async (req, res) => {
         student
       });
     } else {
-      // 1. Check if student email is already registered (Reject duplicates)
-      let existingUser = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
-      let existingStudent = mockStore.students.find(s => s.email && s.email.toLowerCase().trim() === cleanEmail);
-      if (existingUser || existingStudent) {
-        return res.status(400).json({
-          success: false,
-          message: `The email "${cleanEmail}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
-        });
-      }
+      const existingStudent = mockStore.students.find(s =>
+        (s.email && s.email.toLowerCase().trim() === cleanEmail) ||
+        (s.phone && s.phone.trim() === cleanPhone)
+      );
 
-      // 2. Check if student mobile phone is already registered (Reject duplicates)
-      const phoneDigits = (cleanPhone || '').replace(/[^0-9]/g, '').slice(-10);
-      if (phoneDigits && phoneDigits.length === 10 && phoneDigits !== '9999999999') {
-        let existingPhone = mockStore.students.find(s => String(s.phone || '').replace(/[^0-9]/g, '').endsWith(phoneDigits));
-        if (existingPhone) {
-          return res.status(400).json({
-            success: false,
-            message: `The mobile number "${phone}" is already registered for DATAVERSE 2026. Duplicate spot registration is not allowed. Please check them in via QR scanner or Attendee list.`
-          });
-        }
+      if (existingStudent) {
+        return res.status(409).json({
+          success: false,
+          message: "A student with this email or phone number is already registered."
+        });
       }
 
       const salt = await bcrypt.genSalt(10);
