@@ -145,6 +145,12 @@ export default function Login() {
             <LogIn className="w-4 h-4" />
             <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
           </button>
+
+          <div className="pt-2 text-center">
+            <p className="text-[11px] text-slate-400">
+              Spot registered at desk? Password is your <span className="text-teal-400 font-semibold">mobile phone number</span>.
+            </p>
+          </div>
         </form>
       </div>
     </div>

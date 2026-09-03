@@ -101,6 +101,8 @@ exports.spotRegistration = async (req, res) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
     const cleanRegisterNumber = (registerNumber || '').trim() || 'N/A';
+    const cleanPhone = (phone || '').replace(/\s+/g, '').trim() || '9999999999';
+    const initialPassword = cleanPhone;
 
     if (!cleanName || cleanName === '.' || cleanName.length < 3 || !cleanEmail || !collegeName || !department) {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
@@ -116,8 +118,12 @@ exports.spotRegistration = async (req, res) => {
       }
       if (!user) {
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
+        const hashedPassword = await bcrypt.hash(initialPassword, salt);
         user = await User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' });
+      } else {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(initialPassword, salt);
+        await user.save();
       }
 
       student = await Student.findOne({ user: user._id });
@@ -186,11 +192,13 @@ exports.spotRegistration = async (req, res) => {
       });
     } else {
       let user = mockStore.users.find(u => u.email.toLowerCase().trim() === cleanEmail);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(initialPassword, salt);
       if (!user) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(generateSpotPassword(), salt);
         user = { _id: 'u' + (mockStore.users.length + 1), name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
         mockStore.users.push(user);
+      } else {
+        user.password = hashedPassword;
       }
 
       let student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));

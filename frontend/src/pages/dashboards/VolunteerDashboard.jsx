@@ -54,9 +54,10 @@ export default function VolunteerDashboard() {
         eventIds: selectedEventIds
       });
       if (res.data.success) {
+        const studentPhone = spotForm.phone ? spotForm.phone.trim() : '';
         setSpotMsg({
           type: 'success',
-          text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}`
+          text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}${studentPhone ? ` (Login Password: ${studentPhone})` : ''}`
         });
         setBadgeStudent(res.data.student);
         setSpotForm({
@@ -277,12 +278,15 @@ export default function VolunteerDashboard() {
               </div>
 
               <div>
-                <label className="text-slate-300 font-semibold block mb-1">Mobile Phone</label>
+                <label className="text-slate-300 font-semibold block mb-1">
+                  Mobile Phone Number * <span className="text-[10px] text-teal-400 font-normal">(Used as Website Login Password)</span>
+                </label>
                 <input
-                  type="text"
+                  type="tel"
+                  required
                   value={spotForm.phone}
                   onChange={(e) => setSpotForm({ ...spotForm, phone: e.target.value })}
-                  placeholder="9876543210"
+                  placeholder="e.g. 9876543210"
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
                 />
               </div>
