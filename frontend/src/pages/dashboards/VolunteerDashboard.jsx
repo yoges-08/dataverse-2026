@@ -30,7 +30,7 @@ export default function VolunteerDashboard() {
   });
   const [selectedEventIds, setSelectedEventIds] = useState([]);
   const [spotLoading, setSpotLoading] = useState(false);
-  const [spotMsg, setSpotMsg] = useState({ type: '', text: '', warning: '' });
+  const [spotMsg, setSpotMsg] = useState({ type: '', text: '' });
 
   useEffect(() => {
     API.get('/events').then((res) => {
@@ -48,23 +48,16 @@ export default function VolunteerDashboard() {
     e.preventDefault();
     try {
       setSpotLoading(true);
-      setSpotMsg({ type: '', text: '', warning: '' });
+      setSpotMsg({ type: '', text: '' });
 
       const res = await API.post('/student/spot-registration', {
         ...spotForm,
         eventIds: selectedEventIds
       });
       if (res.data.success) {
-        let warningText = '';
-        if (Array.isArray(res.data.skippedEvents) && res.data.skippedEvents.length > 0) {
-          const titles = res.data.skippedEvents.map(se => se.title || 'Event').join(', ');
-          warningText = `Student registered, but could not be added to: ${titles} (event is full)`;
-        }
-
         setSpotMsg({
           type: 'success',
-          text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}`,
-          warning: warningText
+          text: `Spot Registration & Auto-Check-In Successful! Code: ${res.data.student.symposiumCode}`
         });
         setBadgeStudent(res.data.student);
         setSpotForm({
@@ -81,7 +74,7 @@ export default function VolunteerDashboard() {
         setSelectedEventIds([]);
       }
     } catch (err) {
-      setSpotMsg({ type: 'error', text: err.response?.data?.message || 'Spot registration failed', warning: '' });
+      setSpotMsg({ type: 'error', text: err.response?.data?.message || 'Spot registration failed' });
     } finally {
       setSpotLoading(false);
     }
@@ -181,23 +174,15 @@ export default function VolunteerDashboard() {
           </div>
 
           {spotMsg.text && (
-            <div className="space-y-2">
-              <div className={`p-4 rounded-xl text-xs flex items-center space-x-2 ${
-                spotMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
-              }`}>
-                {spotMsg.type === 'success' ? (
-                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
-                )}
-                <span>{spotMsg.text}</span>
-              </div>
-              {spotMsg.warning && (
-                <div className="p-4 rounded-xl text-xs flex items-center space-x-2 bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                  <AlertCircle className="w-5 h-5 shrink-0 text-amber-400" />
-                  <span>{spotMsg.warning}</span>
-                </div>
+            <div className={`p-4 rounded-xl text-xs flex items-center space-x-2 ${
+              spotMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'
+            }`}>
+              {spotMsg.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
               )}
+              <span>{spotMsg.text}</span>
             </div>
           )}
 
@@ -214,21 +199,31 @@ export default function VolunteerDashboard() {
                   {events.length === 0 ? (
                     <span className="text-[10px] text-slate-500 col-span-2 p-2">Loading events...</span>
                   ) : (
-                    events.map(ev => (
-                      <button
-                        key={ev._id}
-                        type="button"
-                        onClick={() => toggleEvent(ev._id)}
-                        className={`text-left p-2.5 rounded-lg border text-[10px] font-semibold transition-all ${
-                          selectedEventIds.includes(ev._id)
-                            ? 'bg-teal-600/20 border-teal-500 text-teal-300'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-teal-500/50'
-                        }`}
-                      >
-                        <span className="block font-bold">{ev.title}</span>
-                        <span className="block text-[9px] opacity-70">{ev.venue}{ev.date ? ` • ${ev.date}` : ''}</span>
-                      </button>
-                    ))
+                    events.map(ev => {
+                      const isFull = ev.maxParticipants > 0 && ev.currentRegistrations >= ev.maxParticipants;
+                      return (
+                        <button
+                          key={ev._id}
+                          type="button"
+                          onClick={() => toggleEvent(ev._id)}
+                          className={`text-left p-2.5 rounded-lg border text-[10px] font-semibold transition-all ${
+                            selectedEventIds.includes(ev._id)
+                              ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                              : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-teal-500/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="block font-bold truncate">{ev.title}</span>
+                            {isFull && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shrink-0">
+                                Full (Spot OK)
+                              </span>
+                            )}
+                          </div>
+                          <span className="block text-[9px] opacity-70">{ev.venue}{ev.date ? ` • ${ev.date}` : ''}</span>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
                 {selectedEventIds.length > 0 && (
