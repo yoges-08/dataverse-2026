@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
-  FileBadge, Loader, Code
+  FileBadge, Loader, Code, Star
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -43,6 +43,12 @@ export default function AdminDashboard() {
   const [certSearch, setCertSearch] = useState('');
   const [certificates, setCertificates] = useState([]);
   const [certDeleting, setCertDeleting] = useState(null);
+
+  // Feedback tab state
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackSearch, setFeedbackSearch] = useState('');
+  const [exportingDocx, setExportingDocx] = useState(false);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,6 +152,43 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadFeedback = async () => {
+    try {
+      setFeedbackBusy(true);
+      const res = await API.get('/admin/feedback');
+      if (res.data.success) {
+        setFeedbackList(res.data.feedback || []);
+      }
+    } catch (err) {
+      console.error('Error loading feedback:', err);
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
+
+  const handleExportDocx = async () => {
+    try {
+      setExportingDocx(true);
+      const res = await API.get('/admin/feedback/export', { responseType: 'blob' });
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DATAVERSE_Feedback_${Date.now()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting feedback Word docx:', err);
+      alert('Failed to export feedback Word document.');
+    } finally {
+      setExportingDocx(false);
+    }
+  };
+
   const ensureTabDataLoaded = useCallback(async (tabId) => {
     if (loadedTabs[tabId]) return;
     try {
@@ -160,6 +203,8 @@ export default function AdminDashboard() {
         if (res.data.success) setAnnouncements(res.data.announcements);
       } else if (tabId === 'messages') {
         await loadContactMessages();
+      } else if (tabId === 'feedback') {
+        await loadFeedback();
       }
       setLoadedTabs(prev => ({ ...prev, [tabId]: true }));
     } catch (err) {
@@ -568,6 +613,20 @@ export default function AdminDashboard() {
     });
   }, [students, certSearch]);
 
+  // Feedback filtered by search query
+  const filteredFeedback = useMemo(() => {
+    if (!feedbackSearch.trim()) return feedbackList;
+    const q = feedbackSearch.trim().toLowerCase();
+    return feedbackList.filter(fb => {
+      const emailMatch = (fb.email || '').toLowerCase().includes(q);
+      const collegeMatch = (fb.collegeName || '').toLowerCase().includes(q);
+      const eventMatch = (fb.eventRatings || []).some(er =>
+        (er.eventTitle || '').toLowerCase().includes(q) ||
+        (er.comment || '').toLowerCase().includes(q)
+      );
+      return emailMatch || collegeMatch || eventMatch;
+    });
+  }, [feedbackList, feedbackSearch]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -629,7 +688,8 @@ export default function AdminDashboard() {
           { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
           { id: 'announcements', label: `Announcements (${announcements.length})` },
-          { id: 'messages', label: `Contact Messages (${contactMessages.length})` }
+          { id: 'messages', label: `Contact Messages (${contactMessages.length})` },
+          { id: 'feedback', label: `Feedback (${feedbackList.length})` }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1123,6 +1183,128 @@ export default function AdminDashboard() {
                   <p className="text-xs text-slate-300 mt-1 whitespace-pre-wrap">{msg.message}</p>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 7: FEEDBACK & RATINGS */}
+      {activeTab === 'feedback' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
+                <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                <span>Public Event Feedback & Ratings ({feedbackList.length})</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Reviews and ratings submitted by symposium attendees and public visitors.
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <button
+                onClick={loadFeedback}
+                disabled={feedbackBusy}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-700 flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+              >
+                {feedbackBusy ? <Loader className="w-4 h-4 animate-spin text-indigo-400" /> : null}
+                <span>Refresh</span>
+              </button>
+
+              <button
+                onClick={handleExportDocx}
+                disabled={exportingDocx || feedbackList.length === 0}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exportingDocx ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    <span>Generating Word...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Export as Word (.docx)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Search Filter */}
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 flex items-center">
+            <div className="relative w-full max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="Search by Email, College, or Event..."
+                value={feedbackSearch}
+                onChange={(e) => setFeedbackSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+          </div>
+
+          {feedbackBusy ? (
+            <div className="glass-card p-12 rounded-2xl text-center space-y-3">
+              <Loader className="w-6 h-6 animate-spin text-indigo-400 mx-auto" />
+              <p className="text-xs text-slate-400">Loading feedback submissions...</p>
+            </div>
+          ) : filteredFeedback.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/50 rounded-2xl border border-slate-800">
+              {feedbackList.length === 0
+                ? 'No feedback submissions received yet.'
+                : 'No feedback submissions match your search query.'}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredFeedback.map((fb, idx) => {
+                const dateStr = fb.createdAt
+                  ? new Date(fb.createdAt).toLocaleString('en-IN', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short'
+                    })
+                  : '—';
+
+                return (
+                  <div key={fb._id || idx} className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-white text-sm">{fb.email}</span>
+                          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                            {fb.collegeName}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-medium">{dateStr}</span>
+                    </div>
+
+                    {/* Rated Events Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      {(fb.eventRatings || []).map((er, rIdx) => (
+                        <div key={rIdx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-xs text-slate-200 truncate">
+                              {er.eventTitle || 'Event'}
+                            </span>
+                            <div className="flex items-center space-x-1 shrink-0 text-amber-400">
+                              <span className="text-xs font-black">{'★'.repeat(er.rating) + '☆'.repeat(5 - er.rating)}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({er.rating}/5)</span>
+                            </div>
+                          </div>
+                          {er.comment && (
+                            <p className="text-xs text-slate-300 italic pt-1 border-t border-slate-800/50">
+                              "{er.comment}"
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

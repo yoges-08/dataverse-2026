@@ -212,6 +212,8 @@ app.use('/api/certificates', require('./routes/certificateRoutes'));
 app.use('/api/teams', require('./routes/teamRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
+app.use('/api/feedback', require('./routes/feedbackRoutes'));
+app.use('/api', require('./routes/feedbackRoutes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

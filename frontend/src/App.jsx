@@ -14,6 +14,7 @@ const Schedule = lazy(() => import('./pages/Schedule'));
 const Sponsors = lazy(() => import('./pages/Sponsors'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Feedback = lazy(() => import('./pages/Feedback'));
 const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -114,7 +115,7 @@ export default function App() {
 
 // Route transitions: remount the route content per path so each page
 // fades in with a subtle rise (tab-switch style animation).
-const NAV_ORDER = ['/', '/events', '/schedule', '/sponsors', '/about', '/contact'];
+const NAV_ORDER = ['/', '/events', '/schedule', '/sponsors', '/about', '/contact', '/feedback'];
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -145,6 +146,7 @@ function AnimatedRoutes() {
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signin" element={<Navigate to="/login" replace />} />

@@ -13,6 +13,7 @@ class MockStore {
     this.certificates = [];
     this.announcements = [];
     this.teams = [];
+    this.feedbacks = [];
     this.dataFile = path.join(__dirname, '..', 'data', 'db.json');
     // Restore previously saved data (survives server restarts)
     this.restored = this.loadFromFile();
@@ -31,6 +32,7 @@ class MockStore {
       this.certificates = raw.certificates || [];
       this.announcements = raw.announcements || [];
       this.teams = raw.teams || [];
+      this.feedbacks = raw.feedbacks || [];
       console.log('💾 Restored DATAVERSE data from local storage (backend/data/db.json).');
       return true;
     } catch (e) {
@@ -51,7 +53,8 @@ class MockStore {
         attendance: this.attendance,
         certificates: this.certificates,
         announcements: this.announcements,
-        teams: this.teams
+        teams: this.teams,
+        feedbacks: this.feedbacks
       };
       fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
     } catch (e) {

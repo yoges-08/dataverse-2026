@@ -68,6 +68,7 @@ export default function Navbar() {
     { to: '/', label: 'Home', end: true },
     { to: '/events', label: 'Events', end: false },
     { to: '/about', label: 'About AAMEC', end: false },
+    { to: '/feedback', label: 'Feedback', end: false },
     { to: '/contact', label: 'Contact', end: false },
   ];
 
