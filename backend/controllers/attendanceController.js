@@ -196,3 +196,199 @@ exports.getAttendanceLogs = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching attendance logs' });
   }
 };
+
+exports.serveFood = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: 'Scan payload or student code is required' });
+
+    let searchCode = String(code).trim();
+    try {
+      if (searchCode.startsWith('{') && searchCode.endsWith('}')) {
+        const parsed = JSON.parse(searchCode);
+        searchCode = parsed.symposiumCode || parsed.registerNumber || searchCode;
+      }
+    } catch (e) {}
+
+    const cleanPhoneDigits = searchCode.replace(/[^0-9]/g, '').slice(-10);
+
+    if (isDbConnected()) {
+      const orConditions = [
+        { symposiumCode: searchCode },
+        { registerNumber: searchCode },
+        { email: searchCode.toLowerCase() }
+      ];
+      if (cleanPhoneDigits.length === 10) {
+        orConditions.push({ phone: new RegExp(cleanPhoneDigits + '$') });
+      }
+
+      const student = await Student.findOne({ $or: orConditions }).populate('user', 'name email');
+
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: `No student record found for '${searchCode}'. Please verify at the registration desk.`
+        });
+      }
+
+      const studentName = student.user ? student.user.name : (student.name || student.email);
+
+      // Check if food was already served
+      if (student.isFoodServed) {
+        return res.status(400).json({
+          success: false,
+          alreadyServed: true,
+          message: `Meal already collected! Student '${studentName}' already received their Veg lunch at ${new Date(student.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (by ${student.foodServedBy || 'Canteen Counter'}).`,
+          student: {
+            id: student._id,
+            name: studentName,
+            symposiumCode: student.symposiumCode,
+            collegeName: student.collegeName,
+            department: student.department,
+            isFoodServed: true,
+            foodServedAt: student.foodServedAt,
+            foodServedBy: student.foodServedBy
+          }
+        });
+      }
+
+      // Mark food as served
+      student.isFoodServed = true;
+      student.foodServedAt = new Date();
+      student.foodServedBy = req.user ? req.user.name : 'Canteen Volunteer';
+      await student.save();
+
+      return res.status(200).json({
+        success: true,
+        alreadyServed: false,
+        message: `Meal Approved! 1 Veg Lunch served to ${studentName}.`,
+        student: {
+          id: student._id,
+          name: studentName,
+          symposiumCode: student.symposiumCode,
+          collegeName: student.collegeName,
+          department: student.department,
+          isFoodServed: true,
+          foodServedAt: student.foodServedAt,
+          foodServedBy: student.foodServedBy
+        }
+      });
+    } else {
+      // mockStore in-memory branch
+      const student = mockStore.students.find(s =>
+        (s.symposiumCode && s.symposiumCode.toLowerCase() === searchCode.toLowerCase()) ||
+        (s.email && s.email.toLowerCase() === searchCode.toLowerCase()) ||
+        (cleanPhoneDigits.length === 10 && String(s.phone || '').replace(/[^0-9]/g, '').endsWith(cleanPhoneDigits))
+      );
+
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: `No student record found for '${searchCode}'.`
+        });
+      }
+
+      const user = mockStore.users.find(u => u._id === student.user);
+      const studentName = user ? user.name : student.email;
+
+      if (student.isFoodServed) {
+        return res.status(400).json({
+          success: false,
+          alreadyServed: true,
+          message: `Meal already collected! Student '${studentName}' already received their Veg lunch at ${new Date(student.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+          student: {
+            id: student._id,
+            name: studentName,
+            symposiumCode: student.symposiumCode,
+            collegeName: student.collegeName,
+            department: student.department,
+            isFoodServed: true,
+            foodServedAt: student.foodServedAt,
+            foodServedBy: student.foodServedBy
+          }
+        });
+      }
+
+      student.isFoodServed = true;
+      student.foodServedAt = new Date().toISOString();
+      student.foodServedBy = req.user ? req.user.name : 'Canteen Volunteer';
+
+      return res.status(200).json({
+        success: true,
+        alreadyServed: false,
+        message: `Meal Approved! 1 Veg Lunch served to ${studentName}.`,
+        student: {
+          id: student._id,
+          name: studentName,
+          symposiumCode: student.symposiumCode,
+          collegeName: student.collegeName,
+          department: student.department,
+          isFoodServed: true,
+          foodServedAt: student.foodServedAt,
+          foodServedBy: student.foodServedBy
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Serve Food Error:', error);
+    res.status(500).json({ success: false, message: 'Error processing food scan' });
+  }
+};
+
+exports.getFoodStats = async (req, res) => {
+  try {
+    if (isDbConnected()) {
+      const [totalRegistered, totalServed, recentServed] = await Promise.all([
+        Student.countDocuments(),
+        Student.countDocuments({ isFoodServed: true }),
+        Student.find({ isFoodServed: true })
+          .sort({ foodServedAt: -1 })
+          .limit(10)
+          .populate('user', 'name')
+          .select('symposiumCode collegeName department foodServedAt foodServedBy user')
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        totalRegistered,
+        totalServed,
+        totalRemaining: Math.max(0, totalRegistered - totalServed),
+        recentServed: recentServed.map(s => ({
+          id: s._id,
+          name: s.user ? s.user.name : 'Student',
+          symposiumCode: s.symposiumCode,
+          collegeName: s.collegeName,
+          department: s.department,
+          foodServedAt: s.foodServedAt,
+          foodServedBy: s.foodServedBy
+        }))
+      });
+    } else {
+      const totalRegistered = mockStore.students.length;
+      const served = mockStore.students.filter(s => s.isFoodServed);
+      const recent = served.slice(-10).reverse().map(s => {
+        const u = mockStore.users.find(user => user._id === s.user);
+        return {
+          id: s._id,
+          name: u ? u.name : 'Student',
+          symposiumCode: s.symposiumCode,
+          collegeName: s.collegeName,
+          department: s.department,
+          foodServedAt: s.foodServedAt,
+          foodServedBy: s.foodServedBy
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        totalRegistered,
+        totalServed: served.length,
+        totalRemaining: Math.max(0, totalRegistered - served.length),
+        recentServed: recent
+      });
+    }
+  } catch (error) {
+    console.error('Get Food Stats Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching food stats' });
+  }
+};

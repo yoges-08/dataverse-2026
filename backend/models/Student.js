@@ -22,13 +22,17 @@ const studentSchema = new mongoose.Schema({
   checkInTime: { type: Date, default: null },
   checkedInBy: { type: String, default: null },
   qrCodeData: { type: String, required: true },
-  isSpotRegistration: { type: Boolean, default: false }
+  isSpotRegistration: { type: Boolean, default: false },
+  isFoodServed: { type: Boolean, default: false },
+  foodServedAt: { type: Date, default: null },
+  foodServedBy: { type: String, default: null }
 }, { timestamps: true });
 
 studentSchema.index({ verificationStatus: 1 });
 studentSchema.index({ department: 1 });
 studentSchema.index({ collegeName: 1 });
 studentSchema.index({ isCheckedIn: 1 });
+studentSchema.index({ isFoodServed: 1 });
 studentSchema.index({ user: 1 });
 
 module.exports = mongoose.model('Student', studentSchema);
