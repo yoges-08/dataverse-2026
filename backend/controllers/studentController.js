@@ -108,33 +108,22 @@ exports.spotRegistration = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please fill all required spot registration fields' });
     }
 
-    if (Array.isArray(eventIds) && eventIds.length) {
-      if (eventIds.length > 4) {
-        return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
-      }
-
-      const eventsToCheck = isDbConnected()
-        ? await Event.find({ _id: { $in: eventIds } })
-        : mockStore.events.filter(e => eventIds.includes(e._id) || eventIds.includes(String(e._id)));
-
-      const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
-      const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
-
-      if (techCount > 2) {
-        return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
-      }
-      if (nonTechCount > 2) {
-        return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
-      }
+    const rawEventIds = Array.isArray(eventIds) ? [...new Set(eventIds)] : [];
+    if (rawEventIds.length > 4) {
+      return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
     }
 
     if (isDbConnected()) {
-      const existingStudent = await Student.findOne({
-        $or: [
-          { email: cleanEmail },
-          { phone: cleanPhone }
-        ]
-      });
+      // 1. Run independent early checks in parallel: duplicate student check and event category check
+      const [existingStudent, eventsToCheck] = await Promise.all([
+        Student.findOne({
+          $or: [
+            { email: cleanEmail },
+            { phone: cleanPhone }
+          ]
+        }),
+        rawEventIds.length > 0 ? Event.find({ _id: { $in: rawEventIds } }) : Promise.resolve([])
+      ]);
 
       if (existingStudent) {
         return res.status(409).json({
@@ -143,10 +132,19 @@ exports.spotRegistration = async (req, res) => {
         });
       }
 
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(initialPassword, salt);
-      const user = await User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' });
+      if (rawEventIds.length > 0) {
+        const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
+        const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
 
+        if (techCount > 2) {
+          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
+        }
+        if (nonTechCount > 2) {
+          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
+        }
+      }
+
+      // 2. Generate unique symposiumCode
       let symposiumCode = generateSpotCode();
       let codeExists = await Student.findOne({ symposiumCode });
       let attempts = 0;
@@ -159,9 +157,17 @@ exports.spotRegistration = async (req, res) => {
         throw new Error('Unable to allocate a unique symposium code. Please try again.');
       }
 
+      // 3. Run User creation and QR Code generation concurrently in parallel
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(initialPassword, salt);
       const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
-      const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
 
+      const [user, qrCodeDataUrl] = await Promise.all([
+        User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' }),
+        qrcode.toDataURL(qrPayload)
+      ]);
+
+      // 4. Create Student document
       const student = await Student.create({
         user: user._id,
         symposiumCode,
@@ -181,20 +187,25 @@ exports.spotRegistration = async (req, res) => {
         isSpotRegistration: true
       });
 
-      // Register the walk-in student for the selected events (if any)
-      // Spot registration via Volunteer desk allows walk-ins to register even if event capacity is full
-      if (Array.isArray(eventIds) && eventIds.length) {
-        for (const eventId of eventIds) {
-          const exists = await Registration.findOne({ student: student._id, event: eventId });
-          if (exists) continue;
-
-          await Registration.create({ student: student._id, event: eventId, status: 'Registered' });
-          const ev = await Event.findById(eventId);
-          if (ev) {
-            ev.currentRegistrations = (ev.currentRegistrations || 0) + 1;
-            await ev.save();
+      // 5. Batch event registrations: insert all at once and atomically increment counters
+      if (rawEventIds.length > 0) {
+        try {
+          const registrationDocs = rawEventIds.map(eventId => ({
+            student: student._id,
+            event: eventId,
+            status: 'Registered'
+          }));
+          await Registration.insertMany(registrationDocs, { ordered: false });
+        } catch (regErr) {
+          if (regErr.code !== 11000) {
+            console.error('Non-duplicate error in spotRegistration insertMany:', regErr);
           }
         }
+
+        await Event.updateMany(
+          { _id: { $in: rawEventIds } },
+          { $inc: { currentRegistrations: 1 } }
+        );
       }
 
       return res.status(201).json({
@@ -203,6 +214,7 @@ exports.spotRegistration = async (req, res) => {
         student
       });
     } else {
+      // mockStore in-memory fallback branch
       const existingStudent = mockStore.students.find(s =>
         (s.email && s.email.toLowerCase().trim() === cleanEmail) ||
         (s.phone && s.phone.trim() === cleanPhone)
@@ -213,6 +225,19 @@ exports.spotRegistration = async (req, res) => {
           success: false,
           message: "A student with this email or phone number is already registered."
         });
+      }
+
+      if (rawEventIds.length > 0) {
+        const eventsToCheck = mockStore.events.filter(e => rawEventIds.includes(e._id) || rawEventIds.includes(String(e._id)));
+        const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
+        const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
+
+        if (techCount > 2) {
+          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
+        }
+        if (nonTechCount > 2) {
+          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
+        }
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -256,17 +281,18 @@ exports.spotRegistration = async (req, res) => {
       };
       mockStore.students.push(student);
 
-      // Register walk-in for selected events (mock branch)
-      if (Array.isArray(eventIds) && eventIds.length) {
-        for (const eventId of eventIds) {
-          const exists = mockStore.registrations.find(r =>
-            (r.student === student._id || String(r.student) === String(student._id)) &&
-            (r.event === eventId || String(r.event) === String(eventId)));
-          if (exists) continue;
+      // Register walk-in for selected events (batched mock branch)
+      if (rawEventIds.length > 0) {
+        rawEventIds.forEach(eventId => {
+          mockStore.registrations.push({
+            _id: 'r' + (mockStore.registrations.length + 1),
+            student: student._id,
+            event: eventId,
+            status: 'Registered'
+          });
           const ev = mockStore.events.find(e => e._id === eventId || String(e._id) === String(eventId));
-          mockStore.registrations.push({ _id: 'r' + (mockStore.registrations.length + 1), student: student._id, event: eventId, status: 'Registered' });
           if (ev) ev.currentRegistrations = (ev.currentRegistrations || 0) + 1;
-        }
+        });
       }
 
       return res.status(201).json({
