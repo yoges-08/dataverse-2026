@@ -11,8 +11,9 @@ const mockStore = require('../utils/mockStore');
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
 const generateSpotCode = () => {
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  return `DV2026-SPOT-${randomNum}`;
+  const timeSuffix = Date.now().toString().slice(-4);
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  return `DV2026-SPOT-${timeSuffix}${randomNum}`;
 };
 
 // Spot-registered students get a unique, unguessable password instead of the
@@ -144,68 +145,60 @@ exports.spotRegistration = async (req, res) => {
         }
       }
 
-      // 2. Generate unique symposiumCode
-      let symposiumCode = generateSpotCode();
-      let codeExists = await Student.findOne({ symposiumCode });
-      let attempts = 0;
-      while (codeExists && attempts < 20) {
-        symposiumCode = generateSpotCode();
-        codeExists = await Student.findOne({ symposiumCode });
-        attempts += 1;
-      }
-      if (codeExists) {
-        throw new Error('Unable to allocate a unique symposium code. Please try again.');
-      }
-
-      // 3. Run User creation and QR Code generation concurrently in parallel
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(initialPassword, salt);
+      // 2. Generate unique symposiumCode & pre-generate userId
+      const symposiumCode = generateSpotCode();
+      const userId = new mongoose.Types.ObjectId();
       const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
 
-      const [user, qrCodeDataUrl] = await Promise.all([
-        User.create({ name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' }),
+      // 3. Hash initial password (8 rounds for fast CPU execution) & generate QR code concurrently
+      const salt = await bcrypt.genSalt(8);
+      const [hashedPassword, qrCodeDataUrl] = await Promise.all([
+        bcrypt.hash(initialPassword, salt),
         qrcode.toDataURL(qrPayload)
       ]);
 
-      // 4. Create Student document
-      const student = await Student.create({
-        user: user._id,
-        symposiumCode,
-        registerNumber: cleanRegisterNumber,
-        collegeName,
-        department,
-        year: year || 'III',
-        email: cleanEmail,
-        phone: phone || '9999999999',
-        verificationStatus: 'Approved',
-        isCheckedIn: true,
-        checkInTime: new Date(),
-        checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
-        qrCodeData: qrCodeDataUrl,
-        foodPreference: foodPreference || 'Veg',
-        accommodationRequired: accommodationRequired || 'No',
-        isSpotRegistration: true
-      });
+      // 4. Create User and Student documents simultaneously in parallel
+      const [user, student] = await Promise.all([
+        User.create({ _id: userId, name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' }),
+        Student.create({
+          user: userId,
+          symposiumCode,
+          registerNumber: cleanRegisterNumber,
+          collegeName,
+          department,
+          year: year || 'III',
+          email: cleanEmail,
+          phone: phone || '9999999999',
+          verificationStatus: 'Approved',
+          isCheckedIn: true,
+          checkInTime: new Date(),
+          checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
+          qrCodeData: qrCodeDataUrl,
+          foodPreference: foodPreference || 'Veg',
+          accommodationRequired: accommodationRequired || 'No',
+          isSpotRegistration: true
+        })
+      ]);
 
-      // 5. Batch event registrations: insert all at once and atomically increment counters
+      // 5. Batch event registrations: insert registrations and update event counters concurrently in parallel
       if (rawEventIds.length > 0) {
-        try {
-          const registrationDocs = rawEventIds.map(eventId => ({
-            student: student._id,
-            event: eventId,
-            status: 'Registered'
-          }));
-          await Registration.insertMany(registrationDocs, { ordered: false });
-        } catch (regErr) {
-          if (regErr.code !== 11000) {
-            console.error('Non-duplicate error in spotRegistration insertMany:', regErr);
-          }
-        }
+        const registrationDocs = rawEventIds.map(eventId => ({
+          student: student._id,
+          event: eventId,
+          status: 'Registered'
+        }));
 
-        await Event.updateMany(
-          { _id: { $in: rawEventIds } },
-          { $inc: { currentRegistrations: 1 } }
-        );
+        await Promise.all([
+          Registration.insertMany(registrationDocs, { ordered: false }).catch(regErr => {
+            if (regErr.code !== 11000) {
+              console.error('Non-duplicate error in spotRegistration insertMany:', regErr);
+            }
+          }),
+          Event.updateMany(
+            { _id: { $in: rawEventIds } },
+            { $inc: { currentRegistrations: 1 } }
+          )
+        ]);
       }
 
       return res.status(201).json({
@@ -240,29 +233,22 @@ exports.spotRegistration = async (req, res) => {
         }
       }
 
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(initialPassword, salt);
-      const user = { _id: 'u' + (mockStore.users.length + 1), name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
-      mockStore.users.push(user);
-
-      let symposiumCode = generateSpotCode();
-      let codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-      let attempts = 0;
-      while (codeExists && attempts < 20) {
-        symposiumCode = generateSpotCode();
-        codeExists = mockStore.students.find(s => s.symposiumCode === symposiumCode);
-        attempts += 1;
-      }
-      if (codeExists) {
-        throw new Error('Unable to allocate a unique symposium code. Please try again.');
-      }
-
+      const salt = await bcrypt.genSalt(8);
+      const symposiumCode = generateSpotCode();
       const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
-      const qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
+
+      const [hashedPassword, qrCodeDataUrl] = await Promise.all([
+        bcrypt.hash(initialPassword, salt),
+        qrcode.toDataURL(qrPayload)
+      ]);
+
+      const userId = 'u' + (mockStore.users.length + 1);
+      const user = { _id: userId, name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' };
+      mockStore.users.push(user);
 
       const student = {
         _id: 's' + (mockStore.students.length + 1),
-        user: user._id,
+        user: userId,
         symposiumCode,
         registerNumber: cleanRegisterNumber,
         collegeName,
