@@ -146,23 +146,25 @@ exports.spotRegistration = async (req, res) => {
       }
 
       // 2. Generate unique symposiumCode & pre-generate userId
-      const symposiumCode = generateSpotCode();
+      let symposiumCode = generateSpotCode();
       const userId = new mongoose.Types.ObjectId();
-      const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
+      let qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
 
       // 3. Hash initial password (8 rounds for fast CPU execution) & generate QR code concurrently
       const salt = await bcrypt.genSalt(8);
-      const [hashedPassword, qrCodeDataUrl] = await Promise.all([
+      let [hashedPassword, qrCodeDataUrl] = await Promise.all([
         bcrypt.hash(initialPassword, salt),
         qrcode.toDataURL(qrPayload)
       ]);
 
-      // 4. Create User and Student documents simultaneously in parallel
-      const [user, student] = await Promise.all([
-        User.create({ _id: userId, name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' }),
-        Student.create({
+      // 4. Create User and Student documents with auto-retry on code collision & rollback protection
+      let user;
+      let student;
+
+      const createStudentDoc = (code, qrData) => {
+        return Student.create({
           user: userId,
-          symposiumCode,
+          symposiumCode: code,
           registerNumber: cleanRegisterNumber,
           collegeName,
           department,
@@ -173,12 +175,40 @@ exports.spotRegistration = async (req, res) => {
           isCheckedIn: true,
           checkInTime: new Date(),
           checkedInBy: req.user ? req.user.name : 'Spot Counter Volunteer',
-          qrCodeData: qrCodeDataUrl,
+          qrCodeData: qrData,
           foodPreference: foodPreference || 'Veg',
           accommodationRequired: accommodationRequired || 'No',
           isSpotRegistration: true
-        })
-      ]);
+        });
+      };
+
+      try {
+        try {
+          [user, student] = await Promise.all([
+            User.create({ _id: userId, name: cleanName, email: cleanEmail, password: hashedPassword, role: 'student' }),
+            createStudentDoc(symposiumCode, qrCodeDataUrl)
+          ]);
+        } catch (initialErr) {
+          // If a rare collision occurs on symposiumCode, retry Student.create with a fresh code
+          const isCodeDup = initialErr.code === 11000 && (
+            initialErr.keyPattern?.symposiumCode ||
+            (initialErr.message && initialErr.message.includes('symposiumCode'))
+          );
+
+          if (isCodeDup) {
+            symposiumCode = generateSpotCode();
+            qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
+            qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
+            student = await createStudentDoc(symposiumCode, qrCodeDataUrl);
+          } else {
+            throw initialErr;
+          }
+        }
+      } catch (createErr) {
+        // Rollback safety net: if student creation failed, cleanly delete the User account so no orphan record is left
+        await User.findByIdAndDelete(userId).catch(() => {});
+        throw createErr;
+      }
 
       // 5. Batch event registrations: insert registrations and update event counters concurrently in parallel
       if (rawEventIds.length > 0) {
@@ -234,7 +264,10 @@ exports.spotRegistration = async (req, res) => {
       }
 
       const salt = await bcrypt.genSalt(8);
-      const symposiumCode = generateSpotCode();
+      let symposiumCode = generateSpotCode();
+      while (mockStore.students.some(s => s.symposiumCode === symposiumCode)) {
+        symposiumCode = generateSpotCode();
+      }
       const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
 
       const [hashedPassword, qrCodeDataUrl] = await Promise.all([
