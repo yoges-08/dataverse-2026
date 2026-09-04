@@ -354,6 +354,21 @@ export default function VolunteerDashboard() {
                   className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500"
                 />
               </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold block mb-1">Year of Study *</label>
+                <select
+                  required
+                  value={spotForm.year}
+                  onChange={(e) => setSpotForm({ ...spotForm, year: e.target.value })}
+                  className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="I">1st Year (I)</option>
+                  <option value="II">2nd Year (II)</option>
+                  <option value="III">3rd Year (III)</option>
+                  <option value="IV">4th Year (IV)</option>
+                </select>
+              </div>
             </div>
 
             <button
