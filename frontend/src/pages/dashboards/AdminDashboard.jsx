@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
-  FileBadge, Loader, Code, Star
+  FileBadge, Loader, Code, Star, Salad, Utensils
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -54,6 +54,9 @@ export default function AdminDashboard() {
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [foodFilter, setFoodFilter] = useState('');
+  const [canteenSearch, setCanteenSearch] = useState('');
+  const [canteenSubFilter, setCanteenSubFilter] = useState('all');
 
   // Modals
   const [selectedStudentForBadge, setSelectedStudentForBadge] = useState(null);
@@ -616,9 +619,28 @@ export default function AdminDashboard() {
         (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
         (s.user && s.user.name && s.user.name.toLowerCase().includes(term));
       const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesFood = !foodFilter || (foodFilter === 'served' ? s.isFoodServed : !s.isFoodServed);
+      return matchesSearch && matchesStatus && matchesFood;
     });
-  }, [students, searchTerm, statusFilter]);
+  }, [students, searchTerm, statusFilter, foodFilter]);
+
+  // Students filtered for the Canteen Meals tab
+  const canteenFilteredStudents = useMemo(() => {
+    const term = canteenSearch.trim().toLowerCase();
+    return students.filter(s => {
+      const name = (s.user && s.user.name) || s.name || s.email || '';
+      const matchesSearch = !term ||
+        (s.symposiumCode && s.symposiumCode.toLowerCase().includes(term)) ||
+        (s.email && s.email.toLowerCase().includes(term)) ||
+        (name && name.toLowerCase().includes(term)) ||
+        (s.collegeName && s.collegeName.toLowerCase().includes(term)) ||
+        (s.registerNumber && s.registerNumber.toLowerCase().includes(term)) ||
+        (s.foodServedBy && s.foodServedBy.toLowerCase().includes(term));
+      const matchesSub = canteenSubFilter === 'all' || 
+        (canteenSubFilter === 'served' ? s.isFoodServed : !s.isFoodServed);
+      return matchesSearch && matchesSub;
+    });
+  }, [students, canteenSearch, canteenSubFilter]);
 
   // Students filtered by the search box inside the Certificates tab
   const certFilteredStudents = useMemo(() => {
@@ -683,22 +705,34 @@ export default function AdminDashboard() {
       </div>
 
       {/* Analytics Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-5 rounded-2xl border border-slate-800">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="glass-card p-4 rounded-2xl border border-slate-800">
           <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Registered</span>
-          <span className="text-3xl font-black text-white">{stats.totalStudents || 0}</span>
+          <span className="text-2xl sm:text-3xl font-black text-white">{stats.totalStudents || students.length || 0}</span>
         </div>
-        <div className="glass-card p-5 rounded-2xl border border-amber-500/30">
-          <span className="text-[10px] text-amber-400 font-bold uppercase block">Pending Approvals</span>
-          <span className="text-3xl font-black text-amber-400">{stats.pendingStudents || 0}</span>
+        <div className="glass-card p-4 rounded-2xl border border-amber-500/30">
+          <span className="text-[10px] text-amber-400 font-bold uppercase block">Pending</span>
+          <span className="text-2xl sm:text-3xl font-black text-amber-400">{stats.pendingStudents || 0}</span>
         </div>
-        <div className="glass-card p-5 rounded-2xl border border-emerald-500/30">
-          <span className="text-[10px] text-emerald-400 font-bold uppercase block">Approved Students</span>
-          <span className="text-3xl font-black text-emerald-400">{stats.approvedStudents || 0}</span>
+        <div className="glass-card p-4 rounded-2xl border border-emerald-500/30">
+          <span className="text-[10px] text-emerald-400 font-bold uppercase block">Approved</span>
+          <span className="text-2xl sm:text-3xl font-black text-emerald-400">{stats.approvedStudents || 0}</span>
         </div>
-        <div className="glass-card p-5 rounded-2xl border border-indigo-500/30">
-          <span className="text-[10px] text-indigo-400 font-bold uppercase block">Venue Checked-In</span>
-          <span className="text-2xl sm:text-3xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
+        <div className="glass-card p-4 rounded-2xl border border-indigo-500/30">
+          <span className="text-[10px] text-indigo-400 font-bold uppercase block">Checked In</span>
+          <span className="text-xl sm:text-2xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
+        </div>
+        <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/10">
+          <span className="text-[10px] text-emerald-400 font-bold uppercase block">🥗 Veg Served</span>
+          <span className="text-xl sm:text-2xl font-black text-emerald-400">
+            {stats.foodServedCount !== undefined ? stats.foodServedCount : students.filter(s => s.isFoodServed).length} ({stats.foodPercentage !== undefined ? stats.foodPercentage : Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%)
+          </span>
+        </div>
+        <div className="glass-card p-4 rounded-2xl border border-amber-500/30 bg-amber-950/10">
+          <span className="text-[10px] text-amber-400 font-bold uppercase block">⏳ Food Remaining</span>
+          <span className="text-2xl sm:text-3xl font-black text-amber-400">
+            {stats.foodRemainingCount !== undefined ? stats.foodRemainingCount : students.filter(s => !s.isFoodServed).length}
+          </span>
         </div>
       </div>
 
@@ -706,6 +740,7 @@ export default function AdminDashboard() {
       <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         {[
           { id: 'students', label: `Students (${students.length})` },
+          { id: 'canteen', label: `🍱 Canteen Meals (${students.filter(s => s.isFoodServed).length}/${students.length})` },
           { id: 'events', label: `Symposium Events (${events.length})` },
           { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
@@ -754,6 +789,16 @@ export default function AdminDashboard() {
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
               </select>
+
+              <select
+                value={foodFilter}
+                onChange={(e) => setFoodFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none"
+              >
+                <option value="">All Food Statuses</option>
+                <option value="served">🥗 Food Served (Veg)</option>
+                <option value="not_served">⏳ Food Not Claimed</option>
+              </select>
             </div>
           </div>
 
@@ -769,6 +814,7 @@ export default function AdminDashboard() {
                     <th className="p-4">College & Dept</th>
                     <th className="p-4">Status</th>
                     <th className="p-4">Checked In</th>
+                    <th className="p-4">Lunch / Food</th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -817,6 +863,28 @@ export default function AdminDashboard() {
                           )}
                         </td>
 
+                        <td className="p-4">
+                          {s.isFoodServed ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <Salad className="w-3 h-3 text-emerald-400" />
+                                <span>Veg Served ✓</span>
+                              </span>
+                              {s.foodServedAt && (
+                                <span className="text-[9px] text-slate-400 block mt-0.5">
+                                  {new Date(s.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {s.foodServedBy ? ` (${s.foodServedBy})` : ''}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                              <Clock className="w-3 h-3 text-slate-500" />
+                              <span>Not Claimed</span>
+                            </span>
+                          )}
+                        </td>
+
                         <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                           <button
                             onClick={() => setSelectedStudentForBadge(s)}
@@ -860,6 +928,239 @@ export default function AdminDashboard() {
                       </tr>
                     );
                   })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: CANTEEN MEALS MONITORING */}
+      {activeTab === 'canteen' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
+                  Pure Veg Lunch Distribution
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-white mt-1">Canteen Food Claim Tracker</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Real-time monitoring of food claims. Students verify their meal badge at the canteen counter.
+              </p>
+            </div>
+
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700 transition-all flex items-center space-x-2 shrink-0 self-start sm:self-auto disabled:opacity-50"
+            >
+              {exporting ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              <span>Export Meal Report</span>
+            </button>
+          </div>
+
+          {/* Quick Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="glass-card p-4 rounded-2xl border border-slate-800 bg-slate-900/40">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Total Registered</span>
+                <Users className="w-4 h-4 text-slate-400" />
+              </div>
+              <p className="text-2xl font-black text-white mt-1">{students.length}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">All registered participants</p>
+            </div>
+
+            <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-emerald-400">🥗 Pure Veg Meals Served</span>
+                <Salad className="w-4 h-4 text-emerald-400" />
+              </div>
+              <p className="text-2xl font-black text-emerald-400 mt-1">
+                {students.filter(s => s.isFoodServed).length}
+                <span className="text-xs font-semibold text-emerald-300 ml-2">
+                  ({Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%)
+                </span>
+              </p>
+              <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div 
+                  className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" 
+                  style={{ width: `${Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="glass-card p-4 rounded-2xl border border-amber-500/30 bg-amber-950/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-amber-400">⏳ Meals Remaining</span>
+                <Clock className="w-4 h-4 text-amber-400" />
+              </div>
+              <p className="text-2xl font-black text-amber-400 mt-1">
+                {students.filter(s => !s.isFoodServed).length}
+              </p>
+              <p className="text-[10px] text-amber-300/70 mt-0.5">Eligible / pending to claim</p>
+            </div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                placeholder="Search Code, Name, College, Volunteer..."
+                value={canteenSearch}
+                onChange={(e) => setCanteenSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => setCanteenSubFilter('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  canteenSubFilter === 'all'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
+                }`}
+              >
+                All ({students.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCanteenSubFilter('served')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  canteenSubFilter === 'served'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'bg-slate-900 text-emerald-400 hover:bg-slate-800 border border-emerald-500/30'
+                }`}
+              >
+                🥗 Food Served ({students.filter(s => s.isFoodServed).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCanteenSubFilter('not_served')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  canteenSubFilter === 'not_served'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'bg-slate-900 text-amber-400 hover:bg-slate-800 border border-amber-500/30'
+                }`}
+              >
+                ⏳ Not Claimed ({students.filter(s => !s.isFoodServed).length})
+              </button>
+            </div>
+          </div>
+
+          {/* Canteen Table */}
+          <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                  <tr>
+                    <th className="p-4">Student</th>
+                    <th className="p-4">Symposium Code</th>
+                    <th className="p-4">College & Dept</th>
+                    <th className="p-4">Check-In</th>
+                    <th className="p-4">Food Status (Veg)</th>
+                    <th className="p-4">Served At</th>
+                    <th className="p-4">Served By</th>
+                    <th className="p-4 text-right">Badge Pass</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {canteenFilteredStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="p-8 text-center text-slate-400">
+                        No students found matching current canteen filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    canteenFilteredStudents.map((s) => {
+                      const name = getStudentName(s, s.email || 'Student');
+                      return (
+                        <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
+                          <td className="p-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-indigo-400" />
+                              </div>
+                              <div className="min-w-0">
+                                <span className="font-bold text-white block">{name}</span>
+                                <span className="text-[10px] text-slate-400 truncate block">{s.email}</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="p-4 font-mono font-bold text-indigo-400">{s.symposiumCode}</td>
+
+                          <td className="p-4">
+                            <span className="text-slate-200 block font-medium max-w-[200px] whitespace-normal break-words">{s.collegeName}</span>
+                            <span className="text-[10px] text-indigo-300">{s.department} ({s.year})</span>
+                          </td>
+
+                          <td className="p-4">
+                            {s.isCheckedIn ? (
+                              <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold text-[11px]">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Checked In</span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-500 text-[11px]">Pending Venue</span>
+                            )}
+                          </td>
+
+                          <td className="p-4">
+                            {s.isFoodServed ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <Salad className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Pure Veg Served</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                <Clock className="w-3 h-3 text-amber-400" />
+                                <span>Not Claimed</span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-slate-300">
+                            {s.isFoodServed && s.foodServedAt ? (
+                              <div>
+                                <span className="font-mono text-white block">
+                                  {new Date(s.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block">
+                                  {new Date(s.foodServedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-600">—</span>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-slate-300">
+                            {s.isFoodServed && s.foodServedBy ? (
+                              <span className="font-medium text-indigo-300">{s.foodServedBy}</span>
+                            ) : (
+                              <span className="text-slate-600">—</span>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => setSelectedStudentForBadge(s)}
+                              className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors inline-flex items-center justify-center"
+                              title="Preview Badge & QR Pass"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

@@ -22,6 +22,8 @@ exports.getAnalytics = async (req, res) => {
       const approvedStudents = await Student.countDocuments({ verificationStatus: 'Approved' });
       const rejectedStudents = await Student.countDocuments({ verificationStatus: 'Rejected' });
       const checkedInCount = await Student.countDocuments({ isCheckedIn: true });
+      const foodServedCount = await Student.countDocuments({ isFoodServed: true });
+      const foodRemainingCount = Math.max(0, totalStudents - foodServedCount);
       const certificatesCount = await Certificate.countDocuments();
       const technicalEvents = await Event.countDocuments({ category: 'Technical' });
       const nonTechnicalEvents = await Event.countDocuments({ category: 'Non-Technical' });
@@ -79,7 +81,20 @@ exports.getAnalytics = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        stats: { totalStudents, pendingStudents, approvedStudents, rejectedStudents, checkedInCount, certificatesCount, technicalEvents, nonTechnicalEvents, attendancePercentage: totalStudents > 0 ? Math.round((checkedInCount / totalStudents) * 100) : 0 },
+        stats: {
+          totalStudents,
+          pendingStudents,
+          approvedStudents,
+          rejectedStudents,
+          checkedInCount,
+          foodServedCount,
+          foodRemainingCount,
+          foodPercentage: totalStudents > 0 ? Math.round((foodServedCount / totalStudents) * 100) : 0,
+          certificatesCount,
+          technicalEvents,
+          nonTechnicalEvents,
+          attendancePercentage: totalStudents > 0 ? Math.round((checkedInCount / totalStudents) * 100) : 0
+        },
         charts: { eventWiseRegistrations, collegeWiseStats: collegeWiseStats.map(c => ({ college: c._id || 'Unknown', count: c.count })), deptWiseStats: deptWiseStats.map(d => ({ department: d._id || 'Unknown', count: d.count })) }
       });
     } else {
@@ -88,6 +103,8 @@ exports.getAnalytics = async (req, res) => {
       const approvedStudents = mockStore.students.filter(s => s.verificationStatus === 'Approved').length;
       const rejectedStudents = mockStore.students.filter(s => s.verificationStatus === 'Rejected').length;
       const checkedInCount = mockStore.students.filter(s => s.isCheckedIn).length;
+      const foodServedCount = mockStore.students.filter(s => s.isFoodServed).length;
+      const foodRemainingCount = Math.max(0, totalStudents - foodServedCount);
       const certificatesCount = mockStore.certificates.length;
       const technicalEvents = mockStore.events.filter(e => e.category === 'Technical').length;
       const nonTechnicalEvents = mockStore.events.filter(e => e.category === 'Non-Technical').length;
@@ -100,23 +117,11 @@ exports.getAnalytics = async (req, res) => {
         if (!teamStudentsByEvent[key]) teamStudentsByEvent[key] = new Set();
         members.forEach(m => { if (m.student) teamStudentsByEvent[key].add(String(m.student)); });
       });
-      // Count unique, live students per event — orphaned registration rows
-      // (deleted students) and duplicates are excluded so counts match the
-      // registrants list.
-      const studentSetByEvent = {};
-      mockStore.registrations.forEach(r => {
-        const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
-        if (!s) return;
-        const key = String(r.event);
-        if (!studentSetByEvent[key]) studentSetByEvent[key] = new Set();
-        studentSetByEvent[key].add(String(s._id));
-      });
       const teamCountMap = {};
-      Object.keys(studentSetByEvent).forEach(key => {
-        teamCountMap[key] = { total: studentSetByEvent[key].size, teams: 0, teamSet: null };
-      });
       mockStore.registrations.forEach(r => {
         const key = String(r.event);
+        if (!teamCountMap[key]) teamCountMap[key] = { total: 0, teamSet: new Set() };
+        teamCountMap[key].total += 1;
         const s = mockStore.students.find(st => st._id === r.student || String(st._id) === String(r.student));
         if (!s || !teamStudentsByEvent[key] || !teamStudentsByEvent[key].has(String(s._id))) return;
         if (!teamCountMap[key].teamSet) teamCountMap[key].teamSet = new Set();
@@ -149,7 +154,20 @@ exports.getAnalytics = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        stats: { totalStudents, pendingStudents, approvedStudents, rejectedStudents, checkedInCount, certificatesCount, technicalEvents, nonTechnicalEvents, attendancePercentage: totalStudents > 0 ? Math.round((checkedInCount / totalStudents) * 100) : 0 },
+        stats: {
+          totalStudents,
+          pendingStudents,
+          approvedStudents,
+          rejectedStudents,
+          checkedInCount,
+          foodServedCount,
+          foodRemainingCount,
+          foodPercentage: totalStudents > 0 ? Math.round((foodServedCount / totalStudents) * 100) : 0,
+          certificatesCount,
+          technicalEvents,
+          nonTechnicalEvents,
+          attendancePercentage: totalStudents > 0 ? Math.round((checkedInCount / totalStudents) * 100) : 0
+        },
         charts: {
           eventWiseRegistrations,
           collegeWiseStats: Object.keys(collegeMap).map(c => ({ college: c, count: collegeMap[c] })),
@@ -545,7 +563,7 @@ exports.exportStudentsExcel = async (req, res) => {
       });
     }
 
-    const headers = ['Symposium Code', 'Name', 'Email', 'Phone', 'College', 'Department', 'Year', 'Register Number', 'Status', 'Checked In', 'Registered At'];
+    const headers = ['Symposium Code', 'Name', 'Email', 'Phone', 'College', 'Department', 'Year', 'Register Number', 'Status', 'Checked In', 'Food Served (Veg)', 'Food Served At', 'Food Served By', 'Registered At'];
     const rows = students.map(s => {
       const rawName = String((s.user && s.user.name) || '').trim();
       const name = rawName && rawName !== '.' ? rawName : String(s.email || '');
@@ -561,6 +579,9 @@ exports.exportStudentsExcel = async (req, res) => {
         s.registerNumber || '',
         s.verificationStatus || '',
         s.isCheckedIn ? 'Yes' : 'No',
+        s.isFoodServed ? 'Yes (Veg)' : 'No',
+        s.foodServedAt ? new Date(s.foodServedAt).toLocaleString('en-IN') : '—',
+        s.foodServedBy || '—',
         createdAt
       ];
     });
@@ -637,6 +658,7 @@ exports.exportStudentsByEventExcel = async (req, res) => {
       'Team Members',
       'Language',
       'Checked In',
+      'Food Served (Veg)',
       'Registered At'
     ];
 
@@ -681,6 +703,7 @@ exports.exportStudentsByEventExcel = async (req, res) => {
           teamMembersStr,
           r.language || '',
           student.isCheckedIn ? 'Yes' : 'No',
+          student.isFoodServed ? 'Yes (Veg)' : 'No',
           registeredAt
         ];
       });
