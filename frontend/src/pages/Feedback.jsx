@@ -13,7 +13,9 @@ import {
   Loader,
   ArrowRight,
   RotateCcw,
-  ShieldCheck
+  ShieldCheck,
+  Salad,
+  Users
 } from 'lucide-react';
 import API from '../services/api';
 
@@ -35,6 +37,16 @@ export default function Feedback() {
 
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+
+  // General Symposium Experience Ratings
+  const [overallRating, setOverallRating] = useState({ rating: 0, comment: '' });
+  const [hoveredOverall, setHoveredOverall] = useState(0);
+
+  const [foodRating, setFoodRating] = useState({ rating: 0, comment: '' });
+  const [hoveredFood, setHoveredFood] = useState(0);
+
+  const [volunteersRating, setVolunteersRating] = useState({ rating: 0, comment: '' });
+  const [hoveredVolunteers, setHoveredVolunteers] = useState(0);
 
   // Map of eventId -> { rating: number (1-5), comment: string }
   const [ratings, setRatings] = useState({});
@@ -161,7 +173,9 @@ export default function Feedback() {
     });
   };
 
-  const ratedCount = Object.values(ratings).filter(r => r.rating >= 1 && r.rating <= 5).length;
+  const eventRatedCount = Object.values(ratings).filter(r => r.rating >= 1 && r.rating <= 5).length;
+  const generalRatedCount = (overallRating.rating > 0 ? 1 : 0) + (foodRating.rating > 0 ? 1 : 0) + (volunteersRating.rating > 0 ? 1 : 0);
+  const totalRatedCount = eventRatedCount + generalRatedCount;
 
   // ----------------------------------------------------
   // Final Form Submission
@@ -175,8 +189,8 @@ export default function Feedback() {
       return;
     }
 
-    if (ratedCount === 0) {
-      setErrorMsg('Please rate at least one event (1 to 5 stars) before submitting.');
+    if (totalRatedCount === 0) {
+      setErrorMsg('Please provide at least one rating (Overall Symposium, Food, Volunteers, or an Event) before submitting.');
       return;
     }
 
@@ -198,6 +212,9 @@ export default function Feedback() {
         name: name.trim(),
         email: email.trim(),
         collegeName: collegeName.trim(),
+        foodRating: foodRating.rating > 0 ? foodRating : { rating: null, comment: '' },
+        volunteersRating: volunteersRating.rating > 0 ? volunteersRating : { rating: null, comment: '' },
+        overallRating: overallRating.rating > 0 ? overallRating : { rating: null, comment: '' },
         eventRatings: eventRatingsPayload
       });
 
@@ -471,27 +488,339 @@ export default function Feedback() {
         )}
       </div>
 
-      {/* STEP 2: Rate Events Section (Revealed only after Step 1 is verified) */}
+      {/* STEP 2: Rating Section (Revealed only after Step 1 is verified) */}
       {step1Verified && (
         <form onSubmit={handleSubmit} ref={step2Ref} className="space-y-8 animate-fadeIn">
+          
+          {/* SECTION 2A: Overall Experience & Facilities */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                  <span>2. Rate Symposium Events</span>
+                  <Sparkles className="w-5 h-5 text-indigo-400" />
+                  <span>2. Rate Symposium Experience &amp; Facilities</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Rate only the events you participated in or attended (at least 1 required). Comments are optional.
+                  Share your overall experience with the symposium, pure veg catering, and volunteer hospitality.
                 </p>
               </div>
               <div className="self-start sm:self-auto">
                 <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
-                  ratedCount > 0
+                  generalRatedCount > 0
+                    ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
+                    : 'bg-slate-800/80 border-slate-700 text-slate-400'
+                }`}>
+                  {generalRatedCount}/3 facilities rated
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* 1. Overall Symposium Experience */}
+              <div className={`glass-card p-5 sm:p-6 rounded-2xl border transition-all ${
+                overallRating.rating > 0
+                  ? 'border-indigo-500/40 bg-slate-900/60 shadow-lg shadow-indigo-950/20'
+                  : 'border-slate-800/90 hover:border-slate-700'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border bg-indigo-500/15 border-indigo-500/30 text-indigo-300">
+                        General
+                      </span>
+                      {overallRating.rating > 0 && (
+                        <span className="text-[11px] font-bold text-indigo-300">
+                          • Rated {overallRating.rating}/5
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-white flex items-center space-x-2">
+                      <span>🌟 Overall Symposium Experience</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      How was your overall impression of DATAVERSE 2026 organization, ambiance, and schedule?
+                    </p>
+                  </div>
+
+                  {/* Star selector */}
+                  <div className="flex flex-col items-start sm:items-end space-y-1.5 shrink-0">
+                    <div className="flex items-center space-x-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+                      {[1, 2, 3, 4, 5].map((starNum) => {
+                        const activeVal = hoveredOverall || overallRating.rating;
+                        const isFilled = starNum <= activeVal;
+                        return (
+                          <button
+                            key={starNum}
+                            type="button"
+                            onClick={() => setOverallRating(prev => ({
+                              ...prev,
+                              rating: prev.rating === starNum ? 0 : starNum
+                            }))}
+                            onMouseEnter={() => setHoveredOverall(starNum)}
+                            onMouseLeave={() => setHoveredOverall(0)}
+                            className="p-1 rounded-lg hover:scale-110 transition-transform focus:outline-none"
+                            title={`${starNum} Star${starNum > 1 ? 's' : ''} - ${STAR_LABELS[starNum]}`}
+                          >
+                            <Star
+                              className={`w-6 h-6 transition-colors ${
+                                isFilled
+                                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                  : 'text-slate-600 hover:text-slate-400'
+                              }`}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs">
+                      {(hoveredOverall || overallRating.rating) > 0 ? (
+                        <span className="text-amber-300 font-bold text-[11px]">
+                          {STAR_LABELS[hoveredOverall || overallRating.rating]}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-[11px]">Tap stars to rate</span>
+                      )}
+                      {overallRating.rating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setOverallRating({ rating: 0, comment: '' })}
+                          className="text-[10px] text-slate-400 hover:text-red-400 underline font-semibold transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {overallRating.rating > 0 && (
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-300 flex items-center space-x-1">
+                      <MessageSquare className="w-3 h-3 text-indigo-400" />
+                      <span>Overall Comments &amp; Suggestions (Optional):</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Well organized event, engaging speakers, memorable experience..."
+                      value={overallRating.comment}
+                      onChange={(e) => setOverallRating(prev => ({ ...prev, comment: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-slate-950/70 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-500 transition-colors"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Food & Catering (Pure Veg) */}
+              <div className={`glass-card p-5 sm:p-6 rounded-2xl border transition-all ${
+                foodRating.rating > 0
+                  ? 'border-emerald-500/40 bg-slate-900/60 shadow-lg shadow-emerald-950/20'
+                  : 'border-slate-800/90 hover:border-slate-700'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border bg-emerald-500/15 border-emerald-500/30 text-emerald-300">
+                        Catering
+                      </span>
+                      {foodRating.rating > 0 && (
+                        <span className="text-[11px] font-bold text-emerald-300">
+                          • Rated {foodRating.rating}/5
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-white flex items-center space-x-2">
+                      <Salad className="w-5 h-5 text-emerald-400" />
+                      <span>🍲 Food &amp; Refreshments (Pure Veg Lunch)</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      How was the quality, taste, hygiene, and distribution of lunch &amp; refreshments?
+                    </p>
+                  </div>
+
+                  {/* Star selector */}
+                  <div className="flex flex-col items-start sm:items-end space-y-1.5 shrink-0">
+                    <div className="flex items-center space-x-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+                      {[1, 2, 3, 4, 5].map((starNum) => {
+                        const activeVal = hoveredFood || foodRating.rating;
+                        const isFilled = starNum <= activeVal;
+                        return (
+                          <button
+                            key={starNum}
+                            type="button"
+                            onClick={() => setFoodRating(prev => ({
+                              ...prev,
+                              rating: prev.rating === starNum ? 0 : starNum
+                            }))}
+                            onMouseEnter={() => setHoveredFood(starNum)}
+                            onMouseLeave={() => setHoveredFood(0)}
+                            className="p-1 rounded-lg hover:scale-110 transition-transform focus:outline-none"
+                            title={`${starNum} Star${starNum > 1 ? 's' : ''} - ${STAR_LABELS[starNum]}`}
+                          >
+                            <Star
+                              className={`w-6 h-6 transition-colors ${
+                                isFilled
+                                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                  : 'text-slate-600 hover:text-slate-400'
+                              }`}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs">
+                      {(hoveredFood || foodRating.rating) > 0 ? (
+                        <span className="text-amber-300 font-bold text-[11px]">
+                          {STAR_LABELS[hoveredFood || foodRating.rating]}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-[11px]">Tap stars to rate</span>
+                      )}
+                      {foodRating.rating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFoodRating({ rating: 0, comment: '' })}
+                          className="text-[10px] text-slate-400 hover:text-red-400 underline font-semibold transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {foodRating.rating > 0 && (
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-300 flex items-center space-x-1">
+                      <MessageSquare className="w-3 h-3 text-emerald-400" />
+                      <span>Food Comments &amp; Suggestions (Optional):</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Delicious lunch, timely distribution, good variety..."
+                      value={foodRating.comment}
+                      onChange={(e) => setFoodRating(prev => ({ ...prev, comment: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-slate-950/70 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-slate-500 transition-colors"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Volunteers & Support */}
+              <div className={`glass-card p-5 sm:p-6 rounded-2xl border transition-all ${
+                volunteersRating.rating > 0
+                  ? 'border-blue-500/40 bg-slate-900/60 shadow-lg shadow-blue-950/20'
+                  : 'border-slate-800/90 hover:border-slate-700'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border bg-blue-500/15 border-blue-500/30 text-blue-300">
+                        Hospitality
+                      </span>
+                      {volunteersRating.rating > 0 && (
+                        <span className="text-[11px] font-bold text-blue-300">
+                          • Rated {volunteersRating.rating}/5
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-white flex items-center space-x-2">
+                      <Users className="w-5 h-5 text-blue-400" />
+                      <span>🤝 Volunteers &amp; Event Coordination</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      How helpful, polite, and well-organized were our student coordinators &amp; volunteers?
+                    </p>
+                  </div>
+
+                  {/* Star selector */}
+                  <div className="flex flex-col items-start sm:items-end space-y-1.5 shrink-0">
+                    <div className="flex items-center space-x-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
+                      {[1, 2, 3, 4, 5].map((starNum) => {
+                        const activeVal = hoveredVolunteers || volunteersRating.rating;
+                        const isFilled = starNum <= activeVal;
+                        return (
+                          <button
+                            key={starNum}
+                            type="button"
+                            onClick={() => setVolunteersRating(prev => ({
+                              ...prev,
+                              rating: prev.rating === starNum ? 0 : starNum
+                            }))}
+                            onMouseEnter={() => setHoveredVolunteers(starNum)}
+                            onMouseLeave={() => setHoveredVolunteers(0)}
+                            className="p-1 rounded-lg hover:scale-110 transition-transform focus:outline-none"
+                            title={`${starNum} Star${starNum > 1 ? 's' : ''} - ${STAR_LABELS[starNum]}`}
+                          >
+                            <Star
+                              className={`w-6 h-6 transition-colors ${
+                                isFilled
+                                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                  : 'text-slate-600 hover:text-slate-400'
+                              }`}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center space-x-2 text-xs">
+                      {(hoveredVolunteers || volunteersRating.rating) > 0 ? (
+                        <span className="text-amber-300 font-bold text-[11px]">
+                          {STAR_LABELS[hoveredVolunteers || volunteersRating.rating]}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-[11px]">Tap stars to rate</span>
+                      )}
+                      {volunteersRating.rating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setVolunteersRating({ rating: 0, comment: '' })}
+                          className="text-[10px] text-slate-400 hover:text-red-400 underline font-semibold transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {volunteersRating.rating > 0 && (
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-300 flex items-center space-x-1">
+                      <MessageSquare className="w-3 h-3 text-blue-400" />
+                      <span>Volunteers Comments &amp; Suggestions (Optional):</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Extremely helpful volunteers, prompt guidance across venues..."
+                      value={volunteersRating.comment}
+                      onChange={(e) => setVolunteersRating(prev => ({ ...prev, comment: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-slate-950/70 border border-slate-700 text-xs text-white focus:outline-none focus:border-blue-500 placeholder-slate-500 transition-colors"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2B: Rate Events Section */}
+          <div className="space-y-4 pt-4 border-t border-slate-800/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
+                  <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                  <span>3. Rate Specific Competitions &amp; Events</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Rate the technical or non-technical competitions you attended or participated in.
+                </p>
+              </div>
+              <div className="self-start sm:self-auto">
+                <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
+                  eventRatedCount > 0
                     ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
                     : 'bg-slate-800/80 border-slate-700 text-slate-400'
                 }`}>
-                  {ratedCount} {ratedCount === 1 ? 'event' : 'events'} rated
+                  {eventRatedCount} {eventRatedCount === 1 ? 'event' : 'events'} rated
                 </span>
               </div>
             </div>
@@ -631,13 +960,13 @@ export default function Feedback() {
             <div className="text-xs text-slate-300">
               <span className="font-bold text-white block">Ready to submit?</span>
               <span>
-                {ratedCount > 0 ? (
+                {totalRatedCount > 0 ? (
                   <span className="text-emerald-400 font-semibold">
-                    ✓ {ratedCount} {ratedCount === 1 ? 'event' : 'events'} rated by {name}
+                    ✓ {totalRatedCount} {totalRatedCount === 1 ? 'rating' : 'ratings'} provided by {name}
                   </span>
                 ) : (
                   <span className="text-amber-400">
-                    Select stars on at least one event above before submitting.
+                    Select stars on at least one section above before submitting.
                   </span>
                 )}
               </span>
@@ -645,7 +974,7 @@ export default function Feedback() {
 
             <button
               type="submit"
-              disabled={submitting || ratedCount === 0}
+              disabled={submitting || totalRatedCount === 0}
               className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/35 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shrink-0"
             >
               {submitting ? (

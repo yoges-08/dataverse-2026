@@ -24,6 +24,15 @@ const formatStars = (rating) => {
   return '★'.repeat(r) + '☆'.repeat(5 - r);
 };
 
+// Helper to sanitize general category ratings (Food, Volunteers, Overall)
+const sanitizeCategoryRating = (cat) => {
+  if (!cat || typeof cat !== 'object') return { rating: null, comment: '' };
+  const r = Number(cat.rating);
+  const validRating = (r >= 1 && r <= 5) ? Math.round(r) : null;
+  const comment = typeof cat.comment === 'string' ? cat.comment.trim() : '';
+  return { rating: validRating, comment };
+};
+
 // @desc    Fast check for existing feedback by email (Instant UX pre-check)
 // @route   GET /api/feedback/check?email=...
 // @access  Public
@@ -94,7 +103,7 @@ exports.checkFeedback = async (req, res) => {
 // @access  Public
 exports.submitFeedback = async (req, res) => {
   try {
-    const { name, email, collegeName, eventRatings } = req.body;
+    const { name, email, collegeName, foodRating, volunteersRating, overallRating, eventRatings } = req.body;
 
     // 1. Validate full name
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -128,28 +137,27 @@ exports.submitFeedback = async (req, res) => {
       });
     }
 
-    // 4. Validate eventRatings array
-    if (!Array.isArray(eventRatings) || eventRatings.length === 0) {
+    // 4. Sanitize General & Event Ratings
+    const sanitizedFood = sanitizeCategoryRating(foodRating);
+    const sanitizedVolunteers = sanitizeCategoryRating(volunteersRating);
+    const sanitizedOverall = sanitizeCategoryRating(overallRating);
+
+    const sanitizedRatings = Array.isArray(eventRatings)
+      ? eventRatings
+          .filter(item => item && Number(item.rating) >= 1 && Number(item.rating) <= 5)
+          .map(item => ({
+            event: item.event || item.eventId,
+            eventTitle: String(item.eventTitle || item.title || 'Event').trim(),
+            rating: Math.round(Number(item.rating)),
+            comment: item.comment ? String(item.comment).trim() : ''
+          }))
+      : [];
+
+    const hasAnyRating = sanitizedFood.rating || sanitizedVolunteers.rating || sanitizedOverall.rating || sanitizedRatings.length > 0;
+    if (!hasAnyRating) {
       return res.status(400).json({
         success: false,
-        message: 'Please rate at least one event before submitting.'
-      });
-    }
-
-    // Filter and sanitize rated events
-    const sanitizedRatings = eventRatings
-      .filter(item => item && Number(item.rating) >= 1 && Number(item.rating) <= 5)
-      .map(item => ({
-        event: item.event || item.eventId,
-        eventTitle: String(item.eventTitle || item.title || 'Event').trim(),
-        rating: Math.round(Number(item.rating)),
-        comment: item.comment ? String(item.comment).trim() : ''
-      }));
-
-    if (sanitizedRatings.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please rate at least one event with 1 to 5 stars.'
+        message: 'Please provide at least one rating (Food, Volunteers, Overall Symposium, or Events).'
       });
     }
 
@@ -168,6 +176,9 @@ exports.submitFeedback = async (req, res) => {
           name: name.trim(),
           email: normalizedEmail,
           collegeName: collegeName.trim(),
+          foodRating: sanitizedFood,
+          volunteersRating: sanitizedVolunteers,
+          overallRating: sanitizedOverall,
           eventRatings: sanitizedRatings
         });
 
@@ -195,6 +206,9 @@ exports.submitFeedback = async (req, res) => {
                 name: name.trim(),
                 email: normalizedEmail,
                 collegeName: collegeName.trim(),
+                foodRating: sanitizedFood,
+                volunteersRating: sanitizedVolunteers,
+                overallRating: sanitizedOverall,
                 eventRatings: sanitizedRatings
               });
               return res.status(201).json({
@@ -237,6 +251,9 @@ exports.submitFeedback = async (req, res) => {
         name: name.trim(),
         email: normalizedEmail,
         collegeName: collegeName.trim(),
+        foodRating: sanitizedFood,
+        volunteersRating: sanitizedVolunteers,
+        overallRating: sanitizedOverall,
         eventRatings: sanitizedRatings,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -358,16 +375,37 @@ exports.exportFeedbackDocx = async (req, res) => {
       );
     }
 
-    // Calculate quick stats
-    let totalRatingsCount = 0;
-    let sumRating = 0;
+    // Calculate quick stats across categories
+    let foodRatingsCount = 0, foodRatingsSum = 0;
+    let volRatingsCount = 0, volRatingsSum = 0;
+    let overallRatingsCount = 0, overallRatingsSum = 0;
+    let eventRatingsCount = 0, eventRatingsSum = 0;
+
     feedback.forEach(f => {
+      if (f.foodRating && f.foodRating.rating) {
+        foodRatingsCount++;
+        foodRatingsSum += f.foodRating.rating;
+      }
+      if (f.volunteersRating && f.volunteersRating.rating) {
+        volRatingsCount++;
+        volRatingsSum += f.volunteersRating.rating;
+      }
+      if (f.overallRating && f.overallRating.rating) {
+        overallRatingsCount++;
+        overallRatingsSum += f.overallRating.rating;
+      }
       (f.eventRatings || []).forEach(er => {
-        totalRatingsCount++;
-        sumRating += (er.rating || 0);
+        if (er.rating) {
+          eventRatingsCount++;
+          eventRatingsSum += er.rating;
+        }
       });
     });
-    const avgRating = totalRatingsCount > 0 ? (sumRating / totalRatingsCount).toFixed(1) : 'N/A';
+
+    const avgOverall = overallRatingsCount > 0 ? (overallRatingsSum / overallRatingsCount).toFixed(1) : 'N/A';
+    const avgFood = foodRatingsCount > 0 ? (foodRatingsSum / foodRatingsCount).toFixed(1) : 'N/A';
+    const avgVolunteers = volRatingsCount > 0 ? (volRatingsSum / volRatingsCount).toFixed(1) : 'N/A';
+    const avgEvents = eventRatingsCount > 0 ? (eventRatingsSum / eventRatingsCount).toFixed(1) : 'N/A';
 
     // Build Word Document rows
     const tableHeader = new TableRow({
@@ -379,19 +417,19 @@ exports.exportFeedbackDocx = async (req, res) => {
           children: [new Paragraph({ children: [new TextRun({ text: 'S.No', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
-          width: { size: 30, type: WidthType.PERCENTAGE },
+          width: { size: 28, type: WidthType.PERCENTAGE },
           shading: { fill: '4F46E5', type: ShadingType.CLEAR },
           children: [new Paragraph({ children: [new TextRun({ text: 'Participant Details', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
-          width: { size: 16, type: WidthType.PERCENTAGE },
+          width: { size: 14, type: WidthType.PERCENTAGE },
           shading: { fill: '4F46E5', type: ShadingType.CLEAR },
           children: [new Paragraph({ children: [new TextRun({ text: 'Submitted Date', bold: true, color: 'FFFFFF', size: 20 })] })]
         }),
         new TableCell({
-          width: { size: 48, type: WidthType.PERCENTAGE },
+          width: { size: 52, type: WidthType.PERCENTAGE },
           shading: { fill: '4F46E5', type: ShadingType.CLEAR },
-          children: [new Paragraph({ children: [new TextRun({ text: 'Event Ratings & Feedback Comments', bold: true, color: 'FFFFFF', size: 20 })] })]
+          children: [new Paragraph({ children: [new TextRun({ text: 'Symposium & Event Ratings / Feedback', bold: true, color: 'FFFFFF', size: 20 })] })]
         })
       ]
     });
@@ -402,27 +440,96 @@ exports.exportFeedbackDocx = async (req, res) => {
         timeStyle: 'short'
       }) : '—';
 
-      // Build paragraphs for each rated event
-      const eventParagraphs = [];
-      if (!item.eventRatings || item.eventRatings.length === 0) {
-        eventParagraphs.push(new Paragraph({ children: [new TextRun({ text: 'No event ratings', italics: true, size: 18 })] }));
-      } else {
-        item.eventRatings.forEach((er, i) => {
-          const stars = formatStars(er.rating);
-          eventParagraphs.push(
+      const feedbackParagraphs = [];
+
+      // General Categories (Overall, Food, Volunteers)
+      if (item.overallRating?.rating) {
+        feedbackParagraphs.push(
+          new Paragraph({
+            spacing: { before: 40, after: 30 },
+            children: [
+              new TextRun({ text: '🌟 Overall Symposium: ', bold: true, size: 20, color: '4338CA' }),
+              new TextRun({ text: `${formatStars(item.overallRating.rating)} (${item.overallRating.rating}/5)`, bold: true, size: 20, color: 'D97706' })
+            ]
+          })
+        );
+        if (item.overallRating.comment) {
+          feedbackParagraphs.push(
             new Paragraph({
-              spacing: { before: i > 0 ? 120 : 40, after: 40 },
+              indent: { left: 200 },
+              spacing: { after: 60 },
+              children: [new TextRun({ text: `"${item.overallRating.comment}"`, italics: true, size: 18, color: '4B5563' })]
+            })
+          );
+        }
+      }
+
+      if (item.foodRating?.rating) {
+        feedbackParagraphs.push(
+          new Paragraph({
+            spacing: { before: 40, after: 30 },
+            children: [
+              new TextRun({ text: '🍲 Pure Veg Food: ', bold: true, size: 20, color: '059669' }),
+              new TextRun({ text: `${formatStars(item.foodRating.rating)} (${item.foodRating.rating}/5)`, bold: true, size: 20, color: 'D97706' })
+            ]
+          })
+        );
+        if (item.foodRating.comment) {
+          feedbackParagraphs.push(
+            new Paragraph({
+              indent: { left: 200 },
+              spacing: { after: 60 },
+              children: [new TextRun({ text: `"${item.foodRating.comment}"`, italics: true, size: 18, color: '4B5563' })]
+            })
+          );
+        }
+      }
+
+      if (item.volunteersRating?.rating) {
+        feedbackParagraphs.push(
+          new Paragraph({
+            spacing: { before: 40, after: 30 },
+            children: [
+              new TextRun({ text: '🤝 Volunteers & Support: ', bold: true, size: 20, color: '2563EB' }),
+              new TextRun({ text: `${formatStars(item.volunteersRating.rating)} (${item.volunteersRating.rating}/5)`, bold: true, size: 20, color: 'D97706' })
+            ]
+          })
+        );
+        if (item.volunteersRating.comment) {
+          feedbackParagraphs.push(
+            new Paragraph({
+              indent: { left: 200 },
+              spacing: { after: 60 },
+              children: [new TextRun({ text: `"${item.volunteersRating.comment}"`, italics: true, size: 18, color: '4B5563' })]
+            })
+          );
+        }
+      }
+
+      // Individual Competition Event Ratings
+      if (Array.isArray(item.eventRatings) && item.eventRatings.length > 0) {
+        feedbackParagraphs.push(
+          new Paragraph({
+            spacing: { before: 60, after: 30 },
+            children: [new TextRun({ text: 'Competitions & Events:', bold: true, size: 19, color: '1E1B4B', underline: {} })]
+          })
+        );
+        item.eventRatings.forEach((er) => {
+          const stars = formatStars(er.rating);
+          feedbackParagraphs.push(
+            new Paragraph({
+              spacing: { before: 30, after: 30 },
               children: [
-                new TextRun({ text: `• ${er.eventTitle}: `, bold: true, size: 20, color: '1E1B4B' }),
-                new TextRun({ text: `${stars} (${er.rating}/5)`, bold: true, size: 20, color: 'D97706' })
+                new TextRun({ text: `• ${er.eventTitle}: `, bold: true, size: 19, color: '1F2937' }),
+                new TextRun({ text: `${stars} (${er.rating}/5)`, bold: true, size: 19, color: 'D97706' })
               ]
             })
           );
           if (er.comment && er.comment.trim()) {
-            eventParagraphs.push(
+            feedbackParagraphs.push(
               new Paragraph({
-                indent: { left: 240 },
-                spacing: { after: 80 },
+                indent: { left: 200 },
+                spacing: { after: 50 },
                 children: [
                   new TextRun({ text: `Comment: "${er.comment.trim()}"`, italics: true, size: 18, color: '4B5563' })
                 ]
@@ -432,6 +539,10 @@ exports.exportFeedbackDocx = async (req, res) => {
         });
       }
 
+      if (feedbackParagraphs.length === 0) {
+        feedbackParagraphs.push(new Paragraph({ children: [new TextRun({ text: 'No ratings submitted', italics: true, size: 18 })] }));
+      }
+
       return new TableRow({
         children: [
           new TableCell({
@@ -439,7 +550,7 @@ exports.exportFeedbackDocx = async (req, res) => {
             children: [new Paragraph({ children: [new TextRun({ text: String(index + 1), size: 18, bold: true })] })]
           }),
           new TableCell({
-            width: { size: 30, type: WidthType.PERCENTAGE },
+            width: { size: 28, type: WidthType.PERCENTAGE },
             children: [
               new Paragraph({ children: [new TextRun({ text: item.name || 'Participant', bold: true, size: 20, color: '1E1B4B' })] }),
               new Paragraph({ children: [new TextRun({ text: `Email: ${item.email || '—'}`, size: 18, color: '4338CA' })] }),
@@ -447,12 +558,12 @@ exports.exportFeedbackDocx = async (req, res) => {
             ]
           }),
           new TableCell({
-            width: { size: 16, type: WidthType.PERCENTAGE },
+            width: { size: 14, type: WidthType.PERCENTAGE },
             children: [new Paragraph({ children: [new TextRun({ text: dateStr, size: 17, color: '4B5563' })] })]
           }),
           new TableCell({
-            width: { size: 48, type: WidthType.PERCENTAGE },
-            children: eventParagraphs
+            width: { size: 52, type: WidthType.PERCENTAGE },
+            children: feedbackParagraphs
           })
         ]
       });
@@ -465,7 +576,7 @@ exports.exportFeedbackDocx = async (req, res) => {
         properties: {},
         children: [
           new Paragraph({
-            text: 'DATAVERSE 2026 — Public Event Feedback & Ratings',
+            text: 'DATAVERSE 2026 — Symposium & Event Feedback Report',
             heading: HeadingLevel.TITLE,
             alignment: AlignmentType.CENTER,
             spacing: { after: 120 }
@@ -487,8 +598,10 @@ exports.exportFeedbackDocx = async (req, res) => {
             children: [
               new TextRun({ text: 'Report Summary: ', bold: true, size: 20 }),
               new TextRun({ text: `Total Submissions: ${feedback.length} | `, size: 20 }),
-              new TextRun({ text: `Total Event Ratings: ${totalRatingsCount} | `, size: 20 }),
-              new TextRun({ text: `Overall Average Rating: ${avgRating} / 5 | `, size: 20 }),
+              new TextRun({ text: `🌟 Overall: ${avgOverall}/5 | `, size: 20, color: '4338CA', bold: true }),
+              new TextRun({ text: `🍲 Food: ${avgFood}/5 | `, size: 20, color: '059669', bold: true }),
+              new TextRun({ text: `🤝 Volunteers: ${avgVolunteers}/5 | `, size: 20, color: '2563EB', bold: true }),
+              new TextRun({ text: `Events Avg: ${avgEvents}/5 | `, size: 20 }),
               new TextRun({ text: `Generated: ${new Date().toLocaleString('en-IN')}`, size: 18, italics: true })
             ]
           }),

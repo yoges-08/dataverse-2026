@@ -675,13 +675,45 @@ export default function AdminDashboard() {
       const nameMatch = (fb.name || '').toLowerCase().includes(q);
       const emailMatch = (fb.email || '').toLowerCase().includes(q);
       const collegeMatch = (fb.collegeName || '').toLowerCase().includes(q);
+      const overallMatch = (fb.overallRating?.comment || '').toLowerCase().includes(q);
+      const foodMatch = (fb.foodRating?.comment || '').toLowerCase().includes(q);
+      const volunteersMatch = (fb.volunteersRating?.comment || '').toLowerCase().includes(q);
       const eventMatch = (fb.eventRatings || []).some(er =>
         (er.eventTitle || '').toLowerCase().includes(q) ||
         (er.comment || '').toLowerCase().includes(q)
       );
-      return nameMatch || emailMatch || collegeMatch || eventMatch;
+      return nameMatch || emailMatch || collegeMatch || overallMatch || foodMatch || volunteersMatch || eventMatch;
     });
   }, [feedbackList, feedbackSearch]);
+
+  // Aggregate statistics across categories for the Feedback Tab
+  const feedbackStats = useMemo(() => {
+    let overallCount = 0, overallSum = 0;
+    let foodCount = 0, foodSum = 0;
+    let volCount = 0, volSum = 0;
+
+    feedbackList.forEach(fb => {
+      if (fb.overallRating?.rating) {
+        overallCount++;
+        overallSum += fb.overallRating.rating;
+      }
+      if (fb.foodRating?.rating) {
+        foodCount++;
+        foodSum += fb.foodRating.rating;
+      }
+      if (fb.volunteersRating?.rating) {
+        volCount++;
+        volSum += fb.volunteersRating.rating;
+      }
+    });
+
+    return {
+      total: feedbackList.length,
+      avgOverall: overallCount > 0 ? (overallSum / overallCount).toFixed(1) : '—',
+      avgFood: foodCount > 0 ? (foodSum / foodCount).toFixed(1) : '—',
+      avgVolunteers: volCount > 0 ? (volSum / volCount).toFixed(1) : '—'
+    };
+  }, [feedbackList]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -1554,6 +1586,47 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="glass-card p-4 rounded-2xl border border-slate-800 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total Submissions</span>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-2xl font-black text-white">{feedbackStats.total}</span>
+                <span className="text-[10px] text-slate-500">entries</span>
+              </div>
+            </div>
+
+            <div className="glass-card p-4 rounded-2xl border border-indigo-500/30 bg-indigo-950/20 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-indigo-300 tracking-wider block">🌟 Overall Experience</span>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-2xl font-black text-indigo-300">
+                  {feedbackStats.avgOverall !== '—' ? `★ ${feedbackStats.avgOverall}` : '—'}
+                </span>
+                {feedbackStats.avgOverall !== '—' && <span className="text-[10px] text-indigo-400/70">/ 5.0</span>}
+              </div>
+            </div>
+
+            <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-emerald-300 tracking-wider block">🍲 Veg Food &amp; Catering</span>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-2xl font-black text-emerald-300">
+                  {feedbackStats.avgFood !== '—' ? `★ ${feedbackStats.avgFood}` : '—'}
+                </span>
+                {feedbackStats.avgFood !== '—' && <span className="text-[10px] text-emerald-400/70">/ 5.0</span>}
+              </div>
+            </div>
+
+            <div className="glass-card p-4 rounded-2xl border border-blue-500/30 bg-blue-950/20 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-blue-300 tracking-wider block">🤝 Volunteers &amp; Help</span>
+              <div className="flex items-baseline space-x-1.5">
+                <span className="text-2xl font-black text-blue-300">
+                  {feedbackStats.avgVolunteers !== '—' ? `★ ${feedbackStats.avgVolunteers}` : '—'}
+                </span>
+                {feedbackStats.avgVolunteers !== '—' && <span className="text-[10px] text-blue-400/70">/ 5.0</span>}
+              </div>
+            </div>
+          </div>
+
           {/* Search Filter */}
           <div className="glass-card p-4 rounded-2xl border border-slate-800 flex items-center">
             <div className="relative w-full max-w-md">
@@ -1620,27 +1693,85 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Rated Events Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                      {(fb.eventRatings || []).map((er, rIdx) => (
-                        <div key={rIdx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-xs text-slate-200 truncate">
-                              {er.eventTitle || 'Event'}
-                            </span>
-                            <div className="flex items-center space-x-1 shrink-0 text-amber-400">
-                              <span className="text-xs font-black">{'★'.repeat(er.rating) + '☆'.repeat(5 - er.rating)}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">({er.rating}/5)</span>
+                    {/* General Symposium Facilities Ratings (Food, Volunteers, Overall) */}
+                    {(fb.overallRating?.rating || fb.foodRating?.rating || fb.volunteersRating?.rating) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 pb-2 border-b border-slate-800/60">
+                        {fb.overallRating?.rating && (
+                          <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/30 space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-indigo-300 text-[11px]">🌟 Overall Experience</span>
+                              <div className="flex items-center space-x-1 text-amber-400">
+                                <span className="text-xs font-black">{'★'.repeat(fb.overallRating.rating) + '☆'.repeat(5 - fb.overallRating.rating)}</span>
+                                <span className="text-[10px] text-indigo-300 font-mono">({fb.overallRating.rating}/5)</span>
+                              </div>
                             </div>
+                            {fb.overallRating.comment && (
+                              <p className="text-[11px] text-slate-300 italic pt-1 border-t border-indigo-500/20">
+                                "{fb.overallRating.comment}"
+                              </p>
+                            )}
                           </div>
-                          {er.comment && (
-                            <p className="text-xs text-slate-300 italic pt-1 border-t border-slate-800/50">
-                              "{er.comment}"
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        )}
+
+                        {fb.foodRating?.rating && (
+                          <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-emerald-300 text-[11px]">🍲 Pure Veg Food</span>
+                              <div className="flex items-center space-x-1 text-amber-400">
+                                <span className="text-xs font-black">{'★'.repeat(fb.foodRating.rating) + '☆'.repeat(5 - fb.foodRating.rating)}</span>
+                                <span className="text-[10px] text-emerald-300 font-mono">({fb.foodRating.rating}/5)</span>
+                              </div>
+                            </div>
+                            {fb.foodRating.comment && (
+                              <p className="text-[11px] text-slate-300 italic pt-1 border-t border-emerald-500/20">
+                                "{fb.foodRating.comment}"
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {fb.volunteersRating?.rating && (
+                          <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-blue-300 text-[11px]">🤝 Volunteers &amp; Help</span>
+                              <div className="flex items-center space-x-1 text-amber-400">
+                                <span className="text-xs font-black">{'★'.repeat(fb.volunteersRating.rating) + '☆'.repeat(5 - fb.volunteersRating.rating)}</span>
+                                <span className="text-[10px] text-blue-300 font-mono">({fb.volunteersRating.rating}/5)</span>
+                              </div>
+                            </div>
+                            {fb.volunteersRating.comment && (
+                              <p className="text-[11px] text-slate-300 italic pt-1 border-t border-blue-500/20">
+                                "{fb.volunteersRating.comment}"
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Rated Events Grid */}
+                    {Array.isArray(fb.eventRatings) && fb.eventRatings.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        {fb.eventRatings.map((er, rIdx) => (
+                          <div key={rIdx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-xs text-slate-200 truncate">
+                                {er.eventTitle || 'Event'}
+                              </span>
+                              <div className="flex items-center space-x-1 shrink-0 text-amber-400">
+                                <span className="text-xs font-black">{'★'.repeat(er.rating) + '☆'.repeat(5 - er.rating)}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">({er.rating}/5)</span>
+                              </div>
+                            </div>
+                            {er.comment && (
+                              <p className="text-xs text-slate-300 italic pt-1 border-t border-slate-800/50">
+                                "{er.comment}"
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}

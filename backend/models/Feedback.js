@@ -24,6 +24,20 @@ const EventRatingSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const CategoryRatingSchema = new mongoose.Schema({
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null
+  },
+  comment: {
+    type: String,
+    trim: true,
+    default: ''
+  }
+}, { _id: false });
+
 const FeedbackSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -42,12 +56,23 @@ const FeedbackSchema = new mongoose.Schema({
     required: [true, 'College name is required'],
     trim: true
   },
+  // General Symposium Experience Ratings
+  foodRating: {
+    type: CategoryRatingSchema,
+    default: () => ({ rating: null, comment: '' })
+  },
+  volunteersRating: {
+    type: CategoryRatingSchema,
+    default: () => ({ rating: null, comment: '' })
+  },
+  overallRating: {
+    type: CategoryRatingSchema,
+    default: () => ({ rating: null, comment: '' })
+  },
+  // Individual Competition Event Ratings
   eventRatings: {
     type: [EventRatingSchema],
-    validate: [
-      (val) => Array.isArray(val) && val.length > 0,
-      'At least one event rating is required'
-    ]
+    default: []
   }
 }, {
   timestamps: true
