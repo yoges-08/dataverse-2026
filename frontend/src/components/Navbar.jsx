@@ -67,6 +67,7 @@ export default function Navbar() {
   const navItems = [
     { to: '/', label: 'Home', end: true },
     { to: '/events', label: 'Events', end: false },
+    { to: '/how-to-reach', label: 'How to Reach', end: false },
     { to: '/about', label: 'About AAMEC', end: false },
     { to: '/feedback', label: 'Feedback', end: false },
     { to: '/contact', label: 'Contact', end: false },

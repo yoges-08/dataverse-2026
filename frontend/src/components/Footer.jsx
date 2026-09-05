@@ -30,6 +30,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-xs">
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Technical Events</Link></li>
               <li><Link to="/events" className="hover:text-indigo-400 transition-colors">Non-Technical Events</Link></li>
+              <li><Link to="/how-to-reach" className="hover:text-indigo-400 transition-colors">How to Reach (Transit Guide)</Link></li>
               <li><Link to="/faq" className="hover:text-indigo-400 transition-colors">Frequently Asked Questions</Link></li>
             </ul>
 

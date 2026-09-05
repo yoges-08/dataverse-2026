@@ -13,6 +13,7 @@ const Events = lazy(() => import('./pages/Events'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Sponsors = lazy(() => import('./pages/Sponsors'));
 const FAQ = lazy(() => import('./pages/FAQ'));
+const HowToReach = lazy(() => import('./pages/HowToReach'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Register = lazy(() => import('./pages/Register'));
@@ -115,7 +116,7 @@ export default function App() {
 
 // Route transitions: remount the route content per path so each page
 // fades in with a subtle rise (tab-switch style animation).
-const NAV_ORDER = ['/', '/events', '/schedule', '/sponsors', '/about', '/contact', '/feedback'];
+const NAV_ORDER = ['/', '/events', '/schedule', '/how-to-reach', '/sponsors', '/about', '/contact', '/feedback'];
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -143,6 +144,7 @@ function AnimatedRoutes() {
             <Route path="/about" element={<About />} />
             <Route path="/events" element={<Events />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/how-to-reach" element={<HowToReach />} />
             <Route path="/sponsors" element={<Sponsors />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
