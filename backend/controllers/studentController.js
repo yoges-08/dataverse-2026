@@ -3,6 +3,7 @@ const Student = require('../models/Student');
 const User = require('../models/User');
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
+const Counter = require('../models/Counter');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const qrcode = require('qrcode');
@@ -10,10 +11,13 @@ const mockStore = require('../utils/mockStore');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
-const generateSpotCode = () => {
-  const timeSuffix = Date.now().toString().slice(-4);
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  return `DV2026-SPOT-${timeSuffix}${randomNum}`;
+const getNextSpotCode = async () => {
+  const counter = await Counter.findOneAndUpdate(
+    { _id: 'DV2026-SPOT' },
+    { $inc: { seq: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+  return `DV2026-SPOT-${String(counter.seq).padStart(6, '0')}`;
 };
 
 // Spot-registered students get a unique, unguessable password instead of the
@@ -146,7 +150,7 @@ exports.spotRegistration = async (req, res) => {
       }
 
       // 2. Generate unique symposiumCode & pre-generate userId
-      let symposiumCode = generateSpotCode();
+      let symposiumCode = await getNextSpotCode();
       const userId = new mongoose.Types.ObjectId();
       let qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
 
@@ -196,7 +200,7 @@ exports.spotRegistration = async (req, res) => {
           );
 
           if (isCodeDup) {
-            symposiumCode = generateSpotCode();
+            symposiumCode = await getNextSpotCode();
             qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
             qrCodeDataUrl = await qrcode.toDataURL(qrPayload);
             student = await createStudentDoc(symposiumCode, qrCodeDataUrl);
@@ -267,10 +271,8 @@ exports.spotRegistration = async (req, res) => {
       }
 
       const salt = await bcrypt.genSalt(8);
-      let symposiumCode = generateSpotCode();
-      while (mockStore.students.some(s => s.symposiumCode === symposiumCode)) {
-        symposiumCode = generateSpotCode();
-      }
+      const spotSeq = (mockStore.spotCounter = (mockStore.spotCounter || 0) + 1);
+      const symposiumCode = `DV2026-SPOT-${String(spotSeq).padStart(6, '0')}`;
       const qrPayload = JSON.stringify({ symposiumCode, registerNumber: cleanRegisterNumber, type: 'Spot Registration' });
 
       const [hashedPassword, qrCodeDataUrl] = await Promise.all([
