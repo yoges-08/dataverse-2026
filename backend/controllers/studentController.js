@@ -205,8 +205,11 @@ exports.spotRegistration = async (req, res) => {
           }
         }
       } catch (createErr) {
-        // Rollback safety net: if student creation failed, cleanly delete the User account so no orphan record is left
-        await User.findByIdAndDelete(userId).catch(() => {});
+        // Rollback safety net: cleanly delete both User and Student if either was created, preventing orphan records in either direction
+        await Promise.all([
+          User.findByIdAndDelete(userId).catch(() => {}),
+          Student.deleteOne({ user: userId }).catch(() => {})
+        ]);
         throw createErr;
       }
 
