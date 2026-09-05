@@ -22,8 +22,9 @@ exports.getAnalytics = async (req, res) => {
       const approvedStudents = await Student.countDocuments({ verificationStatus: 'Approved' });
       const rejectedStudents = await Student.countDocuments({ verificationStatus: 'Rejected' });
       const checkedInCount = await Student.countDocuments({ isCheckedIn: true });
+      const eligibleForFood = await Student.countDocuments({ verificationStatus: 'Approved', isCheckedIn: true });
       const foodServedCount = await Student.countDocuments({ isFoodServed: true });
-      const foodRemainingCount = Math.max(0, totalStudents - foodServedCount);
+      const foodRemainingCount = Math.max(0, eligibleForFood - foodServedCount);
       const certificatesCount = await Certificate.countDocuments();
       const technicalEvents = await Event.countDocuments({ category: 'Technical' });
       const nonTechnicalEvents = await Event.countDocuments({ category: 'Non-Technical' });
@@ -87,9 +88,10 @@ exports.getAnalytics = async (req, res) => {
           approvedStudents,
           rejectedStudents,
           checkedInCount,
+          eligibleForFood,
           foodServedCount,
           foodRemainingCount,
-          foodPercentage: totalStudents > 0 ? Math.round((foodServedCount / totalStudents) * 100) : 0,
+          foodPercentage: eligibleForFood > 0 ? Math.round((foodServedCount / eligibleForFood) * 100) : 0,
           certificatesCount,
           technicalEvents,
           nonTechnicalEvents,
@@ -103,8 +105,9 @@ exports.getAnalytics = async (req, res) => {
       const approvedStudents = mockStore.students.filter(s => s.verificationStatus === 'Approved').length;
       const rejectedStudents = mockStore.students.filter(s => s.verificationStatus === 'Rejected').length;
       const checkedInCount = mockStore.students.filter(s => s.isCheckedIn).length;
+      const eligibleForFood = mockStore.students.filter(s => s.verificationStatus === 'Approved' && s.isCheckedIn).length;
       const foodServedCount = mockStore.students.filter(s => s.isFoodServed).length;
-      const foodRemainingCount = Math.max(0, totalStudents - foodServedCount);
+      const foodRemainingCount = Math.max(0, eligibleForFood - foodServedCount);
       const certificatesCount = mockStore.certificates.length;
       const technicalEvents = mockStore.events.filter(e => e.category === 'Technical').length;
       const nonTechnicalEvents = mockStore.events.filter(e => e.category === 'Non-Technical').length;
@@ -160,9 +163,10 @@ exports.getAnalytics = async (req, res) => {
           approvedStudents,
           rejectedStudents,
           checkedInCount,
+          eligibleForFood,
           foodServedCount,
           foodRemainingCount,
-          foodPercentage: totalStudents > 0 ? Math.round((foodServedCount / totalStudents) * 100) : 0,
+          foodPercentage: eligibleForFood > 0 ? Math.round((foodServedCount / eligibleForFood) * 100) : 0,
           certificatesCount,
           technicalEvents,
           nonTechnicalEvents,

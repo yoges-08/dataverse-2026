@@ -624,6 +624,17 @@ export default function AdminDashboard() {
     });
   }, [students, searchTerm, statusFilter, foodFilter]);
 
+  // Memoized food served and remaining counts to avoid inline array filtering on every render
+  const foodServedTotal = useMemo(
+    () => students.filter(s => s.isFoodServed).length,
+    [students]
+  );
+
+  const foodRemainingTotal = useMemo(
+    () => students.filter(s => !s.isFoodServed).length,
+    [students]
+  );
+
   // Students filtered for the Canteen Meals tab
   const canteenFilteredStudents = useMemo(() => {
     const term = canteenSearch.trim().toLowerCase();
@@ -728,7 +739,7 @@ export default function AdminDashboard() {
       <div className="flex items-center space-x-2 border-b border-slate-800 pb-2 overflow-x-auto">
         {[
           { id: 'students', label: `Students (${students.length})` },
-          { id: 'canteen', label: `🍱 Canteen Meals (${students.filter(s => s.isFoodServed).length}/${students.length})` },
+          { id: 'canteen', label: `🍱 Canteen Meals (${foodServedTotal}/${students.length})` },
           { id: 'events', label: `Symposium Events (${events.length})` },
           { id: 'certificates', label: 'Certificates' },
           { id: 'staff', label: `Coordinators & Volunteers (${staffList.length})` },
@@ -966,15 +977,15 @@ export default function AdminDashboard() {
                 <Salad className="w-4 h-4 text-emerald-400" />
               </div>
               <p className="text-2xl font-black text-emerald-400 mt-1">
-                {students.filter(s => s.isFoodServed).length}
+                {foodServedTotal}
                 <span className="text-xs font-semibold text-emerald-300 ml-2">
-                  ({Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%)
+                  ({Math.round((foodServedTotal / (students.length || 1)) * 100)}%)
                 </span>
               </p>
               <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
                 <div 
                   className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%` }}
+                  style={{ width: `${Math.round((foodServedTotal / (students.length || 1)) * 100)}%` }}
                 />
               </div>
             </div>
@@ -985,7 +996,7 @@ export default function AdminDashboard() {
                 <Clock className="w-4 h-4 text-amber-400" />
               </div>
               <p className="text-2xl font-black text-amber-400 mt-1">
-                {students.filter(s => !s.isFoodServed).length}
+                {foodRemainingTotal}
               </p>
               <p className="text-[10px] text-amber-300/70 mt-0.5">Eligible / pending to claim</p>
             </div>
@@ -1025,7 +1036,7 @@ export default function AdminDashboard() {
                     : 'bg-slate-900 text-emerald-400 hover:bg-slate-800 border border-emerald-500/30'
                 }`}
               >
-                🥗 Food Served ({students.filter(s => s.isFoodServed).length})
+                🥗 Food Served ({foodServedTotal})
               </button>
               <button
                 type="button"
@@ -1036,7 +1047,7 @@ export default function AdminDashboard() {
                     : 'bg-slate-900 text-amber-400 hover:bg-slate-800 border border-amber-500/30'
                 }`}
               >
-                ⏳ Not Claimed ({students.filter(s => !s.isFoodServed).length})
+                ⏳ Not Claimed ({foodRemainingTotal})
               </button>
             </div>
           </div>
