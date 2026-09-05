@@ -222,23 +222,30 @@ exports.serveFood = async (req, res) => {
         orConditions.push({ phone: new RegExp(cleanPhoneDigits + '$') });
       }
 
-      const student = await Student.findOne({ $or: orConditions }).populate('user', 'name email');
+      // 1. Attempt atomic find and update for approved, checked-in, not-yet-served student
+      const student = await Student.findOneAndUpdate(
+        {
+          $or: orConditions,
+          verificationStatus: 'Approved',
+          isCheckedIn: true,
+          isFoodServed: { $ne: true }
+        },
+        {
+          $set: {
+            isFoodServed: true,
+            foodServedAt: new Date(),
+            foodServedBy: req.user ? req.user.name : 'Canteen Volunteer'
+          }
+        },
+        { new: true }
+      ).populate('user', 'name email');
 
-      if (!student) {
-        return res.status(404).json({
-          success: false,
-          message: `No student record found for '${searchCode}'. Please verify at the registration desk.`
-        });
-      }
-
-      const studentName = student.user ? student.user.name : (student.name || student.email);
-
-      // Check if food was already served
-      if (student.isFoodServed) {
-        return res.status(400).json({
-          success: false,
-          alreadyServed: true,
-          message: `Meal already collected! Student '${studentName}' already received their Veg lunch at ${new Date(student.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (by ${student.foodServedBy || 'Canteen Counter'}).`,
+      if (student) {
+        const studentName = student.user ? student.user.name : (student.name || student.email);
+        return res.status(200).json({
+          success: true,
+          alreadyServed: false,
+          message: `Meal Approved! 1 Veg Lunch served to ${studentName}.`,
           student: {
             id: student._id,
             name: studentName,
@@ -252,26 +259,53 @@ exports.serveFood = async (req, res) => {
         });
       }
 
-      // Mark food as served
-      student.isFoodServed = true;
-      student.foodServedAt = new Date();
-      student.foodServedBy = req.user ? req.user.name : 'Canteen Volunteer';
-      await student.save();
+      // 2. If atomic update returned null, diagnose exact reason with a fallback findOne
+      const existingStudent = await Student.findOne({ $or: orConditions }).populate('user', 'name email');
 
-      return res.status(200).json({
-        success: true,
-        alreadyServed: false,
-        message: `Meal Approved! 1 Veg Lunch served to ${studentName}.`,
-        student: {
-          id: student._id,
-          name: studentName,
-          symposiumCode: student.symposiumCode,
-          collegeName: student.collegeName,
-          department: student.department,
-          isFoodServed: true,
-          foodServedAt: student.foodServedAt,
-          foodServedBy: student.foodServedBy
-        }
+      if (!existingStudent) {
+        return res.status(404).json({
+          success: false,
+          message: `No student record found for '${searchCode}'. Please verify at the registration desk.`
+        });
+      }
+
+      const studentName = existingStudent.user ? existingStudent.user.name : (existingStudent.name || existingStudent.email);
+
+      if (existingStudent.verificationStatus !== 'Approved') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot serve food. Verification status is '${existingStudent.verificationStatus}'. Admin approval required.`
+        });
+      }
+
+      if (!existingStudent.isCheckedIn) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot serve food. Student has not checked in at the gate yet.`
+        });
+      }
+
+      if (existingStudent.isFoodServed) {
+        return res.status(400).json({
+          success: false,
+          alreadyServed: true,
+          message: `Meal already collected! Student '${studentName}' already received their Veg lunch at ${new Date(existingStudent.foodServedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (by ${existingStudent.foodServedBy || 'Canteen Counter'}).`,
+          student: {
+            id: existingStudent._id,
+            name: studentName,
+            symposiumCode: existingStudent.symposiumCode,
+            collegeName: existingStudent.collegeName,
+            department: existingStudent.department,
+            isFoodServed: true,
+            foodServedAt: existingStudent.foodServedAt,
+            foodServedBy: existingStudent.foodServedBy
+          }
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: 'Unable to process meal request. Please try again.'
       });
     } else {
       // mockStore in-memory branch
@@ -290,6 +324,20 @@ exports.serveFood = async (req, res) => {
 
       const user = mockStore.users.find(u => u._id === student.user);
       const studentName = user ? user.name : student.email;
+
+      if (student.verificationStatus !== 'Approved') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot serve food. Verification status is '${student.verificationStatus}'. Admin approval required.`
+        });
+      }
+
+      if (!student.isCheckedIn) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot serve food. Student has not checked in at the gate yet.`
+        });
+      }
 
       if (student.isFoodServed) {
         return res.status(400).json({
