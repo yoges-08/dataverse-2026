@@ -705,34 +705,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* Analytics Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="glass-card p-4 rounded-2xl border border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="glass-card p-5 rounded-2xl border border-slate-800">
           <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Registered</span>
-          <span className="text-2xl sm:text-3xl font-black text-white">{stats.totalStudents || students.length || 0}</span>
+          <span className="text-3xl font-black text-white">{stats.totalStudents || students.length || 0}</span>
         </div>
-        <div className="glass-card p-4 rounded-2xl border border-amber-500/30">
-          <span className="text-[10px] text-amber-400 font-bold uppercase block">Pending</span>
-          <span className="text-2xl sm:text-3xl font-black text-amber-400">{stats.pendingStudents || 0}</span>
+        <div className="glass-card p-5 rounded-2xl border border-amber-500/30">
+          <span className="text-[10px] text-amber-400 font-bold uppercase block">Pending Approvals</span>
+          <span className="text-3xl font-black text-amber-400">{stats.pendingStudents || 0}</span>
         </div>
-        <div className="glass-card p-4 rounded-2xl border border-emerald-500/30">
-          <span className="text-[10px] text-emerald-400 font-bold uppercase block">Approved</span>
-          <span className="text-2xl sm:text-3xl font-black text-emerald-400">{stats.approvedStudents || 0}</span>
+        <div className="glass-card p-5 rounded-2xl border border-emerald-500/30">
+          <span className="text-[10px] text-emerald-400 font-bold uppercase block">Approved Students</span>
+          <span className="text-3xl font-black text-emerald-400">{stats.approvedStudents || 0}</span>
         </div>
-        <div className="glass-card p-4 rounded-2xl border border-indigo-500/30">
-          <span className="text-[10px] text-indigo-400 font-bold uppercase block">Checked In</span>
-          <span className="text-xl sm:text-2xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
-        </div>
-        <div className="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/10">
-          <span className="text-[10px] text-emerald-400 font-bold uppercase block">🥗 Veg Served</span>
-          <span className="text-xl sm:text-2xl font-black text-emerald-400">
-            {stats.foodServedCount !== undefined ? stats.foodServedCount : students.filter(s => s.isFoodServed).length} ({stats.foodPercentage !== undefined ? stats.foodPercentage : Math.round((students.filter(s => s.isFoodServed).length / (students.length || 1)) * 100)}%)
-          </span>
-        </div>
-        <div className="glass-card p-4 rounded-2xl border border-amber-500/30 bg-amber-950/10">
-          <span className="text-[10px] text-amber-400 font-bold uppercase block">⏳ Food Remaining</span>
-          <span className="text-2xl sm:text-3xl font-black text-amber-400">
-            {stats.foodRemainingCount !== undefined ? stats.foodRemainingCount : students.filter(s => !s.isFoodServed).length}
-          </span>
+        <div className="glass-card p-5 rounded-2xl border border-indigo-500/30">
+          <span className="text-[10px] text-indigo-400 font-bold uppercase block">Venue Checked-In</span>
+          <span className="text-2xl sm:text-3xl font-black text-indigo-400">{stats.checkedInCount || 0} ({stats.attendancePercentage || 0}%)</span>
         </div>
       </div>
 
