@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import EventDetailModal from '../components/EventDetailModal';
 import { Search, Filter, Sparkles, Trophy, Calendar, MapPin, ChevronRight, Zap, CheckCircle2, Users, User } from 'lucide-react';
+import { formatEventWithEmoji } from '../utils/eventEmoji';
 import API from '../services/api';
 
 export default function Events() {
@@ -147,7 +148,7 @@ export default function Events() {
               <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div>
                   <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors mb-1">
-                    {ev.title}
+                    {formatEventWithEmoji(ev.title)}
                   </h3>
                   <p className="text-xs text-indigo-300 font-medium mb-2">{ev.tagline}</p>
                   <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">{ev.description}</p>

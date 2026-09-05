@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Feedback = require('../models/Feedback');
 const Event = require('../models/Event');
 const mockStore = require('../utils/mockStore');
+const { formatEventWithEmoji } = require('../utils/eventEmoji');
 const {
   Document,
   Packer,
@@ -520,7 +521,7 @@ exports.exportFeedbackDocx = async (req, res) => {
             new Paragraph({
               spacing: { before: 30, after: 30 },
               children: [
-                new TextRun({ text: `• ${er.eventTitle}: `, bold: true, size: 19, color: '1F2937' }),
+                new TextRun({ text: `• ${formatEventWithEmoji(er.eventTitle)}: `, bold: true, size: 19, color: '1F2937' }),
                 new TextRun({ text: `${stars} (${er.rating}/5)`, bold: true, size: 19, color: 'D97706' })
               ]
             })

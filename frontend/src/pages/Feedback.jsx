@@ -18,6 +18,7 @@ import {
   Users
 } from 'lucide-react';
 import API from '../services/api';
+import { formatEventWithEmoji } from '../utils/eventEmoji';
 
 const STAR_LABELS = {
   1: 'Needs Improvement',
@@ -871,8 +872,8 @@ export default function Feedback() {
                             )}
                           </div>
 
-                          <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                            {ev.title}
+                          <h3 className="text-base sm:text-lg font-black text-white leading-tight flex items-center space-x-2">
+                            <span>{formatEventWithEmoji(ev.title)}</span>
                           </h3>
                           {ev.tagline && (
                             <p className="text-xs text-slate-400 line-clamp-2">{ev.tagline}</p>

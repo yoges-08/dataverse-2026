@@ -8,6 +8,7 @@ import {
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
 import { getStudentName } from '../../utils/studentName';
+import { formatEventWithEmoji } from '../../utils/eventEmoji';
 import API from '../../services/api';
 
 export default function AdminDashboard() {
@@ -1234,7 +1235,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-bold text-indigo-400">{ev.category}</span>
                   </div>
-                  <h4 className="text-lg font-bold text-white">{ev.title}</h4>
+                  <h4 className="text-lg font-bold text-white">{formatEventWithEmoji(ev.title)}</h4>
                   <p className="text-xs text-slate-400">{ev.venue} • {ev.date}</p>
                   {t ? (
                     <p className="text-[11px] text-slate-300 flex items-center space-x-2">
@@ -1342,7 +1343,7 @@ export default function AdminDashboard() {
                 >
                   <option value="">— Choose an event —</option>
                   {events.map((ev) => (
-                    <option key={ev._id} value={ev._id}>{ev.title} ({ev.category})</option>
+                    <option key={ev._id} value={ev._id}>{formatEventWithEmoji(ev.title)} ({ev.category})</option>
                   ))}
                 </select>
               </div>
@@ -1756,7 +1757,7 @@ export default function AdminDashboard() {
                           <div key={rIdx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-bold text-xs text-slate-200 truncate">
-                                {er.eventTitle || 'Event'}
+                                {formatEventWithEmoji(er.eventTitle || 'Event')}
                               </span>
                               <div className="flex items-center space-x-1 shrink-0 text-amber-400">
                                 <span className="text-xs font-black">{'★'.repeat(er.rating) + '☆'.repeat(5 - er.rating)}</span>

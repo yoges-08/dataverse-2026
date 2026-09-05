@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { X, AlertCircle, FileText, Sparkles, Calendar, Clock, MapPin, User, Code, Check, CheckCircle2, Users } from 'lucide-react';
+import { formatEventWithEmoji } from '../utils/eventEmoji';
 import API from '../services/api';
 
 const formatDate = (d) => {
@@ -461,7 +462,7 @@ export default function EventDetailModal({ event, onClose, onRegisterSuccess }) 
                 }`}>
                   {event.category} Event
                 </span>
-                <h2 className="text-xl sm:text-3xl font-extrabold text-white mt-1 leading-tight">{event.title}</h2>
+                <h2 className="text-xl sm:text-3xl font-extrabold text-white mt-1 leading-tight">{formatEventWithEmoji(event.title)}</h2>
               </div>
             </div>
           </div>
