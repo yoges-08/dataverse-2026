@@ -13,6 +13,11 @@ const {
   exportStudentsExcel,
   exportStudentsByEventExcel
 } = require('../controllers/adminController');
+const {
+  getAllFeedback,
+  exportFeedbackDocx,
+  deleteFeedback
+} = require('../controllers/feedbackController');
 
 router.use(protect);
 
@@ -29,5 +34,10 @@ router.delete('/students/:id', authorize('super_admin'), deleteStudent);
 router.delete('/registrations/:id', authorize('super_admin'), removeRegistration);
 router.post('/staff', authorize('super_admin'), createStaff);
 router.get('/staff', authorize('super_admin'), getStaffList);
+
+// Feedback management routes (super_admin only)
+router.get('/feedback', authorize('super_admin'), getAllFeedback);
+router.get('/feedback/export', authorize('super_admin'), exportFeedbackDocx);
+router.delete('/feedback/:id', authorize('super_admin'), deleteFeedback);
 
 module.exports = router;

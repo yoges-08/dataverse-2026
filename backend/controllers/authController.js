@@ -39,10 +39,15 @@ const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
 // @desc    Register a new Student
 // @route   POST /api/auth/register-student
 exports.registerStudent = async (req, res) => {
-  return res.status(403).json({
-    success: false,
-    message: 'Symposium registrations are officially closed as all slots are full. Thank you for the overwhelming response!'
-  });
+  // Configurable registration gate (defaults to closed 'true' if not set to 'false')
+  const isRegistrationClosed = process.env.REGISTRATIONS_CLOSED !== 'false';
+  if (isRegistrationClosed) {
+    return res.status(403).json({
+      success: false,
+      message: 'Symposium registrations are officially closed as all slots are full. Thank you for the overwhelming response!'
+    });
+  }
+
   let createdUser = null;
   try {
     const {
