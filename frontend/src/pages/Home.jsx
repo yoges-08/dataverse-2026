@@ -158,7 +158,7 @@ export default function Home() {
 
           {/* Countdown Timer */}
           <div className="pt-6">
-            <CountdownTimer targetDate="2026-09-12T09:00:00" />
+            <CountdownTimer targetDate="2026-09-12T11:00:00" />
           </div>
 
         </div>
