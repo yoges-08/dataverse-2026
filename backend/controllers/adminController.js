@@ -10,7 +10,7 @@ const Certificate = require('../models/Certificate');
 const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const teamController = require('./teamController');
-const { sendApprovalMail, sendAccountRemovalMail } = require('../utils/mailer');
+const { sendApprovalMail, sendAccountRemovalMail, sendEventReminderMail } = require('../utils/mailer');
 const { sanitizeUser } = require('../utils/sanitizeUser');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
@@ -860,5 +860,103 @@ exports.removeRegistration = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error removing registration' });
   }
 };
+
+exports.remindUnregisteredStudents = async (req, res) => {
+  try {
+    const { studentId, studentIds } = req.body || {};
+
+    if (isDbConnected()) {
+      const registeredStudentIds = await Registration.distinct('student');
+
+      let query = {
+        _id: { $nin: registeredStudentIds }
+      };
+
+      if (studentId) {
+        query._id = studentId;
+      } else if (Array.isArray(studentIds) && studentIds.length > 0) {
+        query._id = { $in: studentIds, $nin: registeredStudentIds };
+      }
+
+      const zeroEventStudents = await Student.find(query).populate('user', 'name email').lean();
+
+      if (zeroEventStudents.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'No 0-event registered students found to remind.',
+          count: 0
+        });
+      }
+
+      let sentCount = 0;
+      let failedCount = 0;
+
+      for (const student of zeroEventStudents) {
+        const email = student.email || (student.user && student.user.email);
+        const name = (student.user && student.user.name) || student.name || 'Student';
+        if (email) {
+          try {
+            await sendEventReminderMail({ to: email, name });
+            sentCount++;
+          } catch (err) {
+            console.error(`Failed to send reminder to ${email}:`, err);
+            failedCount++;
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Sent reminder email${sentCount === 1 ? '' : 's'} to ${sentCount} student${sentCount === 1 ? '' : 's'}${failedCount > 0 ? ` (${failedCount} failed)` : ''}.`,
+        count: sentCount,
+        failed: failedCount
+      });
+    } else {
+      // MockStore fallback
+      const registeredStudentIdSet = new Set(mockStore.registrations.map(r => String(r.student)));
+      let zeroEventStudents = mockStore.students.filter(s => !registeredStudentIdSet.has(String(s._id)));
+
+      if (studentId) {
+        zeroEventStudents = zeroEventStudents.filter(s => String(s._id) === String(studentId));
+      } else if (Array.isArray(studentIds) && studentIds.length > 0) {
+        const idSet = new Set(studentIds.map(String));
+        zeroEventStudents = zeroEventStudents.filter(s => idSet.has(String(s._id)));
+      }
+
+      if (zeroEventStudents.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'No 0-event registered students found to remind.',
+          count: 0
+        });
+      }
+
+      let sentCount = 0;
+      for (const student of zeroEventStudents) {
+        const u = mockStore.users.find(usr => usr._id === student.user);
+        const email = student.email || (u && u.email);
+        const name = (u && u.name) || student.name || 'Student';
+        if (email) {
+          try {
+            await sendEventReminderMail({ to: email, name });
+            sentCount++;
+          } catch (err) {
+            console.error(`Failed to send reminder to ${email}:`, err);
+          }
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Sent reminder email${sentCount === 1 ? '' : 's'} to ${sentCount} student${sentCount === 1 ? '' : 's'}.`,
+        count: sentCount
+      });
+    }
+  } catch (error) {
+    console.error('remindUnregisteredStudents error:', error);
+    res.status(500).json({ success: false, message: 'Error sending reminder emails' });
+  }
+};
+
 
 

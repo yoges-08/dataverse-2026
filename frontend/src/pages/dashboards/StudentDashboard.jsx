@@ -93,6 +93,29 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      {/* 0 Events Action Required Alert */}
+      {registeredEvents.length === 0 && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-amber-950/20">
+          <div className="flex items-start space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertCircle className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-white text-sm">Action Required: Complete Your Event Registration</h4>
+              <p className="text-xs text-amber-300/90 mt-1 leading-relaxed">
+                You have registered for DATAVERSE 2026, but have not yet registered for any individual events. Please complete your event registration by <strong className="text-white">Monday, 7 September 2026, 12:00 PM (Noon)</strong> to confirm your symposium seat.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/events"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs transition-all shadow-md shrink-0 text-center"
+          >
+            Register for Events Now →
+          </Link>
+        </div>
+      )}
+
       {/* Dashboard Overview */}
 
       {/* Dashboard Cards Grid */}
@@ -185,9 +208,21 @@ export default function StudentDashboard() {
           </div>
 
           {registeredEvents.length === 0 ? (
-            <div className="glass-card p-8 rounded-2xl text-center text-slate-400 space-y-3">
-              <Calendar className="w-10 h-10 text-indigo-400 mx-auto opacity-50" />
-              <p className="text-sm">You haven't registered for any symposium events yet.</p>
+            <div className="glass-card p-8 rounded-2xl text-center text-slate-400 space-y-3 border border-amber-500/30 bg-amber-500/5">
+              <Calendar className="w-10 h-10 text-amber-400 mx-auto opacity-70" />
+              <p className="text-sm font-semibold text-white">You haven't registered for any symposium events yet.</p>
+              <p className="text-xs text-slate-400 max-w-md mx-auto">
+                Please register for at least 1 technical or non-technical competition before Monday, 7 Sept 12:00 PM.
+              </p>
+              <div className="pt-2">
+                <Link
+                  to="/events"
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-900/30"
+                >
+                  <span>Browse & Register for Events</span>
+                  <span>→</span>
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">

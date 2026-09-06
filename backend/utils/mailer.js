@@ -286,10 +286,55 @@ const sendAccountRemovalMail = async ({ to, name, reason }) => {
   return sendMail({ to, subject: 'Update Regarding Your Dataverse Symposium Registration', html });
 };
 
+const sendEventReminderMail = async ({ to, name }) => {
+  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Student');
+
+  const html = mailShell(`
+    <div style="padding:20px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:18px;margin:0 0 12px;font-weight:700;">Dear ${safeName},</h2>
+      
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
+        We hope you are excited to be part of the <strong style="color:#ffffff;">Dataverse Symposium</strong>!
+      </p>
+
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
+        Our records show that you have successfully registered for the symposium but <strong style="color:#fbbf24;">have not yet registered for any individual event</strong>.
+      </p>
+
+      <div style="background:rgba(99,102,241,0.12);border:1px solid rgba(139,92,246,0.35);border-radius:12px;padding:14px 16px;margin:16px 0 18px;">
+        <p style="color:#e0e7ff;font-size:13px;line-height:1.6;margin:0;">
+          ⏰ We kindly request you to complete your event registration by <strong style="color:#ffffff;">Monday, 7 September 2026, 12:00 PM (Noon)</strong>. This will be the final opportunity to complete your event registration.
+        </p>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:12px;padding:14px 16px;margin:16px 0 18px;">
+        <p style="color:#fca5a5;font-size:13px;line-height:1.6;margin:0;font-weight:600;">
+          ⚠️ Please note that if you do not register for at least one event before the deadline, your symposium account and registration will be removed.
+        </p>
+      </div>
+
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 18px;">
+        We encourage you to complete your event registration at your earliest convenience and look forward to welcoming you to the symposium!
+      </p>
+
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.6;margin:0 0 18px;">
+        Thank you for your cooperation and understanding.
+      </p>
+
+      <div style="color:#cbd5e1;font-size:13px;line-height:1.6;border-top:1px solid rgba(139,92,246,0.25);padding-top:14px;">
+        <strong style="color:#ffffff;">Warm regards,</strong><br/>
+        <strong style="color:#a78bfa;">Dataverse Symposium Organizing Team</strong>
+      </div>
+    </div>
+  `);
+  return sendMail({ to, subject: 'Action Required: Complete Your Event Registration', html });
+};
+
 module.exports = {
   sendMail,
   sendRegistrationMail,
   sendApprovalMail,
   sendEventRegistrationMail,
-  sendAccountRemovalMail
+  sendAccountRemovalMail,
+  sendEventReminderMail
 };

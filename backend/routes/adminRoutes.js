@@ -11,7 +11,8 @@ const {
   createStaff,
   getStaffList,
   exportStudentsExcel,
-  exportStudentsByEventExcel
+  exportStudentsByEventExcel,
+  remindUnregisteredStudents
 } = require('../controllers/adminController');
 const {
   getAllFeedback,
@@ -32,6 +33,7 @@ router.get('/students/export-by-event', authorize('super_admin'), exportStudents
 router.put('/students/:id/status', authorize('super_admin'), updateStudentStatus);
 router.delete('/students/:id', authorize('super_admin'), deleteStudent);
 router.delete('/registrations/:id', authorize('super_admin'), removeRegistration);
+router.post('/remind-unregistered-events', authorize('super_admin'), remindUnregisteredStudents);
 router.post('/staff', authorize('super_admin'), createStaff);
 router.get('/staff', authorize('super_admin'), getStaffList);
 

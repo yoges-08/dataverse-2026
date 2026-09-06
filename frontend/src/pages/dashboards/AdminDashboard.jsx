@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
   Users, CheckCircle2, Clock, XCircle, Award, Calendar, BarChart3, 
   Search, Filter, Plus, Trash2, Edit, ShieldCheck, QrCode, Download, Bell, Sparkles, UserCheck, User,
-  FileBadge, Loader, Code, Star, Salad, Utensils
+  FileBadge, Loader, Code, Star, Salad, Utensils, Mail, AlertTriangle
 } from 'lucide-react';
 import StudentBadgeModal from '../../components/StudentBadgeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -56,6 +56,9 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [foodFilter, setFoodFilter] = useState('');
+  const [eventFilter, setEventFilter] = useState('');
+  const [remindBusy, setRemindBusy] = useState(false);
+  const [remindSingleBusyId, setRemindSingleBusyId] = useState(null);
   const [canteenSearch, setCanteenSearch] = useState('');
   const [canteenSubFilter, setCanteenSubFilter] = useState('all');
 
@@ -610,6 +613,57 @@ export default function AdminDashboard() {
     }
   };
 
+  const zeroEventStudentsCount = useMemo(() => {
+    return students.filter(s => !s.registeredEvents || s.registeredEvents.length === 0).length;
+  }, [students]);
+
+  const handleSendBulkEventReminder = async () => {
+    const targets = students.filter(s => !s.registeredEvents || s.registeredEvents.length === 0);
+    if (targets.length === 0) {
+      alert('All registered students have already registered for at least one event! No reminder emails needed.');
+      return;
+    }
+
+    const confirmMsg = `Send event registration reminder email to ${targets.length} student(s) with 0 registered events?\n\nDeadline stated in email: Monday, 7 September 2026, 12:00 PM (Noon).`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setRemindBusy(true);
+      const res = await API.post('/admin/remind-unregistered-events');
+      if (res.data.success) {
+        alert(res.data.message || `Reminder emails sent successfully to ${res.data.count || targets.length} students!`);
+      } else {
+        alert(res.data.message || 'Failed to send reminder emails.');
+      }
+    } catch (err) {
+      console.error('Error sending reminder emails:', err);
+      alert(err.response?.data?.message || 'Failed to send reminder emails. Please check server logs.');
+    } finally {
+      setRemindBusy(false);
+    }
+  };
+
+  const handleSendSingleEventReminder = async (student) => {
+    const sName = getStudentName(student, student.email || 'Student');
+    const confirmMsg = `Send event registration reminder email to ${sName} (${student.email})?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setRemindSingleBusyId(student._id);
+      const res = await API.post('/admin/remind-unregistered-events', { studentId: student._id });
+      if (res.data.success) {
+        alert(res.data.message || `Reminder email sent successfully to ${sName}!`);
+      } else {
+        alert(res.data.message || 'Failed to send reminder email.');
+      }
+    } catch (err) {
+      console.error('Error sending reminder email:', err);
+      alert(err.response?.data?.message || 'Failed to send reminder email.');
+    } finally {
+      setRemindSingleBusyId(null);
+    }
+  };
+
   const filteredStudents = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return students.filter(s => {
@@ -621,9 +675,11 @@ export default function AdminDashboard() {
         (s.user && s.user.name && s.user.name.toLowerCase().includes(term));
       const matchesStatus = !statusFilter || s.verificationStatus === statusFilter;
       const matchesFood = !foodFilter || (foodFilter === 'served' ? s.isFoodServed : !s.isFoodServed);
-      return matchesSearch && matchesStatus && matchesFood;
+      const regCount = (s.registeredEvents && s.registeredEvents.length) || 0;
+      const matchesEventCount = !eventFilter || (eventFilter === 'zero' ? regCount === 0 : regCount > 0);
+      return matchesSearch && matchesStatus && matchesFood && matchesEventCount;
     });
-  }, [students, searchTerm, statusFilter, foodFilter]);
+  }, [students, searchTerm, statusFilter, foodFilter, eventFilter]);
 
   // Memoized food served and remaining counts to avoid inline array filtering on every render
   const foodServedTotal = useMemo(
@@ -797,6 +853,41 @@ export default function AdminDashboard() {
       {/* TAB 1: STUDENTS MANAGEMENT */}
       {activeTab === 'students' && (
         <div className="space-y-6">
+          {/* Unregistered Events Reminder Banner */}
+          {zeroEventStudentsCount > 0 && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-300">
+                    {zeroEventStudentsCount} Student{zeroEventStudentsCount === 1 ? '' : 's'} Registered with 0 Events
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    These students haven't selected any symposium events yet. Send them a reminder to register before Monday, 7 Sept 12:00 PM.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEventFilter(eventFilter === 'zero' ? '' : 'zero')}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-[11px] border border-slate-700 transition-all"
+                >
+                  {eventFilter === 'zero' ? 'Show All Students' : 'Filter 0-Event Students'}
+                </button>
+                <button
+                  onClick={handleSendBulkEventReminder}
+                  disabled={remindBusy}
+                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-[11px] shadow-md shadow-amber-900/30 transition-all flex items-center space-x-1.5 disabled:opacity-50"
+                >
+                  {remindBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                  <span>{remindBusy ? 'Sending...' : `Send Reminder Email (${zeroEventStudentsCount})`}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Controls */}
           <div className="glass-card p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="relative w-full md:w-80">
@@ -831,6 +922,30 @@ export default function AdminDashboard() {
                 <option value="served">🥗 Food Served (Veg)</option>
                 <option value="not_served">⏳ Food Not Claimed</option>
               </select>
+
+              <select
+                value={eventFilter}
+                onChange={(e) => setEventFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none font-medium"
+              >
+                <option value="">All Event Counts</option>
+                <option value="zero">⚠️ 0 Events ({zeroEventStudentsCount})</option>
+                <option value="registered">✅ 1+ Events ({students.length - zeroEventStudentsCount})</option>
+              </select>
+
+              <button
+                onClick={handleSendBulkEventReminder}
+                disabled={remindBusy || zeroEventStudentsCount === 0}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                  zeroEventStudentsCount > 0
+                    ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-900/20'
+                    : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                }`}
+                title="Send reminder email to all 0-event registered students"
+              >
+                {remindBusy ? <Loader className="w-3.5 h-3.5 animate-spin text-white" /> : <Mail className="w-3.5 h-3.5" />}
+                <span>Send Reminders ({zeroEventStudentsCount})</span>
+              </button>
             </div>
           </div>
 
@@ -844,6 +959,7 @@ export default function AdminDashboard() {
                     <th className="p-4">Symposium Code</th>
                     <th className="p-4">Phone</th>
                     <th className="p-4">College & Dept</th>
+                    <th className="p-4">Events</th>
                     <th className="p-4">Status</th>
                     <th className="p-4">Checked In</th>
                     <th className="p-4">Lunch / Food</th>
@@ -853,6 +969,7 @@ export default function AdminDashboard() {
                 <tbody className="divide-y divide-slate-800/60">
                   {filteredStudents.map((s) => {
                     const name = getStudentName(s, s.email || 'Student');
+                    const hasZeroEvents = !s.registeredEvents || s.registeredEvents.length === 0;
                     return (
                       <tr key={s._id} className="hover:bg-slate-900/50 transition-colors">
                         <td className="p-4">
@@ -872,6 +989,19 @@ export default function AdminDashboard() {
                         <td className="p-4">
                           <span className="text-slate-200 block font-medium max-w-[220px] whitespace-normal break-words">{s.collegeName}</span>
                           <span className="text-[10px] text-indigo-300">{s.department} ({s.year})</span>
+                        </td>
+
+                        <td className="p-4">
+                          {hasZeroEvents ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              <AlertTriangle className="w-3 h-3 text-amber-400" />
+                              <span>0 Events</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                              <span>{s.registeredEvents.length} Event{s.registeredEvents.length > 1 ? 's' : ''}</span>
+                            </span>
+                          )}
                         </td>
 
                         <td className="p-4">
@@ -918,6 +1048,17 @@ export default function AdminDashboard() {
                         </td>
 
                         <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                          {hasZeroEvents && (
+                            <button
+                              onClick={() => handleSendSingleEventReminder(s)}
+                              disabled={remindSingleBusyId === s._id}
+                              className="p-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 disabled:opacity-50"
+                              title="Send Event Registration Reminder Email"
+                            >
+                              {remindSingleBusyId === s._id ? <Loader className="w-4 h-4 animate-spin text-amber-300" /> : <Mail className="w-4 h-4" />}
+                            </button>
+                          )}
+
                           <button
                             onClick={() => setSelectedStudentForBadge(s)}
                             className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30"
