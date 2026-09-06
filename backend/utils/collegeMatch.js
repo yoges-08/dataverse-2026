@@ -127,6 +127,22 @@ const editDistance = (a, b, max) => {
 // order are identical, only where the word boundaries fall differs.
 const normSquash = (s) => normStrict(s).replace(/\s+/g, '');
 
+// Known campus/district locations in Tamil Nadu & South India to safely distinguish
+// location suffixes from distinct institution brand names.
+const KNOWN_LOCATIONS = new Set([
+  'KOVILVENNI', 'KOVILVEENI', 'PUNALKULAM', 'ORATHANADU', 'THANJAVUR',
+  'TIRUCHIRAPPALLI', 'TRICHY', 'CHENNAI', 'COIMBATORE', 'MADURAI', 'SALEM',
+  'POLLACHI', 'KUMBAKONAM', 'NAGAPATTINAM', 'TIRUVARUR', 'PERAMBALUR',
+  'ARIYALUR', 'PUDUKKOTTAI', 'KARUR', 'DINDIGUL', 'ERODE', 'TIRUPPUR',
+  'VELLORE', 'KANCHIPURAM', 'TIRUNELVELI', 'SIVAGANGAI', 'VIRUDHUNAGAR',
+  'THENI', 'KRISHNAGIRI', 'DHARMAPURI', 'CUDDALORE', 'VILLUPURAM',
+  'KALLAKURICHI', 'TENKASI', 'TIRUVANNAMALAI', 'RANIPET', 'TIRUPATTUR',
+  'CHENGALPATTU', 'KANYAKUMARI', 'NAGERCOIL', 'TUTICORIN', 'THOOTHUKUDI',
+  'AVADI', 'TAMBARAM', 'SIRKAZHI', 'MAYILADUTHURAI', 'NAMAKKAL', 'NILGIRIS',
+  'OOTY', 'HOSUR', 'SIVAKASI', 'KARAISUTHI', 'VALLIOOR', 'CHIDAMBARAM',
+  'NEYVELI', 'METTUR', 'PALANI', 'RAJAPALAYAM', 'PARAMAKUDI', 'RAMANATHAPURAM'
+]);
+
 // Known aliases and squashed canonical forms for the host college of this symposium.
 // Guarantees every common way a student might type "Anjalai Ammal Mahalingam Engineering
 // College Kovilvenni" (including merged words e.g. "Anjalaiammal Mahalingam..." or
@@ -152,13 +168,13 @@ const isHostCollege = (s) => {
   const strict = normStrict(s);
   const squash = normSquash(s);
   if (HOST_COLLEGE_ALIASES.has(strict) || HOST_CANONICAL_SQUASHES.has(squash)) return true;
-  // Merged word "Anjalaiammal" + Mahalingam check
-  if ((squash.includes('ANJALAIAMMAL') || squash.includes('ANJALAI')) && squash.includes('MAHALINGAM')) return true;
   // Acronym AAMEC check
   if (squash.startsWith('AAMEC')) return true;
-  // Fallback: general matcher already tolerates location suffixes,
-  // acronyms, spacing and small typos against the canonical full name.
-  return collegesMatch(s, 'Anjalai Ammal Mahalingam Engineering College') || collegesMatch(s, 'AAMEC');
+  // Must require both key distinctive words: Anjalai AND Mahalingam
+  const tokens = coreTokens(s);
+  const hasAnjalai = tokens.has('ANJALAI') || tokens.has('ANJALAIAMMAL') || squash.includes('ANJALAI');
+  const hasMahalingam = tokens.has('MAHALINGAM') || squash.includes('MAHALINGAM');
+  return !!(hasAnjalai && hasMahalingam);
 };
 
 // Per-word budget: how many edits we tolerate for a single word, scaled to
@@ -166,11 +182,7 @@ const isHostCollege = (s) => {
 const tokenEditBudget = (len) => (len <= 3 ? 0 : len <= 6 ? 1 : len <= 12 ? 2 : 3);
 
 // Token-level fuzzy containment: every core word of the SHORTER name must
-// closely match some core word of the LONGER name. This is what
-// `collegesMatch`'s existing containment tier does, but tolerating small
-// per-word typos instead of requiring an exact word match — so it also
-// covers the case where a typo AND an extra location word both appear
-// between two entries for the same real college.
+// closely match some core word of the LONGER name.
 const tokenFuzzyContains = (shortTokens, longTokens) =>
   shortTokens.every(st =>
     longTokens.some(lt => {
@@ -186,7 +198,22 @@ const tokenFuzzyMatch = (a, b) => {
   const [shortTokens, longTokens] = tokensA.length <= tokensB.length
     ? [tokensA, tokensB] : [tokensB, tokensA];
   if (shortTokens.length === 0) return false;
+  // 1-token short form against 3+ token long form must never fuzzy match
+  if (shortTokens.length === 1 && longTokens.length >= 3) return false;
   if (shortTokens.length === 1 && shortTokens[0].length < 6) return false;
+  if (shortTokens.length === 1 && longTokens.length === 2) {
+    const matchedIdx = longTokens.findIndex(lt => {
+      const budget = Math.max(tokenEditBudget(shortTokens[0].length), tokenEditBudget(lt.length));
+      return editDistance(shortTokens[0], lt, budget) <= budget;
+    });
+    if (matchedIdx !== -1) {
+      const extraToken = longTokens[matchedIdx === 0 ? 1 : 0];
+      if (!KNOWN_LOCATIONS.has(extraToken)) return false;
+    }
+  }
+  if (shortTokens.length >= 2 && longTokens.length - shortTokens.length > 1) {
+    return false;
+  }
   return tokenFuzzyContains(shortTokens, longTokens);
 };
 
@@ -205,9 +232,7 @@ const collegesMatch = (a, b) => {
 
   // Split/merged-word tier: same letters, same order, only the spacing
   // differs. Guarded on length so two short, generic names typed with
-  // different spacing can't coincidentally squash to the same short string
-  // (e.g. "AB College" vs "A B College" — plausibly two different, unrelated
-  // small colleges, not worth risking a false merge over).
+  // different spacing can't coincidentally squash to the same short string.
   const squashA = normSquash(a);
   const squashB = normSquash(b);
   const MIN_SQUASH_LENGTH = 10;
@@ -215,10 +240,7 @@ const collegesMatch = (a, b) => {
 
   // Acronym tier: one side may be typed as a short-form acronym of the
   // other's full spelled-out name (e.g. "AAMEC" vs "Anjalai Ammal
-  // Mahalingam Engineering College"). Tolerates a bounded location/campus
-  // suffix on the long-name side (e.g. "... College Kovilveeni"), and
-  // treats the FIRST word as an acronym candidate so an acronym typed with
-  // its own location suffix ("AAMEC Kovilvenni") still matches.
+  // Mahalingam Engineering College").
   if (acronymMatch(a, b) || acronymMatch(b, a)) return true;
 
   const coreA = normCore(a);
@@ -228,29 +250,22 @@ const collegesMatch = (a, b) => {
   if (coreA === coreB) return true;
 
   // Containment tier: if every core word of the SHORTER name appears in the
-  // LONGER name, treat them as the same college (handles a location/campus
-  // suffix being present on only one side, e.g. "RMS Engineering College"
-  // vs "RMS Engineering College Orathanadu").
+  // LONGER name, treat them as the same college if the extra words represent
+  // a location/campus suffix (e.g. "Anjalai Ammal Mahalingam..." vs "... Kovilvenni"
+  // or "Kings College of Engineering" vs "... Punalkulam").
   const tokensA = coreTokens(a);
   const tokensB = coreTokens(b);
   const [shorter, longer] = tokensA.size <= tokensB.size ? [tokensA, tokensB] : [tokensB, tokensA];
 
-  // Require at least 2 shared core words (or the shorter side to be a single,
-  // reasonably specific word of 3+ chars — real abbreviations like RMS, SRM,
-  // PSG, MIT) so a lone short/generic token doesn't cause an over-eager match
-  // between two unrelated colleges.
   if (shorter.size === 0) return false;
   const allContained = [...shorter].every(t => longer.has(t));
-  if (allContained && (shorter.size >= 2 || [...shorter][0].length >= 3)) return true;
+  if (allContained) {
+    const diff = [...longer].filter(t => !shorter.has(t));
+    if (shorter.size >= 2 && diff.length <= 1) return true;
+    if (shorter.size === 1 && diff.length === 1 && KNOWN_LOCATIONS.has(diff[0])) return true;
+  }
 
-  // Fuzzy tier (last resort): tolerates small free-text typos — a missing/
-  // doubled letter, a swap, one wrong character — most often landing in a
-  // location suffix ("kovilvenni" vs "kovilveni"). Compared on the CORE
-  // (filler words like "Engineering College" already stripped, then
-  // squashed) rather than the full name — shared generic words are long and
-  // would otherwise dilute the distance budget, masking a real difference
-  // in the short, distinctive part of the name (e.g. "SRM" vs "SSN"
-  // Engineering College must NOT match just because both end the same way).
+  // Fuzzy tier (last resort): tolerates small free-text typos
   const coreSquashA = coreA.replace(/\s+/g, '');
   const coreSquashB = coreB.replace(/\s+/g, '');
   const fuzzyA = coreSquashA.length <= coreSquashB.length ? coreSquashA : coreSquashB;
@@ -264,4 +279,4 @@ const collegesMatch = (a, b) => {
   return tokenFuzzyMatch(a, b);
 };
 
-module.exports = { normStrict, normCore, collegesMatch, isHostCollege, tokenFuzzyMatch };
+module.exports = { normStrict, normCore, collegesMatch, isHostCollege, tokenFuzzyMatch, KNOWN_LOCATIONS };
