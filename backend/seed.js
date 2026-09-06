@@ -102,6 +102,7 @@ const seedData = async () => {
     const adminPass = await bcrypt.hash(getRequiredPassword('ADMIN_SEED_PASSWORD', 'Super Admin'), salt);
     const coordPass = await bcrypt.hash(getRequiredPassword('COORDINATOR_SEED_PASSWORD', 'Coordinator'), salt);
     const volPass = await bcrypt.hash(getRequiredPassword('VOLUNTEER_SEED_PASSWORD', 'Volunteer'), salt);
+    const coOrgPass = await bcrypt.hash(process.env.CO_ORGANIZER_SEED_PASSWORD || 'CoOrg@2026', salt);
 
     // 1. Create Core Users
     const adminUser = await User.create({
@@ -128,7 +129,15 @@ const seedData = async () => {
       role: 'volunteer'
     });
 
-    console.log('Created Admin, Coordinator, and Volunteer accounts.');
+    const coOrgUser = await User.create({
+      name: 'Co-Organizer (AAMEC)',
+      username: 'coorganizer',
+      email: 'coorganizer@aamec.edu.in',
+      password: coOrgPass,
+      role: 'co_organizer'
+    });
+
+    console.log('Created Admin, Coordinator, Volunteer, and Co-Organizer accounts.');
 
     // 2. Create Events
     const events = await Event.create([

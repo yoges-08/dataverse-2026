@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Sparkles, AlertCircle, Eye, EyeOff, CheckCircle2, User } from 'lucide-react';
 import LoginCanvasBackground from '../components/LoginCanvasBackground';
 
 export default function Register() {

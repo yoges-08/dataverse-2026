@@ -858,10 +858,11 @@ exports.removeTeamMember = async (req, res) => {
 
       // The `leader` field is just the tracked creator id (used for the unique
       // index); if the creator left, re-point it at the oldest remaining member.
-      const newLeader = remaining.length && wasLeader
+      const oldestMember = remaining.length && wasLeader
         ? [...team.members]
             .sort((a, b) => new Date(a.addedAt || 0) - new Date(b.addedAt || 0))[0]
-        : team.leader;
+        : null;
+      const newLeader = oldestMember ? (oldestMember.student?._id || oldestMember.student) : team.leader;
 
       const status = recomputeStatus(team, event);
       const patch = {};

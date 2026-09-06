@@ -229,6 +229,9 @@ app.use((err, req, res, next) => {
   if (err && err.message === 'Not allowed by CORS') {
     return res.status(403).json({ success: false, message: 'Not allowed by CORS' });
   }
+  if (err && (err.name === 'MulterError' || (err.message && err.message.includes('Only images')))) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
   console.error('API Error:', err.stack);
   res.status(err.statusCode || 500).json({
     success: false,

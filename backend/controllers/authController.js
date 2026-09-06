@@ -39,8 +39,8 @@ const normalizePhone = (p) => String(p || '').replace(/[^0-9]/g, '');
 // @desc    Register a new Student
 // @route   POST /api/auth/register-student
 exports.registerStudent = async (req, res) => {
-  // Configurable registration gate (defaults to closed 'true' if not set to 'false')
-  const isRegistrationClosed = process.env.REGISTRATIONS_CLOSED !== 'false';
+  // Configurable registration gate (set REGISTRATIONS_CLOSED="true" in .env to close)
+  const isRegistrationClosed = process.env.REGISTRATIONS_CLOSED === 'true';
   if (isRegistrationClosed) {
     return res.status(403).json({
       success: false,

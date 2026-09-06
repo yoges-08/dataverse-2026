@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const { protect, authorize } = require('../middleware/auth');
 const {
   checkFeedback,
   submitFeedback,
   cleanupFeedbackIndexes
 } = require('../controllers/feedbackController');
 
-// Maintenance & index cleanup
-router.get('/cleanup-indexes', cleanupFeedbackIndexes);
+// Maintenance & index cleanup (Restricted to Super Admin)
+router.get('/cleanup-indexes', protect, authorize('super_admin'), cleanupFeedbackIndexes);
 
 // Public route: instant duplicate check by email
 router.get('/check', checkFeedback);

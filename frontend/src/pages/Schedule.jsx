@@ -11,14 +11,12 @@ export default function Schedule() {
       { time: '10:30 AM - 12:30 PM', title: 'Knowledge Knockout Quiz & Buzzer Round', venue: 'A/C Conference Hall', category: 'Technical' },
       { time: '11:00 AM - 01:00 PM', title: 'Bug Hunt - Syntax & Logic Debugging Battle', venue: 'CC2 Lab', category: 'Technical' },
       { time: '11:00 AM - 03:00 PM', title: 'Agentic AI Hackathon & Agent Demo', venue: 'CS Lab 3 & High Performance Computing Lab', category: 'Technical' },
+      { time: '11:30 AM - 01:30 PM', title: 'Layman Vibes Tech Explanation Challenge', venue: 'Open Air Theatre (OAT)', category: 'Non-Technical' },
+      { time: '12:30 PM - 01:30 PM', title: 'Complimentary Pure Veg Lunch & Refreshments', venue: 'College Canteen', category: 'Lunch' },
       { time: '01:30 PM - 04:30 PM', title: 'NovaSpeak Paper Presentation Sessions', venue: 'MB-110 (Smart Class)', category: 'Technical' },
-      { time: '02:00 PM - 03:30 PM', title: 'Code Sprint - Speed Coding & Reconstruction', venue: 'CC1 Lab', category: 'Technical' }
-    ],
-    Day2: [
-      { time: '09:30 AM - 10:30 AM', title: 'Day 2 Keynote: Future of Generative AI', venue: 'Auditorium Block A', category: 'Keynote' },
-      { time: '10:00 AM - 12:30 PM', title: 'Layman Vibes Tech Explanation Challenge', venue: 'Open Air Theatre (OAT)', category: 'Non-Technical' },
-      { time: '10:30 AM - 03:30 PM', title: 'Viral Vision Reel Screening & Submission', venue: 'A/C Conference Hall', category: 'Non-Technical' },
-      { time: '01:30 PM - 03:30 PM', title: 'Luminas Fest Cultural Stage Performance', venue: 'Main Auditorium', category: 'Non-Technical' },
+      { time: '01:30 PM - 03:30 PM', title: 'Luminas Fest Skill & Cultural Arena', venue: 'Main Auditorium', category: 'Non-Technical' },
+      { time: '02:00 PM - 03:30 PM', title: 'Code Sprint - Speed Coding & Reconstruction', venue: 'CC1 Lab', category: 'Technical' },
+      { time: '02:00 PM - 03:30 PM', title: 'Viral Vision Reel Screening & Judging', venue: 'A/C Conference Hall', category: 'Non-Technical' },
       { time: '03:45 PM - 05:00 PM', title: 'Valedictory Function & Trophy Distribution', venue: 'Main Auditorium', category: 'Valedictory' }
     ]
   };
@@ -31,14 +29,13 @@ export default function Schedule() {
           DATAVERSE 2026 Timeline
         </span>
         <h1 className="text-4xl sm:text-5xl font-black text-white">Event Schedule</h1>
-        <p className="text-sm text-slate-400">Plan your symposium itinerary across Day 1 and Day 2 competitions.</p>
+        <p className="text-sm text-slate-400">Plan your symposium itinerary across September 12, 2026 competitions and ceremonies.</p>
       </div>
 
       {/* Day Selector */}
       <div className="flex flex-wrap items-center justify-center gap-3">
         {[
-          { key: 'Day1', label: 'Day 1 • September 15, 2026' },
-          { key: 'Day2', label: 'Day 2 • September 16, 2026' }
+          { key: 'Day1', label: 'Symposium Day • September 12, 2026' }
         ].map(d => (
           <button
             key={d.key}

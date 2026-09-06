@@ -10,7 +10,7 @@ export default function FAQ() {
     { q: "Is on-spot registration available for non-registered students?", a: "Yes! While online pre-registration is recommended to reserve event seats, spot registration counters will be open at Main Block Admin Reception on Day 1 starting 9:30 AM." },
     { q: "How do I get my entry ticket and QR code?", a: "Once your online registration is approved by the admin team, your unique Symposium Code (e.g. DV2026-REG-1001) and QR Code ticket will appear on your Student Dashboard and downloadable receipt." },
     { q: "Are certificates provided to all participants?", a: "Yes! High-resolution verified E-Certificates will be issued to all verified participants and winners after check-in and event completion." },
-    { q: "Is accommodation and food available?", a: "Yes, food (Veg/Non-Veg options) is included with registration. Hostel accommodation is available upon selection during registration." }
+    { q: "Is accommodation and food available?", a: "Yes! Complimentary Pure Veg Lunch and refreshments are provided for all registered participants. Hostel accommodation is available upon selection during registration." }
   ];
 
   return (
