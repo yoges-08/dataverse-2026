@@ -11,6 +11,7 @@ const Team = require('../models/Team');
 const mockStore = require('../utils/mockStore');
 const teamController = require('./teamController');
 const { sendApprovalMail, sendAccountRemovalMail } = require('../utils/mailer');
+const { sanitizeUser } = require('../utils/sanitizeUser');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -388,6 +389,14 @@ exports.getRegistrants = async (req, res) => {
 exports.updateStudentStatus = async (req, res) => {
   try {
     const { status, rejectionReason } = req.body;
+    const allowedStatuses = ['Approved', 'Pending', 'Rejected'];
+    if (!status || !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Must be one of: ${allowedStatuses.join(', ')}`
+      });
+    }
+
     if (isDbConnected()) {
       const student = await Student.findById(req.params.id);
       if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
@@ -522,17 +531,20 @@ exports.createStaff = async (req, res) => {
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ success: false, message: `Role must be one of: ${allowedRoles.join(', ')}` });
     }
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
     if (isDbConnected()) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       const user = await User.create({ name, email, password: hashedPassword, role });
-      return res.status(201).json({ success: true, message: `${role.toUpperCase()} account created`, user });
+      return res.status(201).json({ success: true, message: `${role.toUpperCase()} account created`, user: sanitizeUser(user) });
     } else {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       const user = { _id: 'u' + (mockStore.users.length + 1), name, email, password: hashedPassword, role };
       mockStore.users.push(user);
-      return res.status(201).json({ success: true, message: `${role.toUpperCase()} account created`, user });
+      return res.status(201).json({ success: true, message: `${role.toUpperCase()} account created`, user: sanitizeUser(user) });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error creating staff' });
@@ -545,7 +557,9 @@ exports.getStaffList = async (req, res) => {
       const staff = await User.find({ role: { $in: ['coordinator', 'volunteer', 'super_admin', 'co_organizer'] } }).select('-password').lean();
       return res.status(200).json({ success: true, count: staff.length, staff });
     } else {
-      const staff = mockStore.users.filter(u => ['coordinator', 'volunteer', 'super_admin', 'co_organizer'].includes(u.role));
+      const staff = mockStore.users
+        .filter(u => ['coordinator', 'volunteer', 'super_admin', 'co_organizer'].includes(u.role))
+        .map(sanitizeUser);
       return res.status(200).json({ success: true, count: staff.length, staff });
     }
   } catch (error) {

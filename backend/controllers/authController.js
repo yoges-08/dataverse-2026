@@ -9,6 +9,7 @@ const mockStore = require('../utils/mockStore');
 const sendEmail = require('../utils/sendEmail');
 const { sendRegistrationMail } = require('../utils/mailer');
 const { isHostCollege } = require('../utils/collegeMatch');
+const { sanitizeUser } = require('../utils/sanitizeUser');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -332,9 +333,10 @@ exports.getMe = async (req, res) => {
       const user = await User.findById(userId).select('-password');
       let student = null;
       if (user && user.role === 'student') student = await Student.findOne({ user: user._id });
-      return res.status(200).json({ success: true, user, student });
+      return res.status(200).json({ success: true, user: sanitizeUser(user), student });
     } else {
-      const user = mockStore.users.find(u => u._id === userId || String(u._id) === String(userId));
+      const rawUser = mockStore.users.find(u => u._id === userId || String(u._id) === String(userId));
+      const user = sanitizeUser(rawUser);
       let student = null;
       if (user && user.role === 'student') student = mockStore.students.find(s => s.user === user._id || String(s.user) === String(user._id));
       return res.status(200).json({ success: true, user, student });
