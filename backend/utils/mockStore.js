@@ -62,6 +62,19 @@ class MockStore {
     }
   }
 
+  generateId(collectionName, prefix) {
+    const list = this[collectionName] || [];
+    let maxNum = 0;
+    list.forEach(item => {
+      const match = String(item._id || '').match(new RegExp(`^${prefix}(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    });
+    return `${prefix}${maxNum + 1}`;
+  }
+
   async init() {
     if (this.restored) return; // data already loaded from disk - do not re-seed
 

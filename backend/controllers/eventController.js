@@ -258,17 +258,32 @@ exports.getEventById = async (req, res) => {
   }
 };
 
+const sanitizeEventPayload = (data) => {
+  const clean = { ...data };
+  if (clean.maxParticipants !== undefined) clean.maxParticipants = Number(clean.maxParticipants) || 0;
+  if (clean.teamLimit !== undefined) clean.teamLimit = Number(clean.teamLimit) || 0;
+  if (clean.requiresLanguageChoice !== undefined) {
+    clean.requiresLanguageChoice = clean.requiresLanguageChoice === true || clean.requiresLanguageChoice === 'true';
+  }
+  if (clean.pdfRequired !== undefined) {
+    clean.pdfRequired = clean.pdfRequired === true || clean.pdfRequired === 'true';
+  }
+  return clean;
+};
+
 exports.createEvent = async (req, res) => {
   try {
-    const eventData = req.body;
-    if (req.file) eventData.bannerImage = `/uploads/${req.file.filename}`;
+    const rawData = req.body;
+    if (req.file) rawData.bannerImage = `/uploads/${req.file.filename}`;
+    const eventData = sanitizeEventPayload(rawData);
 
     if (isDbConnected()) {
       const event = await Event.create(eventData);
       return res.status(201).json({ success: true, message: 'Event created successfully', event });
     } else {
+      const nextId = mockStore.generateId ? mockStore.generateId('events', 'e') : 'e' + (mockStore.events.length + 1);
       const newEvent = {
-        _id: 'e' + (mockStore.events.length + 1),
+        _id: nextId,
         ...eventData,
         currentRegistrations: 0,
         bannerImage: eventData.bannerImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800&q=80'
@@ -283,17 +298,19 @@ exports.createEvent = async (req, res) => {
 
 exports.updateEvent = async (req, res) => {
   try {
+    const rawData = { ...req.body };
+    if (req.file) rawData.bannerImage = `/uploads/${req.file.filename}`;
+    const updateData = sanitizeEventPayload(rawData);
+
     if (isDbConnected()) {
       let event = await Event.findById(req.params.id);
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
-      const updateData = { ...req.body };
-      if (req.file) updateData.bannerImage = `/uploads/${req.file.filename}`;
       event = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true });
       return res.status(200).json({ success: true, message: 'Event updated successfully', event });
     } else {
       let event = mockStore.events.find(e => e._id === req.params.id || String(e._id) === String(req.params.id));
       if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
-      Object.assign(event, req.body);
+      Object.assign(event, updateData);
       return res.status(200).json({ success: true, message: 'Event updated successfully', event });
     }
   } catch (error) {
