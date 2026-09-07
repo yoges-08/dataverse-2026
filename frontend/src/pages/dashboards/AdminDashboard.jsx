@@ -64,6 +64,19 @@ export default function AdminDashboard() {
 
   // Modals
   const [selectedStudentForBadge, setSelectedStudentForBadge] = useState(null);
+  const [showEditStudentModal, setShowEditStudentModal] = useState(false);
+  const [editStudentBusy, setEditStudentBusy] = useState(false);
+  const [editStudentForm, setEditStudentForm] = useState({
+    id: '',
+    name: '',
+    email: '',
+    symposiumCode: '',
+    collegeName: '',
+    department: '',
+    year: '',
+    phone: '',
+    registerNumber: ''
+  });
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
@@ -613,6 +626,51 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleOpenEditStudent = (s) => {
+    const sName = (s.user && s.user.name) || s.name || '';
+    setEditStudentForm({
+      id: s._id,
+      name: sName,
+      email: s.email || (s.user && s.user.email) || '',
+      symposiumCode: s.symposiumCode || '',
+      collegeName: s.collegeName || '',
+      department: s.department || '',
+      year: s.year || '1',
+      phone: s.phone || '',
+      registerNumber: s.registerNumber || ''
+    });
+    setShowEditStudentModal(true);
+  };
+
+  const handleSaveStudentEdit = async (e) => {
+    e.preventDefault();
+    if (!editStudentForm.id) return;
+    try {
+      setEditStudentBusy(true);
+      const res = await API.put(`/admin/students/${editStudentForm.id}`, {
+        name: editStudentForm.name,
+        collegeName: editStudentForm.collegeName,
+        department: editStudentForm.department,
+        year: editStudentForm.year,
+        phone: editStudentForm.phone,
+        registerNumber: editStudentForm.registerNumber
+      });
+      if (res.data.success && res.data.student) {
+        const updated = res.data.student;
+        setStudents(prev => prev.map(s => String(s._id) === String(editStudentForm.id) ? { ...s, ...updated } : s));
+        setShowEditStudentModal(false);
+        alert('Student details updated successfully!');
+      } else {
+        alert(res.data.message || 'Failed to update student details.');
+      }
+    } catch (err) {
+      console.error('Error updating student:', err);
+      alert(err.response?.data?.message || 'Failed to update student. Please check server logs.');
+    } finally {
+      setEditStudentBusy(false);
+    }
+  };
+
   const zeroEventStudentsCount = useMemo(() => {
     return students.filter(s => !s.registeredEvents || s.registeredEvents.length === 0).length;
   }, [students]);
@@ -1065,6 +1123,14 @@ export default function AdminDashboard() {
                             title="Preview Badge & QR Pass"
                           >
                             <QrCode className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenEditStudent(s)}
+                            className="p-2 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors"
+                            title="Edit Student Details & College"
+                          >
+                            <Edit className="w-4 h-4" />
                           </button>
 
                           {s.verificationStatus !== 'Approved' && (
@@ -2234,6 +2300,130 @@ export default function AdminDashboard() {
                 })()}
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Edit Student Details Modal */}
+      {showEditStudentModal && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="glass-card max-w-lg w-full rounded-2xl p-6 border border-blue-500/30 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                  <Edit className="w-4 h-4 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white">Edit Student Details</h3>
+              </div>
+              <button onClick={() => setShowEditStudentModal(false)} className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveStudentEdit} className="space-y-4 text-xs">
+              {/* Read-Only Information */}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Symposium Code</span>
+                  <span className="font-mono font-bold text-indigo-400">{editStudentForm.symposiumCode || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Email Address</span>
+                  <span className="font-medium text-slate-300 truncate block">{editStudentForm.email || '—'}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">Student Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editStudentForm.name}
+                  onChange={e => setEditStudentForm({ ...editStudentForm, name: e.target.value })}
+                  placeholder="Student name"
+                  className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">College Name</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editStudentForm.collegeName}
+                  onChange={e => setEditStudentForm({ ...editStudentForm, collegeName: e.target.value })}
+                  placeholder="Official college name"
+                  className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">Department</label>
+                  <input
+                    type="text"
+                    required
+                    value={editStudentForm.department}
+                    onChange={e => setEditStudentForm({ ...editStudentForm, department: e.target.value })}
+                    placeholder="e.g. AI & DS"
+                    className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">Year of Study</label>
+                  <select
+                    value={editStudentForm.year}
+                    onChange={e => setEditStudentForm({ ...editStudentForm, year: e.target.value })}
+                    className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    value={editStudentForm.phone}
+                    onChange={e => setEditStudentForm({ ...editStudentForm, phone: e.target.value })}
+                    placeholder="10-digit mobile"
+                    className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 mb-1">Register Number</label>
+                  <input
+                    type="text"
+                    value={editStudentForm.registerNumber}
+                    onChange={e => setEditStudentForm({ ...editStudentForm, registerNumber: e.target.value })}
+                    placeholder="College reg no"
+                    className="w-full p-2.5 bg-slate-900 rounded-xl border border-slate-700 text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditStudentModal(false)}
+                  className="w-1/2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editStudentBusy}
+                  className="w-1/2 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 shadow-md shadow-blue-900/30 transition-all"
+                >
+                  {editStudentBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>{editStudentBusy ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body

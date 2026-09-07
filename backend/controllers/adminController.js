@@ -441,6 +441,62 @@ exports.updateStudentStatus = async (req, res) => {
   }
 };
 
+exports.updateStudentDetails = async (req, res) => {
+  try {
+    const { name, collegeName, department, year, phone, registerNumber } = req.body || {};
+
+    if (isDbConnected()) {
+      const student = await Student.findById(req.params.id);
+      if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+      if (collegeName !== undefined) student.collegeName = String(collegeName).trim();
+      if (department !== undefined) student.department = String(department).trim();
+      if (year !== undefined) student.year = String(year).trim();
+      if (phone !== undefined) student.phone = String(phone).trim();
+      if (registerNumber !== undefined) student.registerNumber = String(registerNumber).trim();
+      if (name !== undefined) student.name = String(name).trim();
+
+      await student.save();
+
+      if (name && student.user) {
+        await User.findByIdAndUpdate(student.user, { name: String(name).trim() });
+      }
+
+      const updatedStudent = await Student.findById(student._id).populate('user', 'name email role').lean();
+      return res.status(200).json({
+        success: true,
+        message: 'Student details updated successfully',
+        student: updatedStudent
+      });
+    } else {
+      const student = mockStore.students.find(s => String(s._id) === String(req.params.id));
+      if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+      if (collegeName !== undefined) student.collegeName = String(collegeName).trim();
+      if (department !== undefined) student.department = String(department).trim();
+      if (year !== undefined) student.year = String(year).trim();
+      if (phone !== undefined) student.phone = String(phone).trim();
+      if (registerNumber !== undefined) student.registerNumber = String(registerNumber).trim();
+      if (name !== undefined) student.name = String(name).trim();
+
+      if (name && student.user) {
+        const u = mockStore.users.find(usr => String(usr._id) === String(student.user));
+        if (u) u.name = String(name).trim();
+      }
+
+      const u = mockStore.users.find(usr => String(usr._id) === String(student.user));
+      return res.status(200).json({
+        success: true,
+        message: 'Student details updated successfully',
+        student: { ...student, user: u ? { name: u.name, email: u.email, role: u.role } : { name: student.name } }
+      });
+    }
+  } catch (error) {
+    console.error('Error updating student details:', error);
+    res.status(500).json({ success: false, message: 'Error updating student details' });
+  }
+};
+
 exports.deleteStudent = async (req, res) => {
   try {
     if (isDbConnected()) {

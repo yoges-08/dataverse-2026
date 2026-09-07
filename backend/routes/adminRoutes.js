@@ -12,7 +12,8 @@ const {
   getStaffList,
   exportStudentsExcel,
   exportStudentsByEventExcel,
-  remindUnregisteredStudents
+  remindUnregisteredStudents,
+  updateStudentDetails
 } = require('../controllers/adminController');
 const {
   getAllFeedback,
@@ -30,6 +31,7 @@ router.get('/registrants', authorize('super_admin', 'co_organizer'), getRegistra
 // Write/admin-only routes (keep locked to super_admin only, do NOT allow co_organizer)
 router.get('/students/export', authorize('super_admin'), exportStudentsExcel);
 router.get('/students/export-by-event', authorize('super_admin'), exportStudentsByEventExcel);
+router.put('/students/:id', authorize('super_admin'), updateStudentDetails);
 router.put('/students/:id/status', authorize('super_admin'), updateStudentStatus);
 router.delete('/students/:id', authorize('super_admin'), deleteStudent);
 router.delete('/registrations/:id', authorize('super_admin'), removeRegistration);
