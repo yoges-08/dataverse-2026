@@ -260,25 +260,27 @@ const sendAccountRemovalMail = async ({ to, name, reason }) => {
       <h2 style="color:#ffffff;font-size:18px;margin:0 0 12px;font-weight:700;">Dear ${safeName},</h2>
       
       <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We regret to inform you that, due to the high number of registrations from external colleges and administrative constraints, we are unable to accommodate your participation in the upcoming <strong style="color:#ffffff;">Dataverse Symposium</strong>. Therefore, your registration has been removed.
+        We hope you are doing well.
       </p>
 
-      <p style="color:#94a3b8;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We sincerely apologize for the inconvenience and appreciate your interest and understanding.
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
+        We regret to inform you that, as you have not registered for any individual event within the given deadline, <strong style="color:#ffffff;">your Dataverse Symposium account and registration have been removed</strong>.
       </p>
 
-      <div style="background:rgba(99,102,241,0.12);border:1px solid rgba(139,92,246,0.35);border-radius:12px;padding:14px 16px;margin:16px 0 18px;">
-        <p style="color:#e0e7ff;font-size:13px;line-height:1.6;margin:0;">
-          ✨ We are planning to conduct a similar <strong style="color:#ffffff;">internal college event</strong> in the coming days, and we warmly encourage you to participate. Further details will be shared soon.
-        </p>
-      </div>
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
+        We sincerely appreciate your interest in the symposium and apologize for any inconvenience this may cause.
+      </p>
+
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
+        We hope to have the opportunity to welcome you to our future events and activities.
+      </p>
 
       <p style="color:#cbd5e1;font-size:13px;line-height:1.6;margin:0 0 18px;">
-        Thank you for your understanding.
+        Thank you for your understanding and cooperation.
       </p>
 
       <div style="color:#cbd5e1;font-size:13px;line-height:1.6;border-top:1px solid rgba(139,92,246,0.25);padding-top:14px;">
-        <strong style="color:#ffffff;">Regards,</strong><br/>
+        <strong style="color:#ffffff;">Warm regards,</strong><br/>
         <strong style="color:#a78bfa;">Dataverse Symposium Organizing Team</strong>
       </div>
     </div>
