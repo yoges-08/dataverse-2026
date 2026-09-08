@@ -46,7 +46,7 @@ const FILLER_WORDS = new Set([
   'COLLEGE', 'OF', 'ENGINEERING', 'TECHNOLOGY', 'INSTITUTE', 'AND',
   'SCIENCE', 'SCIENCES', 'THE', 'FOR', 'POLYTECHNIC', 'UNIVERSITY',
   'ARTS', 'MANAGEMENT', 'STUDIES', 'EDUCATIONAL', 'TRUST', 'INSTITUTIONS',
-  'SCHOOL'
+  'SCHOOL', 'AUTONOMOUS', 'CAMPUS', 'DEEMED', 'CAMPUSES', 'ENGG', 'TECH'
 ]);
 
 const isFillerWord = (w) => {
@@ -62,19 +62,33 @@ const isFillerWord = (w) => {
 };
 
 // Strict normalize: case + hidden-character hardening only, no words dropped.
-// .normalize('NFKC') folds visually-identical unicode variants (e.g. a
-// non-breaking space, or full-width characters) down to their plain form.
-// Also strips possessive 's (e.g. "Jospeh's" -> "Jospeh") and adds spaces around dots
-// (e.g. "St.joseph" -> "ST JOSEPH").
-const normStrict = (s) => String(s || '')
-  .normalize('NFKC')
-  .replace(/['’]s\b/gi, '')
-  .replace(/&/g, ' AND ')
-  .replace(/\./g, ' ')
-  .replace(/['’`,]/g, '')
-  .replace(/\s+/g, ' ')
-  .trim()
-  .toUpperCase();
+// .normalize('NFKC') folds visually-identical unicode variants down to their plain form.
+// Also strips possessive 's (e.g. "Joseph's" -> "Joseph"), canonicalizes "Saint" -> "ST",
+// removes parenthesized notes like "(Autonomous)", and separates punctuation.
+const normStrict = (s) => {
+  let str = String(s || '')
+    .normalize('NFKC')
+    .replace(/\(.*?\)|\[.*?\]/g, ' ')
+    .replace(/['’]s\b/gi, '')
+    .replace(/&/g, ' AND ')
+    .replace(/\./g, ' ')
+    .replace(/[-_/|\\,;:!#*]/g, ' ')
+    .replace(/['’`"]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+
+  str = str.replace(/\bSAINT\b/g, 'ST')
+           .replace(/\bST\s+JOSEPHS\b/g, 'ST JOSEPH')
+           .replace(/\bST\s+ANNES\b/g, 'ST ANNE')
+           .replace(/\bST\s+XAVIERS\b/g, 'ST XAVIER')
+           .replace(/\bST\s+PETERS\b/g, 'ST PETER')
+           .replace(/\bST\s+MICHAELS\b/g, 'ST MICHAEL')
+           .replace(/\bST\s+THOMAS\b/g, 'ST THOMAS')
+           .replace(/\bST\s+MARYS\b/g, 'ST MARY');
+
+  return str.replace(/\s+/g, ' ').trim();
+};
 
 // Core normalize: strict form, then strip generic filler words, so name
 // variants and abbreviations collapse to the same key.
