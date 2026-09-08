@@ -96,6 +96,55 @@ export default function AdminDashboard() {
   const [selectedStudentToAdd, setSelectedStudentToAdd] = useState('');
   const [pairStudent1, setPairStudent1] = useState('');
   const [pairStudent2, setPairStudent2] = useState('');
+  const [manualTeamSearch, setManualTeamSearch] = useState('');
+  const [manualTeamUnassignedOnly, setManualTeamUnassignedOnly] = useState(true);
+
+  // Helper to determine team status for any student in eventDetail
+  const getStudentTeamInfo = useCallback((studentId, teams = []) => {
+    if (!studentId) return null;
+    const sIdStr = String(studentId);
+    const t = (teams || []).find(team =>
+      (team.members || []).some(m => {
+        const id = m.student?._id || m.student?.id || m.student || m.studentId || m._id;
+        return String(id) === sIdStr;
+      })
+    );
+    if (!t) return null;
+    const memberCount = (t.members || []).length;
+    return {
+      teamId: t.teamId || t._id,
+      memberCount,
+      isSolo: memberCount <= 1,
+      team: t
+    };
+  }, []);
+
+  // Filtered registrations for manual team controls based on search & unassigned filter
+  const filteredRegistrants = useMemo(() => {
+    const regs = eventDetail?.registrations || [];
+    const teams = eventDetail?.teams || [];
+    const q = (manualTeamSearch || '').trim().toLowerCase();
+
+    return regs.filter(r => {
+      const st = r.student;
+      if (!st) return false;
+      const teamInfo = getStudentTeamInfo(st._id, teams);
+
+      // If unassignedOnly is active, hide students already in a multi-member (2+) team
+      if (manualTeamUnassignedOnly && teamInfo && !teamInfo.isSolo) {
+        return false;
+      }
+
+      if (!q) return true;
+      const name = (st.user?.name || st.name || '').toLowerCase();
+      const code = (st.symposiumCode || '').toLowerCase();
+      const college = (st.collegeName || '').toLowerCase();
+      const dept = (st.department || '').toLowerCase();
+      const email = (st.email || '').toLowerCase();
+      const lang = (r.language || '').toLowerCase();
+      return name.includes(q) || code.includes(q) || college.includes(q) || dept.includes(q) || email.includes(q) || lang.includes(q);
+    });
+  }, [eventDetail, manualTeamSearch, manualTeamUnassignedOnly, getStudentTeamInfo]);
 
   // New Event Form State
   const [newEvent, setNewEvent] = useState({
@@ -2321,6 +2370,44 @@ export default function AdminDashboard() {
                           </div>
                         )}
 
+                        {/* Search & Availability Filter Bar */}
+                        <div className="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                          <div className="relative flex-1">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            <input
+                              type="text"
+                              value={manualTeamSearch}
+                              onChange={e => setManualTeamSearch(e.target.value)}
+                              placeholder="Search by code (e.g. 182814), student name, college, email..."
+                              className="w-full pl-8 pr-7 py-1.5 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500 placeholder-slate-500"
+                            />
+                            {manualTeamSearch && (
+                              <button
+                                type="button"
+                                onClick={() => setManualTeamSearch('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                                title="Clear search"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-3 shrink-0">
+                            <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] text-slate-300 select-none">
+                              <input
+                                type="checkbox"
+                                checked={manualTeamUnassignedOnly}
+                                onChange={e => setManualTeamUnassignedOnly(e.target.checked)}
+                                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                              />
+                              <span className="font-semibold">Unassigned / Solo Only</span>
+                            </label>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                              {filteredRegistrants.length} / {(eventDetail.registrations || []).length} students
+                            </span>
+                          </div>
+                        </div>
+
                         {/* Mode Tabs */}
                         <div className="flex items-center space-x-2">
                           <button
@@ -2356,12 +2443,16 @@ export default function AdminDashboard() {
                                 onChange={e => setSelectedTargetTeam(e.target.value)}
                                 className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
                               >
-                                <option value="">-- Select Team --</option>
-                                {(eventDetail.teams || []).map(t => (
-                                  <option key={t._id || t.teamId} value={t.teamId || t._id}>
-                                    {t.teamId} ({(t.members || []).length} members)
-                                  </option>
-                                ))}
+                                <option value="">-- Select Target Team --</option>
+                                {(eventDetail.teams || []).map(t => {
+                                  const members = t.members || [];
+                                  const limit = eventDetail?.event?.teamLimit || 2;
+                                  return (
+                                    <option key={t._id || t.teamId} value={t.teamId || t._id}>
+                                      {t.teamId} ({members.length}/{limit} members)
+                                    </option>
+                                  );
+                                })}
                               </select>
                             </div>
                             <div>
@@ -2371,16 +2462,26 @@ export default function AdminDashboard() {
                                 onChange={e => setSelectedStudentToAdd(e.target.value)}
                                 className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
                               >
-                                <option value="">-- Select Student --</option>
-                                {(eventDetail.registrations || []).map(r => {
-                                  const st = r.student;
-                                  if (!st) return null;
-                                  return (
-                                    <option key={st._id} value={st._id}>
-                                      {st.symposiumCode} - {st.user?.name || st.name} ({st.collegeName?.slice(0, 20)}...)
-                                    </option>
-                                  );
-                                })}
+                                <option value="">-- Select Student ({filteredRegistrants.length} available) --</option>
+                                {filteredRegistrants
+                                  .filter(r => {
+                                    if (!selectedTargetTeam) return true;
+                                    const targetT = (eventDetail.teams || []).find(t => (t.teamId || t._id) === selectedTargetTeam);
+                                    if (!targetT) return true;
+                                    return !(targetT.members || []).some(m => String(m.student?._id || m.student || m.studentId) === String(r.student?._id));
+                                  })
+                                  .map(r => {
+                                    const st = r.student;
+                                    if (!st) return null;
+                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                    const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
+                                    const langTag = r.language ? ` • [${r.language}]` : '';
+                                    return (
+                                      <option key={st._id} value={st._id}>
+                                        {statusBadge} {st.symposiumCode} - {st.user?.name || st.name} ({st.collegeName?.slice(0, 20)}...){langTag}
+                                      </option>
+                                    );
+                                  })}
                               </select>
                             </div>
                             <div>
@@ -2404,13 +2505,16 @@ export default function AdminDashboard() {
                                 onChange={e => setPairStudent1(e.target.value)}
                                 className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
                               >
-                                <option value="">-- Select Student 1 --</option>
-                                {(eventDetail.registrations || []).map(r => {
+                                <option value="">-- Select Student 1 ({filteredRegistrants.length} available) --</option>
+                                {filteredRegistrants.map(r => {
                                   const st = r.student;
                                   if (!st) return null;
+                                  const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                  const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
+                                  const langTag = r.language ? ` • [${r.language}]` : '';
                                   return (
                                     <option key={st._id} value={st._id}>
-                                      {st.symposiumCode} - {st.user?.name || st.name}
+                                      {statusBadge} {st.symposiumCode} - {st.user?.name || st.name} ({st.collegeName?.slice(0, 18)}...){langTag}
                                     </option>
                                   );
                                 })}
@@ -2423,16 +2527,21 @@ export default function AdminDashboard() {
                                 onChange={e => setPairStudent2(e.target.value)}
                                 className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
                               >
-                                <option value="">-- Select Student 2 --</option>
-                                {(eventDetail.registrations || []).map(r => {
-                                  const st = r.student;
-                                  if (!st) return null;
-                                  return (
-                                    <option key={st._id} value={st._id}>
-                                      {st.symposiumCode} - {st.user?.name || st.name}
-                                    </option>
-                                  );
-                                })}
+                                <option value="">-- Select Student 2 ({filteredRegistrants.filter(r => String(r.student?._id) !== String(pairStudent1)).length} available) --</option>
+                                {filteredRegistrants
+                                  .filter(r => String(r.student?._id) !== String(pairStudent1))
+                                  .map(r => {
+                                    const st = r.student;
+                                    if (!st) return null;
+                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                    const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
+                                    const langTag = r.language ? ` • [${r.language}]` : '';
+                                    return (
+                                      <option key={st._id} value={st._id}>
+                                        {statusBadge} {st.symposiumCode} - {st.user?.name || st.name} ({st.collegeName?.slice(0, 18)}...){langTag}
+                                      </option>
+                                    );
+                                  })}
                               </select>
                             </div>
                             <div>
