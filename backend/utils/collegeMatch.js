@@ -7,6 +7,37 @@
 //   collegesMatch('AAA\xa0', 'aaa')                               -> true (NFKC)
 //   collegesMatch('ABC Engineering College', 'XYZ Engineering')   -> false
 
+// Damerau-Levenshtein distance (supports insertion, deletion, substitution, and adjacent transpositions)
+const damerauLevenshtein = (a, b, max) => {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const la = a.length;
+  const lb = b.length;
+  const d = Array.from({ length: la + 1 }, () => new Array(lb + 1).fill(0));
+
+  for (let i = 0; i <= la; i++) d[i][0] = i;
+  for (let j = 0; j <= lb; j++) d[0][j] = j;
+
+  for (let i = 1; i <= la; i++) {
+    let rowMin = d[i][0];
+    for (let j = 1; j <= lb; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + cost
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+      if (d[i][j] < rowMin) rowMin = d[i][j];
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return d[la][lb];
+};
+
+const editDistance = damerauLevenshtein;
+
 // Generic institution words that carry no identifying signal on their own —
 // stripping them lets "J J Engineering" and "J J Engineering College" (or
 // "Kings Engineering College" and "Kings College of Engineering") reduce to
@@ -18,15 +49,29 @@ const FILLER_WORDS = new Set([
   'SCHOOL'
 ]);
 
+const isFillerWord = (w) => {
+  if (FILLER_WORDS.has(w)) return true;
+  if (w.length >= 6) {
+    for (const f of FILLER_WORDS) {
+      if (Math.abs(w.length - f.length) <= 1 && damerauLevenshtein(w, f, 1) <= 1) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 // Strict normalize: case + hidden-character hardening only, no words dropped.
 // .normalize('NFKC') folds visually-identical unicode variants (e.g. a
-// non-breaking space, or full-width characters) down to their plain form
-// before trimming/collapsing whitespace — this is the part the old
-// .trim().toUpperCase() couldn't catch.
+// non-breaking space, or full-width characters) down to their plain form.
+// Also strips possessive 's (e.g. "Jospeh's" -> "Jospeh") and adds spaces around dots
+// (e.g. "St.joseph" -> "ST JOSEPH").
 const normStrict = (s) => String(s || '')
   .normalize('NFKC')
+  .replace(/['’]s\b/gi, '')
   .replace(/&/g, ' AND ')
-  .replace(/['’`.,]/g, '')
+  .replace(/\./g, ' ')
+  .replace(/['’`,]/g, '')
   .replace(/\s+/g, ' ')
   .trim()
   .toUpperCase();
@@ -35,7 +80,7 @@ const normStrict = (s) => String(s || '')
 // variants and abbreviations collapse to the same key.
 const normCore = (s) => {
   const tokens = normStrict(s).split(' ').filter(Boolean);
-  const core = tokens.filter(t => !FILLER_WORDS.has(t));
+  const core = tokens.filter(t => !isFillerWord(t));
   // If removing filler words leaves nothing (e.g. the college name IS just
   // "Engineering College"), fall back to the full strict form instead of
   // matching on an empty string.
@@ -96,28 +141,6 @@ const acronymCandidates = (s) => {
 const acronymMatch = (shortSide, longSide) => {
   const longAcronym = acronymOf(longSide);
   return acronymCandidates(shortSide).some(cand => acronymMatchesLongName(cand, longAcronym));
-};
-
-// Bounded Levenshtein edit distance, capped at `max` for speed — once the
-// cheapest possible path through the DP table exceeds `max` we can stop
-// caring about the exact number, so this returns max+1 as an "over budget"
-// sentinel instead of the true (larger) distance.
-const editDistance = (a, b, max) => {
-  if (Math.abs(a.length - b.length) > max) return max + 1;
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= a.length; i++) {
-    const cur = [i];
-    let rowMin = cur[0];
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      const val = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
-      cur.push(val);
-      if (val < rowMin) rowMin = val;
-    }
-    if (rowMin > max) return max + 1; // whole row over budget, no point continuing
-    prev = cur;
-  }
-  return prev[b.length];
 };
 
 // Squash normalize: the strict form with ALL internal whitespace removed
@@ -188,7 +211,7 @@ const tokenFuzzyContains = (shortTokens, longTokens) =>
     longTokens.some(lt => {
       const budget = Math.max(tokenEditBudget(st.length), tokenEditBudget(lt.length));
       if (Math.min(st.length, lt.length) <= 3) return st === lt;
-      return editDistance(st, lt, budget) <= budget;
+      return damerauLevenshtein(st, lt, budget) <= budget;
     })
   );
 
@@ -198,13 +221,14 @@ const tokenFuzzyMatch = (a, b) => {
   const [shortTokens, longTokens] = tokensA.length <= tokensB.length
     ? [tokensA, tokensB] : [tokensB, tokensA];
   if (shortTokens.length === 0) return false;
+
   // 1-token short form against 3+ token long form must never fuzzy match
   if (shortTokens.length === 1 && longTokens.length >= 3) return false;
   if (shortTokens.length === 1 && shortTokens[0].length < 6) return false;
   if (shortTokens.length === 1 && longTokens.length === 2) {
     const matchedIdx = longTokens.findIndex(lt => {
       const budget = Math.max(tokenEditBudget(shortTokens[0].length), tokenEditBudget(lt.length));
-      return editDistance(shortTokens[0], lt, budget) <= budget;
+      return damerauLevenshtein(shortTokens[0], lt, budget) <= budget;
     });
     if (matchedIdx !== -1) {
       const extraToken = longTokens[matchedIdx === 0 ? 1 : 0];
@@ -212,7 +236,10 @@ const tokenFuzzyMatch = (a, b) => {
     }
   }
   if (shortTokens.length >= 2 && longTokens.length - shortTokens.length > 1) {
-    return false;
+    const diff = longTokens.filter(lt => !shortTokens.some(st => damerauLevenshtein(st, lt, 1) <= 1));
+    if (!(diff.length === 1 && KNOWN_LOCATIONS.has(diff[0]))) {
+      return false;
+    }
   }
   return tokenFuzzyContains(shortTokens, longTokens);
 };

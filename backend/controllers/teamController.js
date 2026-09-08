@@ -461,7 +461,6 @@ exports.getAvailableTeammates = async (req, res) => {
 
     const myLanguage = myReg?.language || null;
     const qCollege = student.collegeName || '';
-    const qYear = norm(student.year || '');
 
     // Students already committed to ANY OTHER team for this event are excluded.
     // A solo team (the auto-created seat with only the leader) still counts as
@@ -507,7 +506,6 @@ exports.getAvailableTeammates = async (req, res) => {
     const preliminary = candidates
       .filter(c => String(c._id) !== String(student._id))
       .filter(c => !takenIds.has(String(c._id)))
-      .filter(c => !qYear || norm(c.year || '') === qYear)
       .filter(c => {
         if (event.requiresLanguageChoice && myLanguage) {
           return c.language === myLanguage;
