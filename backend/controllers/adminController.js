@@ -1014,5 +1014,330 @@ exports.remindUnregisteredStudents = async (req, res) => {
   }
 };
 
+// ---- Manual Team Management (Admin Override - Zero Restrictions) ----------------
 
+const generateAdminNextTeamId = async (event) => {
+  let n;
+  if (isDbConnected()) {
+    n = await Team.countDocuments({ event: event._id });
+  } else {
+    n = mockStore.teams.filter(t => String(t.event) === String(event._id)).length;
+  }
+  let teamId = `DV26-T${String(n + 1).padStart(3, '0')}`;
+  while (isDbConnected() ? await Team.exists({ teamId }) : mockStore.teams.some(t => t.teamId === teamId)) {
+    n += 1;
+    teamId = `DV26-T${String(n + 1).padStart(3, '0')}`;
+  }
+  return teamId;
+};
 
+// Admin manually adds a student to any team without condition requirements
+exports.manualAddTeamMember = async (req, res) => {
+  try {
+    const { teamId, studentId, eventId } = req.body;
+    if (!studentId || (!teamId && !eventId)) {
+      return res.status(400).json({ success: false, message: 'teamId (or eventId) and studentId are required.' });
+    }
+
+    // 1. Locate student
+    let student;
+    if (isDbConnected()) {
+      student = await Student.findOne({
+        $or: [
+          mongoose.Types.ObjectId.isValid(studentId) ? { _id: studentId } : null,
+          { symposiumCode: studentId }
+        ].filter(Boolean)
+      }).populate('user', 'name');
+    } else {
+      student = mockStore.students.find(s => String(s._id) === String(studentId) || s.symposiumCode === studentId);
+    }
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
+    // 2. Locate team
+    let team;
+    if (isDbConnected()) {
+      team = await Team.findOne({
+        $or: [
+          mongoose.Types.ObjectId.isValid(teamId) ? { _id: teamId } : null,
+          { teamId: teamId }
+        ].filter(Boolean)
+      }).populate('event');
+    } else {
+      team = mockStore.teams.find(t => String(t._id) === String(teamId) || t.teamId === teamId);
+    }
+
+    const targetEventId = team?.event?._id || team?.event || eventId;
+    const event = isDbConnected()
+      ? (team?.event?._id ? team.event : await Event.findById(targetEventId))
+      : (mockStore.events.find(e => String(e._id) === String(targetEventId)) || null);
+
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found.' });
+    const teamLimit = teamController.getEffectiveTeamLimit(event);
+    if (teamLimit <= 0) {
+      return res.status(400).json({ success: false, message: 'This is a solo event — teams are not supported.' });
+    }
+
+    if (!team) {
+      // If teamId not found, create a new team for this student
+      const newTeamId = await generateAdminNextTeamId(event);
+      const teamDoc = {
+        teamId: newTeamId,
+        event: event._id,
+        leader: student._id,
+        college: student.collegeName || 'AAMEC',
+        teamSize: teamLimit,
+        status: 'Open',
+        members: [{ student: student._id, addedAt: new Date() }]
+      };
+      if (isDbConnected()) {
+        team = await Team.create(teamDoc);
+      } else {
+        team = { _id: 't_' + Date.now(), ...teamDoc };
+        mockStore.teams.push(team);
+      }
+    }
+
+    // 3. Ensure student has active registration for this event
+    if (isDbConnected()) {
+      let reg = await Registration.findOne({ student: student._id, event: event._id, status: { $ne: 'Cancelled' } });
+      if (!reg) {
+        reg = await Registration.create({
+          student: student._id,
+          event: event._id,
+          registeredAt: new Date()
+        });
+        await Event.updateOne({ _id: event._id }, { $inc: { currentRegistrations: 1 } });
+      }
+    } else {
+      let reg = mockStore.registrations.find(r => String(r.student) === String(student._id) && String(r.event) === String(event._id) && r.status !== 'Cancelled');
+      if (!reg) {
+        mockStore.registrations.push({
+          _id: 'reg_' + Date.now(),
+          student: student._id,
+          event: event._id,
+          registeredAt: new Date().toISOString()
+        });
+        if (event.currentRegistrations !== undefined) event.currentRegistrations += 1;
+      }
+    }
+
+    // 4. Remove student from any other team for this event
+    if (isDbConnected()) {
+      const otherTeams = await Team.find({
+        event: event._id,
+        _id: { $ne: team._id },
+        $or: [{ 'members.student': student._id }, { leader: student._id }]
+      });
+      for (const ot of otherTeams) {
+        ot.members = (ot.members || []).filter(m => String(m.student) !== String(student._id));
+        if (ot.members.length === 0) {
+          await Team.deleteOne({ _id: ot._id });
+        } else {
+          if (String(ot.leader) === String(student._id)) {
+            ot.leader = ot.members[0].student;
+          }
+          ot.status = teamController.recomputeStatus(ot, event);
+          await ot.save();
+        }
+      }
+    } else {
+      for (let i = mockStore.teams.length - 1; i >= 0; i--) {
+        const ot = mockStore.teams[i];
+        if (String(ot.event) === String(event._id) && String(ot._id) !== String(team._id)) {
+          ot.members = (ot.members || []).filter(m => String(m.student) !== String(student._id));
+          if (ot.members.length === 0) {
+            mockStore.teams.splice(i, 1);
+          } else {
+            if (String(ot.leader) === String(student._id)) {
+              ot.leader = ot.members[0].student;
+            }
+            ot.status = teamController.recomputeStatus(ot, event);
+          }
+        }
+      }
+    }
+
+    // 5. Add student to the team (unconditional)
+    const alreadyIn = (team.members || []).some(m => String(m.student?._id || m.student) === String(student._id));
+    if (!alreadyIn) {
+      team.members.push({ student: student._id, addedAt: new Date() });
+    }
+    team.status = teamController.recomputeStatus(team, event);
+
+    if (isDbConnected()) {
+      await team.save();
+    }
+
+    const studentName = student.user?.name || student.name || student.symposiumCode;
+    console.log(`⚡ [ADMIN FORCE ADD] Added ${studentName} (${student.symposiumCode}) to Team ${team.teamId}`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully added ${studentName} (${student.symposiumCode}) to Team ${team.teamId}.`,
+      team
+    });
+  } catch (err) {
+    console.error('manualAddTeamMember error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Error manually adding team member' });
+  }
+};
+
+// Admin manually creates a new team pairing specified students
+exports.manualCreateTeam = async (req, res) => {
+  try {
+    const { eventId, studentIds, customCollege } = req.body;
+    if (!eventId || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'eventId and an array of studentIds are required.' });
+    }
+
+    const event = isDbConnected() ? await Event.findById(eventId) : mockStore.events.find(e => String(e._id) === String(eventId));
+    if (!event) return res.status(404).json({ success: false, message: 'Event not found.' });
+
+    const teamLimit = teamController.getEffectiveTeamLimit(event);
+    if (teamLimit <= 0) {
+      return res.status(400).json({ success: false, message: 'This is a solo event — teams cannot be formed.' });
+    }
+
+    // Resolve students
+    let resolvedStudents = [];
+    if (isDbConnected()) {
+      resolvedStudents = await Student.find({
+        $or: [
+          { _id: { $in: studentIds.filter(id => mongoose.Types.ObjectId.isValid(id)) } },
+          { symposiumCode: { $in: studentIds } }
+        ]
+      }).populate('user', 'name');
+    } else {
+      resolvedStudents = mockStore.students.filter(s =>
+        studentIds.includes(String(s._id)) || studentIds.includes(s.symposiumCode)
+      );
+    }
+
+    if (resolvedStudents.length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid students found from provided IDs.' });
+    }
+
+    // Ensure all students registered & clear old teams
+    for (const student of resolvedStudents) {
+      if (isDbConnected()) {
+        let reg = await Registration.findOne({ student: student._id, event: event._id, status: { $ne: 'Cancelled' } });
+        if (!reg) {
+          await Registration.create({ student: student._id, event: event._id, registeredAt: new Date() });
+          await Event.updateOne({ _id: event._id }, { $inc: { currentRegistrations: 1 } });
+        }
+        const oldTeams = await Team.find({
+          event: event._id,
+          $or: [{ 'members.student': student._id }, { leader: student._id }]
+        });
+        for (const ot of oldTeams) {
+          ot.members = (ot.members || []).filter(m => String(m.student) !== String(student._id));
+          if (ot.members.length === 0) {
+            await Team.deleteOne({ _id: ot._id });
+          } else {
+            if (String(ot.leader) === String(student._id)) ot.leader = ot.members[0].student;
+            ot.status = teamController.recomputeStatus(ot, event);
+            await ot.save();
+          }
+        }
+      } else {
+        let reg = mockStore.registrations.find(r => String(r.student) === String(student._id) && String(r.event) === String(event._id) && r.status !== 'Cancelled');
+        if (!reg) {
+          mockStore.registrations.push({ _id: 'reg_' + Date.now(), student: student._id, event: event._id, registeredAt: new Date().toISOString() });
+          if (event.currentRegistrations !== undefined) event.currentRegistrations += 1;
+        }
+        for (let i = mockStore.teams.length - 1; i >= 0; i--) {
+          const ot = mockStore.teams[i];
+          if (String(ot.event) === String(event._id)) {
+            ot.members = (ot.members || []).filter(m => String(m.student) !== String(student._id));
+            if (ot.members.length === 0) mockStore.teams.splice(i, 1);
+            else {
+              if (String(ot.leader) === String(student._id)) ot.leader = ot.members[0].student;
+              ot.status = teamController.recomputeStatus(ot, event);
+            }
+          }
+        }
+      }
+    }
+
+    const leaderStudent = resolvedStudents[0];
+    const teamId = await generateAdminNextTeamId(event);
+    const members = resolvedStudents.map(s => ({ student: s._id, addedAt: new Date() }));
+
+    const doc = {
+      teamId,
+      event: event._id,
+      leader: leaderStudent._id,
+      college: customCollege || leaderStudent.collegeName || 'AAMEC',
+      teamSize: teamLimit,
+      status: resolvedStudents.length >= teamLimit ? 'Complete' : 'Open',
+      members
+    };
+
+    let createdTeam;
+    if (isDbConnected()) {
+      createdTeam = await Team.create(doc);
+    } else {
+      createdTeam = { _id: 't_' + Date.now(), ...doc };
+      mockStore.teams.push(createdTeam);
+    }
+
+    console.log(`⚡ [ADMIN FORCE CREATE] Created Team ${teamId} with ${resolvedStudents.length} member(s)`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Created Team ${teamId} with ${resolvedStudents.length} member(s).`,
+      team: createdTeam
+    });
+  } catch (err) {
+    console.error('manualCreateTeam error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Error creating manual team' });
+  }
+};
+
+// Admin manually removes a student from a team
+exports.manualRemoveTeamMember = async (req, res) => {
+  try {
+    const { teamId, studentId } = req.params;
+    let team;
+    if (isDbConnected()) {
+      team = await Team.findOne({
+        $or: [
+          mongoose.Types.ObjectId.isValid(teamId) ? { _id: teamId } : null,
+          { teamId }
+        ].filter(Boolean)
+      });
+    } else {
+      team = mockStore.teams.find(t => String(t._id) === String(teamId) || t.teamId === teamId);
+    }
+
+    if (!team) return res.status(404).json({ success: false, message: 'Team not found.' });
+
+    const event = isDbConnected() ? await Event.findById(team.event) : mockStore.events.find(e => String(e._id) === String(team.event));
+
+    team.members = (team.members || []).filter(m => String(m.student?._id || m.student) !== String(studentId));
+
+    if (team.members.length === 0) {
+      if (isDbConnected()) {
+        await Team.deleteOne({ _id: team._id });
+      } else {
+        const idx = mockStore.teams.findIndex(t => String(t._id) === String(team._id));
+        if (idx !== -1) mockStore.teams.splice(idx, 1);
+      }
+      return res.status(200).json({ success: true, message: `Member removed. Team ${team.teamId} was empty and deleted.` });
+    }
+
+    if (String(team.leader) === String(studentId)) {
+      team.leader = team.members[0].student?._id || team.members[0].student;
+    }
+    team.status = teamController.recomputeStatus(team, event);
+
+    if (isDbConnected()) {
+      await team.save();
+    }
+
+    return res.status(200).json({ success: true, message: `Member removed from Team ${team.teamId}.`, team });
+  } catch (err) {
+    console.error('manualRemoveTeamMember error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Error removing team member' });
+  }
+};

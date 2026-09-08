@@ -13,7 +13,10 @@ const {
   exportStudentsExcel,
   exportStudentsByEventExcel,
   remindUnregisteredStudents,
-  updateStudentDetails
+  updateStudentDetails,
+  manualAddTeamMember,
+  manualCreateTeam,
+  manualRemoveTeamMember
 } = require('../controllers/adminController');
 const {
   getAllFeedback,
@@ -38,6 +41,11 @@ router.delete('/registrations/:id', authorize('super_admin'), removeRegistration
 router.post('/remind-unregistered-events', authorize('super_admin'), remindUnregisteredStudents);
 router.post('/staff', authorize('super_admin'), createStaff);
 router.get('/staff', authorize('super_admin'), getStaffList);
+
+// Manual Team Management routes (super_admin only - unconditional team overrides)
+router.post('/teams/manual-add-member', authorize('super_admin'), manualAddTeamMember);
+router.post('/teams/manual-create-team', authorize('super_admin'), manualCreateTeam);
+router.delete('/teams/:teamId/members/:studentId', authorize('super_admin'), manualRemoveTeamMember);
 
 // Feedback management routes (super_admin only)
 router.get('/feedback', authorize('super_admin'), getAllFeedback);

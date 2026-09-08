@@ -87,6 +87,16 @@ export default function AdminDashboard() {
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  // Manual Team Management State (Admin Override)
+  const [manualTeamBusy, setManualTeamBusy] = useState(false);
+  const [manualTeamMsg, setManualTeamMsg] = useState(null);
+  const [showManualTeamSection, setShowManualTeamSection] = useState(false);
+  const [manualTeamMode, setManualTeamMode] = useState('add'); // 'add' | 'create'
+  const [selectedTargetTeam, setSelectedTargetTeam] = useState('');
+  const [selectedStudentToAdd, setSelectedStudentToAdd] = useState('');
+  const [pairStudent1, setPairStudent1] = useState('');
+  const [pairStudent2, setPairStudent2] = useState('');
+
   // New Event Form State
   const [newEvent, setNewEvent] = useState({
     title: '', category: 'Technical', tagline: '', description: '', rules: '', venue: '', date: '2026-09-12', time: '', registrationDeadline: '2026-09-11', maxParticipants: 100, teamLimit: 0, requiresLanguageChoice: false, facultyName: '', facultyPhone: '', studentName: '', studentPhone: '', firstPrize: '', secondPrize: '', thirdPrize: ''
@@ -573,7 +583,8 @@ export default function AdminDashboard() {
     try {
       setDetailLoading(true);
       setDetailError('');
-      const res = await API.get(`/events/${ev._id}`);
+      setManualTeamMsg(null);
+      const res = await API.get(`/events/${ev._id || ev}`);
       if (res.data.success) {
         setEventDetail(res.data);
         setShowEventDetail(true);
@@ -587,6 +598,91 @@ export default function AdminDashboard() {
       setEventDetail(null);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const refreshCurrentEventDetail = async (eventId) => {
+    if (!eventId) return;
+    try {
+      const res = await API.get(`/events/${eventId}`);
+      if (res.data.success) {
+        setEventDetail(res.data);
+      }
+    } catch (err) {
+      console.error('Error refreshing event registrations:', err);
+    }
+  };
+
+  const handleAdminManualAddMember = async (teamId, studentId, eventId) => {
+    if (!teamId || !studentId) {
+      setManualTeamMsg({ type: 'error', text: 'Please select both a team and a student.' });
+      return;
+    }
+    try {
+      setManualTeamBusy(true);
+      setManualTeamMsg(null);
+      const res = await API.post('/admin/teams/manual-add-member', { teamId, studentId, eventId });
+      if (res.data.success) {
+        setManualTeamMsg({ type: 'success', text: res.data.message });
+        setSelectedStudentToAdd('');
+        await refreshCurrentEventDetail(eventId);
+      } else {
+        setManualTeamMsg({ type: 'error', text: res.data.message });
+      }
+    } catch (err) {
+      setManualTeamMsg({ type: 'error', text: err.response?.data?.message || 'Failed to add team member.' });
+    } finally {
+      setManualTeamBusy(false);
+    }
+  };
+
+  const handleAdminManualCreateTeam = async (eventId) => {
+    if (!pairStudent1 || !pairStudent2) {
+      setManualTeamMsg({ type: 'error', text: 'Please select two students to pair into a new team.' });
+      return;
+    }
+    if (pairStudent1 === pairStudent2) {
+      setManualTeamMsg({ type: 'error', text: 'Please select two different students.' });
+      return;
+    }
+    try {
+      setManualTeamBusy(true);
+      setManualTeamMsg(null);
+      const res = await API.post('/admin/teams/manual-create-team', {
+        eventId,
+        studentIds: [pairStudent1, pairStudent2]
+      });
+      if (res.data.success) {
+        setManualTeamMsg({ type: 'success', text: res.data.message });
+        setPairStudent1('');
+        setPairStudent2('');
+        await refreshCurrentEventDetail(eventId);
+      } else {
+        setManualTeamMsg({ type: 'error', text: res.data.message });
+      }
+    } catch (err) {
+      setManualTeamMsg({ type: 'error', text: err.response?.data?.message || 'Failed to create team.' });
+    } finally {
+      setManualTeamBusy(false);
+    }
+  };
+
+  const handleAdminManualRemoveMember = async (teamId, studentId, eventId) => {
+    if (!window.confirm('Remove this member from the team?')) return;
+    try {
+      setManualTeamBusy(true);
+      setManualTeamMsg(null);
+      const res = await API.delete(`/admin/teams/${teamId}/members/${studentId}`);
+      if (res.data.success) {
+        setManualTeamMsg({ type: 'success', text: res.data.message });
+        await refreshCurrentEventDetail(eventId);
+      } else {
+        setManualTeamMsg({ type: 'error', text: res.data.message });
+      }
+    } catch (err) {
+      setManualTeamMsg({ type: 'error', text: err.response?.data?.message || 'Failed to remove team member.' });
+    } finally {
+      setManualTeamBusy(false);
     }
   };
 
@@ -2189,6 +2285,174 @@ export default function AdminDashboard() {
                   <p className="text-xs font-bold text-white">{studentCount} student(s) registered</p>
                 </div>
 
+                {/* Manual Team Management (Admin Override - Zero Restrictions) */}
+                {eventDetail?.event?.teamLimit > 1 && (
+                  <div className="p-3.5 bg-gradient-to-r from-indigo-950/60 to-purple-950/60 rounded-xl border border-indigo-500/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-bold text-white">Manual Team Controls (Admin Override)</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
+                          Zero Restrictions
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowManualTeamSection(!showManualTeamSection);
+                          setManualTeamMsg(null);
+                        }}
+                        className="text-[11px] text-indigo-300 hover:text-white underline font-medium"
+                      >
+                        {showManualTeamSection ? 'Hide Controls' : 'Open Controls'}
+                      </button>
+                    </div>
+
+                    {showManualTeamSection && (
+                      <div className="space-y-3 pt-2 border-t border-indigo-500/30 text-xs">
+                        {manualTeamMsg && (
+                          <div className={`p-2.5 rounded-lg text-xs font-medium flex items-center space-x-2 ${
+                            manualTeamMsg.type === 'success'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                          }`}>
+                            {manualTeamMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+                            <span>{manualTeamMsg.text}</span>
+                          </div>
+                        )}
+
+                        {/* Mode Tabs */}
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setManualTeamMode('add')}
+                            className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+                              manualTeamMode === 'add'
+                                ? 'bg-indigo-600 text-white shadow-md'
+                                : 'bg-slate-900/80 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            ➕ Add Student to Existing Team
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setManualTeamMode('create')}
+                            className={`px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+                              manualTeamMode === 'create'
+                                ? 'bg-purple-600 text-white shadow-md'
+                                : 'bg-slate-900/80 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            ⚡ Pair Two Students into New Team
+                          </button>
+                        </div>
+
+                        {manualTeamMode === 'add' ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-300 mb-1">Target Team</label>
+                              <select
+                                value={selectedTargetTeam}
+                                onChange={e => setSelectedTargetTeam(e.target.value)}
+                                className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="">-- Select Team --</option>
+                                {(eventDetail.teams || []).map(t => (
+                                  <option key={t._id || t.teamId} value={t.teamId || t._id}>
+                                    {t.teamId} ({(t.members || []).length} members)
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-300 mb-1">Select Student to Add</label>
+                              <select
+                                value={selectedStudentToAdd}
+                                onChange={e => setSelectedStudentToAdd(e.target.value)}
+                                className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="">-- Select Student --</option>
+                                {(eventDetail.registrations || []).map(r => {
+                                  const st = r.student;
+                                  if (!st) return null;
+                                  return (
+                                    <option key={st._id} value={st._id}>
+                                      {st.symposiumCode} - {st.user?.name || st.name} ({st.collegeName?.slice(0, 20)}...)
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => handleAdminManualAddMember(selectedTargetTeam, selectedStudentToAdd, eventDetail.event._id)}
+                                disabled={manualTeamBusy || !selectedTargetTeam || !selectedStudentToAdd}
+                                className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                              >
+                                {manualTeamBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                                <span>Add to Team</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-300 mb-1">Student 1 (Leader)</label>
+                              <select
+                                value={pairStudent1}
+                                onChange={e => setPairStudent1(e.target.value)}
+                                className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                              >
+                                <option value="">-- Select Student 1 --</option>
+                                {(eventDetail.registrations || []).map(r => {
+                                  const st = r.student;
+                                  if (!st) return null;
+                                  return (
+                                    <option key={st._id} value={st._id}>
+                                      {st.symposiumCode} - {st.user?.name || st.name}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-300 mb-1">Student 2</label>
+                              <select
+                                value={pairStudent2}
+                                onChange={e => setPairStudent2(e.target.value)}
+                                className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                              >
+                                <option value="">-- Select Student 2 --</option>
+                                {(eventDetail.registrations || []).map(r => {
+                                  const st = r.student;
+                                  if (!st) return null;
+                                  return (
+                                    <option key={st._id} value={st._id}>
+                                      {st.symposiumCode} - {st.user?.name || st.name}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => handleAdminManualCreateTeam(eventDetail.event._id)}
+                                disabled={manualTeamBusy || !pairStudent1 || !pairStudent2}
+                                className="w-full py-2 px-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-xs transition disabled:opacity-50 flex items-center justify-center space-x-1.5"
+                              >
+                                {manualTeamBusy ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                <span>Create Team</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Per-Language Breakdown Summary */}
                 {eventDetail?.event?.requiresLanguageChoice && eventDetail?.languageBreakdown && (
                   <div className="p-3.5 bg-indigo-950/40 rounded-xl border border-indigo-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
@@ -2222,9 +2486,18 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           {team.members.map((tm, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
-                              {tm.name}
-                              {tm.year && <span className="text-cyan-300/70">{tm.department ? `${tm.department} • Yr ${tm.year}` : `Yr ${tm.year}`}</span>}
+                            <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-[10px] text-cyan-200">
+                              <span>{tm.name}</span>
+                              {tm.year && <span className="text-cyan-300/70">({tm.department ? `${tm.department} • Yr ${tm.year}` : `Yr ${tm.year}`})</span>}
+                              <button
+                                type="button"
+                                onClick={() => handleAdminManualRemoveMember(team.teamId || team._id, tm._id || tm.studentId || tm.student, eventDetail?.event?._id)}
+                                disabled={manualTeamBusy}
+                                className="text-rose-400 hover:text-rose-300 ml-1 p-0.5 rounded hover:bg-rose-500/20"
+                                title="Remove member from this team (Admin Override)"
+                              >
+                                ✕
+                              </button>
                             </span>
                           ))}
                         </div>
