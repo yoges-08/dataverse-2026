@@ -253,39 +253,31 @@ const sendLoginMail = async ({ to, name }) => {
 };
 
 const sendAccountRemovalMail = async ({ to, name, reason }) => {
-  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Student');
+  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Participant');
 
   const html = mailShell(`
     <div style="padding:20px 8px 4px;">
-      <h2 style="color:#ffffff;font-size:18px;margin:0 0 12px;font-weight:700;">Dear ${safeName},</h2>
+      <h2 style="color:#ffffff;font-size:18px;margin:0 0 14px;font-weight:700;">Dear Participant,</h2>
       
       <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We hope you are doing well.
+        We contacted you regarding your participation in the <strong style="color:#ffffff;">Dataverse 2K26 Symposium</strong>, and you confirmed that you would not be attending.
       </p>
 
       <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We regret to inform you that, as you have not registered for any individual event within the given deadline, <strong style="color:#ffffff;">your Dataverse Symposium account and registration have been removed</strong>.
+        Accordingly, we have removed your registration from the participant list.
       </p>
 
-      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We sincerely appreciate your interest in the symposium and apologize for any inconvenience this may cause.
-      </p>
-
-      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 14px;">
-        We hope to have the opportunity to welcome you to our future events and activities.
-      </p>
-
-      <p style="color:#cbd5e1;font-size:13px;line-height:1.6;margin:0 0 18px;">
-        Thank you for your understanding and cooperation.
+      <p style="color:#cbd5e1;font-size:13px;line-height:1.7;margin:0 0 18px;">
+        Thank you for your understanding and for informing us in advance. We hope to have the opportunity to welcome you to our future events.
       </p>
 
       <div style="color:#cbd5e1;font-size:13px;line-height:1.6;border-top:1px solid rgba(139,92,246,0.25);padding-top:14px;">
-        <strong style="color:#ffffff;">Warm regards,</strong><br/>
-        <strong style="color:#a78bfa;">Dataverse Symposium Organizing Team</strong>
+        <strong style="color:#ffffff;">Regards,</strong><br/>
+        <strong style="color:#a78bfa;">Dataverse 2K26 Team</strong>
       </div>
     </div>
   `);
-  return sendMail({ to, subject: 'Update Regarding Your Dataverse Symposium Registration', html });
+  return sendMail({ to, subject: 'Update Regarding Your Symposium Registration', html });
 };
 
 const sendEventReminderMail = async ({ to, name }) => {
