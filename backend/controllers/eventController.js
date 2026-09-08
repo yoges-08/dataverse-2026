@@ -160,6 +160,7 @@ exports.getEventById = async (req, res) => {
         success: true,
         event: eventObj,
         registrations: enriched,
+        teams,
         groups,
         languageBreakdown: event.requiresLanguageChoice ? languageBreakdown : undefined
       });
@@ -249,6 +250,7 @@ exports.getEventById = async (req, res) => {
         success: true,
         event,
         registrations: populated,
+        teams,
         groups,
         languageBreakdown: event.requiresLanguageChoice ? languageBreakdown : undefined
       });

@@ -100,35 +100,78 @@ export default function AdminDashboard() {
   const [manualTeamUnassignedOnly, setManualTeamUnassignedOnly] = useState(true);
 
   // Helper to determine team status for any student in eventDetail
-  const getStudentTeamInfo = useCallback((studentId, teams = []) => {
-    if (!studentId) return null;
+  const getStudentTeamInfo = useCallback((studentId, detail) => {
+    if (!studentId || !detail) return null;
     const sIdStr = String(studentId);
-    const t = (teams || []).find(team =>
-      (team.members || []).some(m => {
+
+    // 1. Check direct registration row on detail.registrations
+    const reg = (detail.registrations || []).find(r => {
+      const s = r.student;
+      return s && (String(s._id || s.id || s) === sIdStr || String(s.symposiumCode || '') === sIdStr);
+    });
+    if (reg && reg.team) {
+      const memberCount = reg.team.memberCount || (reg.team.members || []).length || 0;
+      return {
+        teamId: reg.team.teamId || reg.team._id,
+        memberCount,
+        isSolo: memberCount <= 1,
+        team: reg.team
+      };
+    }
+
+    // 2. Check teams list from detail.teams and detail.groups
+    const teamsList = [
+      ...(detail.teams || []),
+      ...((detail.groups || []).filter(g => g.kind === 'team').map(g => g.team).filter(Boolean))
+    ];
+
+    for (const t of teamsList) {
+      const members = t.members || [];
+      const isMember = members.some(m => {
         const id = m.student?._id || m.student?.id || m.student || m.studentId || m._id;
-        return String(id) === sIdStr;
-      })
-    );
-    if (!t) return null;
-    const memberCount = (t.members || []).length;
-    return {
-      teamId: t.teamId || t._id,
-      memberCount,
-      isSolo: memberCount <= 1,
-      team: t
-    };
+        const code = m.student?.symposiumCode || m.code;
+        return String(id) === sIdStr || (code && String(code) === sIdStr);
+      });
+      if (isMember) {
+        const memberCount = t.memberCount || members.length || 0;
+        return {
+          teamId: t.teamId || t._id,
+          memberCount,
+          isSolo: memberCount <= 1,
+          team: t
+        };
+      }
+    }
+
+    return null;
   }, []);
+
+  // List of all distinct teams in eventDetail (from both teams & groups)
+  const allAvailableTeams = useMemo(() => {
+    if (!eventDetail) return [];
+    const map = new Map();
+    const list = [
+      ...(eventDetail.teams || []),
+      ...((eventDetail.groups || []).filter(g => g.kind === 'team').map(g => g.team).filter(Boolean))
+    ];
+    list.forEach(t => {
+      if (!t || !t.teamId) return;
+      if (!map.has(t.teamId)) {
+        map.set(t.teamId, t);
+      }
+    });
+    return Array.from(map.values());
+  }, [eventDetail]);
 
   // Filtered registrations for manual team controls based on search & unassigned filter
   const filteredRegistrants = useMemo(() => {
     const regs = eventDetail?.registrations || [];
-    const teams = eventDetail?.teams || [];
     const q = (manualTeamSearch || '').trim().toLowerCase();
 
     return regs.filter(r => {
       const st = r.student;
       if (!st) return false;
-      const teamInfo = getStudentTeamInfo(st._id, teams);
+      const teamInfo = getStudentTeamInfo(st._id, eventDetail);
 
       // If unassignedOnly is active, hide students already in a multi-member (2+) team
       if (manualTeamUnassignedOnly && teamInfo && !teamInfo.isSolo) {
@@ -2444,7 +2487,7 @@ export default function AdminDashboard() {
                                 className="w-full p-2 bg-slate-950 rounded-lg border border-slate-700 text-white text-xs focus:outline-none focus:border-indigo-500"
                               >
                                 <option value="">-- Select Target Team --</option>
-                                {(eventDetail.teams || []).map(t => {
+                                {allAvailableTeams.map(t => {
                                   const members = t.members || [];
                                   const limit = eventDetail?.event?.teamLimit || 2;
                                   return (
@@ -2466,14 +2509,17 @@ export default function AdminDashboard() {
                                 {filteredRegistrants
                                   .filter(r => {
                                     if (!selectedTargetTeam) return true;
-                                    const targetT = (eventDetail.teams || []).find(t => (t.teamId || t._id) === selectedTargetTeam);
+                                    const targetT = allAvailableTeams.find(t => (t.teamId || t._id) === selectedTargetTeam);
                                     if (!targetT) return true;
-                                    return !(targetT.members || []).some(m => String(m.student?._id || m.student || m.studentId) === String(r.student?._id));
+                                    return !(targetT.members || []).some(m => {
+                                      const mId = m.student?._id || m.student?.id || m.student || m.studentId || m._id;
+                                      return String(mId) === String(r.student?._id);
+                                    });
                                   })
                                   .map(r => {
                                     const st = r.student;
                                     if (!st) return null;
-                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail);
                                     const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
                                     const langTag = r.language ? ` • [${r.language}]` : '';
                                     return (
@@ -2509,7 +2555,7 @@ export default function AdminDashboard() {
                                 {filteredRegistrants.map(r => {
                                   const st = r.student;
                                   if (!st) return null;
-                                  const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                  const teamInfo = getStudentTeamInfo(st._id, eventDetail);
                                   const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
                                   const langTag = r.language ? ` • [${r.language}]` : '';
                                   return (
@@ -2533,7 +2579,7 @@ export default function AdminDashboard() {
                                   .map(r => {
                                     const st = r.student;
                                     if (!st) return null;
-                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail.teams || []);
+                                    const teamInfo = getStudentTeamInfo(st._id, eventDetail);
                                     const statusBadge = teamInfo ? (teamInfo.isSolo ? '🟢 [Solo]' : `🔵 [Team ${teamInfo.teamId}]`) : '🟢 [Unassigned]';
                                     const langTag = r.language ? ` • [${r.language}]` : '';
                                     return (
