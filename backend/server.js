@@ -3,6 +3,16 @@ const cors = require('cors');
 const compression = require('compression');
 const path = require('path');
 const dotenv = require('dotenv');
+
+// Process-level crash guards to prevent unhandled promise rejections or exceptions from terminating the server
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ [Process Guard] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ [Process Guard] Uncaught Exception:', err);
+});
+
 const connectDB = require('./config/db');
 const seedIfEmpty = require('./config/seedIfEmpty');
 const seedData = require('./seed');
@@ -221,6 +231,14 @@ app.get('/api/health', (req, res) => {
     symposium: 'DATAVERSE 2026',
     college: 'Anjalai Ammal Mahalingam Engineering College, Kovilvenni',
     timestamp: new Date()
+  });
+});
+
+// Catch-all JSON 404 handler for unmatched API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint not found: ${req.method} ${req.originalUrl}`
   });
 });
 

@@ -1,6 +1,8 @@
-﻿process.env.JWT_SECRET = 'test_jwt_secret_dataverse_2026_super_secure';
+process.env.JWT_SECRET = 'test_jwt_secret_dataverse_2026_super_secure';
+const path = require('path');
+const backendNodeModules = path.join(__dirname, '../backend/node_modules');
 const assert = require('assert');
-const jwt = require('jsonwebtoken');
+const jwt = require(path.join(backendNodeModules, 'jsonwebtoken'));
 const authController = require('../backend/controllers/authController');
 const feedbackRoutes = require('../backend/routes/feedbackRoutes');
 const mockStore = require('../backend/utils/mockStore');
