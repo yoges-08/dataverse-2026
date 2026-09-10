@@ -114,9 +114,11 @@ exports.spotRegistration = async (req, res) => {
     }
 
     const rawEventIds = Array.isArray(eventIds) ? [...new Set(eventIds)] : [];
-    if (rawEventIds.length > 4) {
-      return res.status(400).json({ success: false, message: 'You can register for a maximum of 4 events only.' });
+    if (rawEventIds.length > 1) {
+      return res.status(400).json({ success: false, message: 'Spot registration allows only 1 event per student.' });
     }
+
+    const EXCLUDED_SPOT_EVENTS = ['Bug Hunt', 'NovaSpeak', 'Viral Vision', "Lumina's Fest", 'Luminas Fest'];
 
     if (isDbConnected()) {
       // 1. Run independent early checks in parallel: duplicate student check and event category check
@@ -138,14 +140,11 @@ exports.spotRegistration = async (req, res) => {
       }
 
       if (rawEventIds.length > 0) {
-        const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
-        const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
-
-        if (techCount > 2) {
-          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
-        }
-        if (nonTechCount > 2) {
-          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
+        const isExcluded = eventsToCheck.some(e =>
+          EXCLUDED_SPOT_EVENTS.some(ex => e.title.toLowerCase().replace(/['’\s]/g, '') === ex.toLowerCase().replace(/['’\s]/g, ''))
+        );
+        if (isExcluded) {
+          return res.status(400).json({ success: false, message: 'The selected event is closed for spot registration.' });
         }
       }
 
@@ -259,14 +258,11 @@ exports.spotRegistration = async (req, res) => {
 
       if (rawEventIds.length > 0) {
         const eventsToCheck = mockStore.events.filter(e => rawEventIds.includes(e._id) || rawEventIds.includes(String(e._id)));
-        const techCount = eventsToCheck.filter(e => e.category === 'Technical').length;
-        const nonTechCount = eventsToCheck.filter(e => e.category === 'Non-Technical').length;
-
-        if (techCount > 2) {
-          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Technical events only.' });
-        }
-        if (nonTechCount > 2) {
-          return res.status(400).json({ success: false, message: 'You can select a maximum of 2 Non-Technical events only.' });
+        const isExcluded = eventsToCheck.some(e =>
+          EXCLUDED_SPOT_EVENTS.some(ex => e.title.toLowerCase().replace(/['’\s]/g, '') === ex.toLowerCase().replace(/['’\s]/g, ''))
+        );
+        if (isExcluded) {
+          return res.status(400).json({ success: false, message: 'The selected event is closed for spot registration.' });
         }
       }
 

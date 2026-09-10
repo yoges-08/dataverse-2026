@@ -119,37 +119,26 @@ export default function VolunteerDashboard() {
     }
   };
 
+  const EXCLUDED_SPOT_EVENTS = ['Bug Hunt', 'NovaSpeak', 'Viral Vision', "Lumina's Fest", 'Luminas Fest'];
+  const spotAvailableEvents = events.filter(ev =>
+    !EXCLUDED_SPOT_EVENTS.some(excluded =>
+      ev.title.toLowerCase().replace(/['’\s]/g, '') === excluded.toLowerCase().replace(/['’\s]/g, '')
+    )
+  );
+
   const toggleEvent = (id) => {
     if (selectedEventIds.includes(id)) {
-      setSelectedEventIds(prev => prev.filter(e => e !== id));
+      setSelectedEventIds([]);
       setSpotMsg({ type: '', text: '' });
       return;
     }
 
-    const target = events.find(e => e._id === id);
+    const target = spotAvailableEvents.find(e => e._id === id);
     if (!target) return;
 
-    const selectedEvents = events.filter(e => selectedEventIds.includes(e._id));
-    if (selectedEvents.length >= 4) {
-      setSpotMsg({ type: 'error', text: 'Limit reached: Maximum 4 events total allowed (max 2 Tech & 2 Non-Tech).' });
-      return;
-    }
-
-    const techCount = selectedEvents.filter(e => e.category === 'Technical').length;
-    const nonTechCount = selectedEvents.filter(e => e.category === 'Non-Technical').length;
-
-    if (target.category === 'Technical' && techCount >= 2) {
-      setSpotMsg({ type: 'error', text: 'Category limit reached: Maximum 2 Technical events allowed.' });
-      return;
-    }
-
-    if (target.category === 'Non-Technical' && nonTechCount >= 2) {
-      setSpotMsg({ type: 'error', text: 'Category limit reached: Maximum 2 Non-Technical events allowed.' });
-      return;
-    }
-
+    // Spot registration allows strictly 1 event per student
+    setSelectedEventIds([id]);
     setSpotMsg({ type: '', text: '' });
-    setSelectedEventIds(prev => [...prev, id]);
   };
 
   const handleSpotSubmit = async (e) => {
@@ -332,17 +321,17 @@ export default function VolunteerDashboard() {
                 <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                   <label className="text-slate-300 font-semibold flex items-center space-x-1.5">
                     <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                    <span>Register for Events (optional — select up to 4)</span>
+                    <span>Register for Event (optional — select 1 event)</span>
                   </label>
                   <span className="text-[10px] text-teal-400 font-medium">
-                    Limit: Up to 4 events total (max 2 Tech &amp; 2 Non-Tech)
+                    Limit: Strictly 1 event per student for spot registration
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto p-2 rounded-xl bg-slate-900 border border-slate-700">
-                  {events.length === 0 ? (
-                    <span className="text-[10px] text-slate-500 col-span-2 p-2">Loading events...</span>
+                  {spotAvailableEvents.length === 0 ? (
+                    <span className="text-[10px] text-slate-500 col-span-2 p-2">Loading available spot events...</span>
                   ) : (
-                    events.map(ev => {
+                    spotAvailableEvents.map(ev => {
                       const isFull = ev.maxParticipants > 0 && ev.currentRegistrations >= ev.maxParticipants;
                       const isSelected = selectedEventIds.includes(ev._id);
                       return (
@@ -352,7 +341,7 @@ export default function VolunteerDashboard() {
                           onClick={() => toggleEvent(ev._id)}
                           className={`text-left p-2.5 rounded-lg border text-[10px] font-semibold transition-all ${
                             isSelected
-                              ? 'bg-teal-600/20 border-teal-500 text-teal-300 shadow-sm'
+                              ? 'bg-teal-600/20 border-teal-500 text-teal-300 shadow-sm ring-1 ring-teal-500'
                               : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-teal-500/50'
                           }`}
                         >
@@ -377,23 +366,15 @@ export default function VolunteerDashboard() {
                     })
                   )}
                 </div>
-                {(() => {
-                  const selectedEvents = events.filter(e => selectedEventIds.includes(e._id));
-                  const techCount = selectedEvents.filter(e => e.category === 'Technical').length;
-                  const nonTechCount = selectedEvents.filter(e => e.category === 'Non-Technical').length;
-                  return (
-                    <div className="flex items-center justify-between text-[10px] mt-1.5 text-slate-400">
-                      <span>
-                        Selected: <strong className="text-teal-300">{selectedEventIds.length}/4</strong>{' '}
-                        (Tech: <strong className={techCount >= 2 ? 'text-amber-300' : 'text-slate-200'}>{techCount}/2</strong>,{' '}
-                        Non-Tech: <strong className={nonTechCount >= 2 ? 'text-amber-300' : 'text-slate-200'}>{nonTechCount}/2</strong>)
-                      </span>
-                      {selectedEventIds.length === 4 && (
-                        <span className="text-teal-400 font-bold">Max 4 events selected</span>
-                      )}
-                    </div>
-                  );
-                })()}
+                <div className="flex items-center justify-between text-[10px] mt-1.5 text-slate-400">
+                  <span>
+                    Selected: <strong className="text-teal-300">{selectedEventIds.length}/1 Event</strong>{' '}
+                    <span className="text-slate-500">(Spot registration allows strictly 1 event per student)</span>
+                  </span>
+                  {selectedEventIds.length === 1 && (
+                    <span className="text-teal-400 font-bold">1 event selected</span>
+                  )}
+                </div>
               </div>
 
               <div>
