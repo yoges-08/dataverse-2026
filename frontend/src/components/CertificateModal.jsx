@@ -134,18 +134,21 @@ export default function CertificateModal({ certificate, onClose }) {
                     }}
                   >
                     {/* 1. Student Name Overlay (Over Blank Line 1) */}
-                    <div className="absolute left-[295px] top-[322px] w-[300px] text-center pointer-events-none flex items-center justify-center">
+                    <div className="absolute left-[285px] top-[331px] w-[230px] text-center pointer-events-none flex items-center justify-center">
                       <span
-                        className="text-[17px] font-bold text-slate-900 leading-tight truncate px-1"
-                        style={{ fontFamily: 'Georgia, serif', textShadow: '0 0 1px rgba(0,0,0,0.15)' }}
+                        className="text-[17px] font-extrabold text-slate-900 leading-tight truncate px-1"
+                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.4px' }}
                       >
                         {studentName}
                       </span>
                     </div>
 
                     {/* 2. Event Title Overlay (Over Blank Line 2) */}
-                    <div className="absolute left-[105px] top-[350px] w-[245px] text-center pointer-events-none flex items-center justify-center">
-                      <span className="text-[14px] font-extrabold text-amber-950 uppercase tracking-wide truncate px-1">
+                    <div className="absolute left-[94px] top-[358px] w-[230px] text-center pointer-events-none flex items-center justify-center">
+                      <span
+                        className="text-[13.5px] font-black text-amber-900 uppercase tracking-wide truncate px-1"
+                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.6px' }}
+                      >
                         {eventTitle}
                       </span>
                     </div>
