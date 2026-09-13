@@ -299,7 +299,7 @@ export default function CertificateModal({ certificate, onClose }) {
                         </p>
                       </div>
 
-                      {/* Bottom: Cert No, QR, Signature */}
+                      {/* Bottom: Cert No, Signature */}
                       <div className="flex items-end justify-between gap-6 pt-3.5 border-t border-slate-200 mt-3">
                         <div className="text-left space-y-1">
                           <span className="text-[9px] uppercase text-slate-500 font-bold tracking-wider">Certificate No</span>
@@ -309,14 +309,6 @@ export default function CertificateModal({ certificate, onClose }) {
                           <span className="text-[9px] text-slate-500 block">
                             Issued on {new Date(certificate.issuedAt || Date.now()).toLocaleDateString()}
                           </span>
-                        </div>
-
-                        <div className="bg-white p-1.5 rounded-lg shadow-md border border-slate-200">
-                          <QRCodeSVG
-                            value={certificate.certificateNo}
-                            size={56}
-                            fgColor="#0f172a"
-                          />
                         </div>
 
                         <div className="text-right">

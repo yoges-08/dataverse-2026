@@ -324,11 +324,48 @@ const sendEventReminderMail = async ({ to, name }) => {
   return sendMail({ to, subject: 'Action Required: Complete Your Event Registration', html });
 };
 
+const sendCertificateReadyMail = async ({ to, name, eventTitle, certificateType, certificateNo }) => {
+  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Participant');
+  const frontendUrl = process.env.FRONTEND_URL || 'https://dataverse-2026-qhyb.vercel.app';
+  const certPageUrl = `${frontendUrl}/certificates`;
+  const typeLabel = certificateType || 'Participation';
+
+  const html = mailShell(`
+    <div style="padding:20px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Your Certificate is Ready! 🎓 ${safeName}</h2>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
+        Congratulations! Your official <strong style="color:#ffffff;">DATAVERSE 2026</strong> certificate has been issued.
+      </p>
+
+      <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.4);border-radius:12px;padding:16px;margin-bottom:18px;">
+        <div style="color:#fef3c7;font-size:13px;line-height:1.8;">
+          <div><span style="color:#fbbf24;font-weight:bold;">Participant:</span> <span style="color:#ffffff;">${safeName}</span></div>
+          <div><span style="color:#fbbf24;font-weight:bold;">Event:</span> <span style="color:#ffffff;">${eventTitle}</span></div>
+          <div><span style="color:#fbbf24;font-weight:bold;">Award / Type:</span> <span style="color:#ffffff;">${typeLabel} Certificate</span></div>
+          <div><span style="color:#fbbf24;font-weight:bold;">Certificate No:</span> <span style="color:#fcd34d;font-family:monospace;font-weight:bold;">${certificateNo}</span></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin:24px 0 20px;">
+        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.4);">
+          View &amp; Download Certificate →
+        </a>
+      </div>
+
+      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;text-align:center;">
+        You can also log in to your student dashboard anytime and visit the <strong>Certificates</strong> section to download your high-resolution certificate.
+      </p>
+    </div>
+  `);
+  return sendMail({ to, subject: `DATAVERSE 2026 - Your ${typeLabel} Certificate is Ready!`, html });
+};
+
 module.exports = {
   sendMail,
   sendRegistrationMail,
   sendApprovalMail,
   sendEventRegistrationMail,
   sendAccountRemovalMail,
-  sendEventReminderMail
+  sendEventReminderMail,
+  sendCertificateReadyMail
 };

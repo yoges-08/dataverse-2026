@@ -4,6 +4,7 @@ const Student = require('../models/Student');
 const Event = require('../models/Event');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
+const { sendCertificateReadyMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -112,6 +113,18 @@ exports.generateCertificate = async (req, res) => {
       const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: student.user ? student.user.name : student.email, event: event.title }));
 
       cert = await Certificate.create({ certificateNo: certNo, student: student._id, event: event._id, type: type || 'Participation', verificationQrCode: qrData });
+
+      // Non-blocking auto-email notification to student
+      if (student.email) {
+        sendCertificateReadyMail({
+          to: student.email,
+          name: student.user ? student.user.name : student.email,
+          eventTitle: event.title,
+          certificateType: type || 'Participation',
+          certificateNo: certNo
+        }).catch(mailErr => console.error('Certificate email send error (MongoDB):', mailErr.message));
+      }
+
       return res.status(201).json({ success: true, message: 'Certificate generated successfully', certificate: cert });
     } else {
       const student = mockStore.students.find(s => s._id === studentId || String(s._id) === String(studentId));
@@ -146,6 +159,18 @@ exports.generateCertificate = async (req, res) => {
 
       cert = { _id: 'c' + (mockStore.certificates.length + 1), certificateNo: certNo, student: student._id, event: event._id, type: type || 'Participation', issuedAt: new Date().toISOString(), verificationQrCode: qrData };
       mockStore.certificates.push(cert);
+
+      // Non-blocking auto-email notification to student
+      if (student.email) {
+        const studentUser = mockStore.users.find(u => u._id === student.user || String(u._id) === String(student.user));
+        sendCertificateReadyMail({
+          to: student.email,
+          name: studentUser ? studentUser.name : student.email,
+          eventTitle: event.title,
+          certificateType: type || 'Participation',
+          certificateNo: certNo
+        }).catch(mailErr => console.error('Certificate email send error (mockStore):', mailErr.message));
+      }
 
       return res.status(201).json({ success: true, message: 'Certificate generated successfully', certificate: cert });
     }
