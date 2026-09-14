@@ -3,7 +3,18 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const templatePath = path.join(__dirname, '..', 'assets', 'cert-participation-template.jpg');
-const fontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-Variable.ttf');
+const extraBoldFontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-ExtraBold.ttf');
+const boldFontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-Bold.ttf');
+
+function formatStudentName(name) {
+  if (!name || typeof name !== 'string') return 'Participant';
+  const trimmed = name.trim();
+  if (!trimmed || trimmed === '.' || trimmed.length < 1) return 'Participant';
+  if (trimmed === trimmed.toLowerCase()) {
+    return trimmed.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return trimmed;
+}
 
 /**
  * Generates an official high-resolution PDF certificate for a participant.
@@ -18,13 +29,16 @@ const fontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-Va
 function generateCertificatePdf({ studentName, eventTitle, certificateType, certificateNo }) {
   return new Promise((resolve, reject) => {
     try {
+      const cleanStudentName = formatStudentName(studentName);
+      const cleanEventTitle = (eventTitle || 'DATAVERSE SYMPOSIUM EVENT').trim().toUpperCase();
+
       const doc = new PDFDocument({
         size: [1024, 723],
         margin: 0,
         info: {
-          Title: `DATAVERSE 2026 Certificate - ${studentName}`,
+          Title: `DATAVERSE 2026 Certificate - ${cleanStudentName}`,
           Author: 'Department of AI & DS, Anjalai Ammal Mahalingam Engineering College',
-          Subject: `${eventTitle} - ${certificateType || 'Participation'} Certificate`,
+          Subject: `${cleanEventTitle} - ${certificateType || 'Participation'} Certificate`,
           Keywords: 'DATAVERSE 2026, Certificate, AAMEC, AI & DS'
         }
       });
@@ -40,28 +54,29 @@ function generateCertificatePdf({ studentName, eventTitle, certificateType, cert
       }
 
       // 2. Register and configure League Spartan font
-      if (fs.existsSync(fontPath)) {
-        doc.registerFont('LeagueSpartan', fontPath);
+      if (fs.existsSync(extraBoldFontPath)) {
+        doc.registerFont('LeagueSpartan', extraBoldFontPath);
+        doc.font('LeagueSpartan');
+      } else if (fs.existsSync(boldFontPath)) {
+        doc.registerFont('LeagueSpartan', boldFontPath);
         doc.font('LeagueSpartan');
       } else {
         doc.font('Helvetica-Bold');
       }
 
       // 3. Student Name on Line 1 (Calibrated over blank line 1)
-      const cleanStudentName = studentName && studentName !== '.' ? studentName : 'Participant';
-      doc.fontSize(22)
-         .fillColor('#0f172a')
-         .text(cleanStudentName, 365, 424, {
+      doc.fontSize(24)
+         .fillColor('#090d16')
+         .text(cleanStudentName, 365, 418, {
            width: 295,
            align: 'center',
            lineBreak: false
          });
 
       // 4. Event Title on Line 2 (Calibrated over blank line 2)
-      const cleanEventTitle = (eventTitle || 'DATAVERSE SYMPOSIUM EVENT').toUpperCase();
-      doc.fontSize(17)
-         .fillColor('#78350f')
-         .text(cleanEventTitle, 120, 458, {
+      doc.fontSize(18)
+         .fillColor('#1e1b4b')
+         .text(cleanEventTitle, 120, 454, {
            width: 295,
            align: 'center',
            lineBreak: false

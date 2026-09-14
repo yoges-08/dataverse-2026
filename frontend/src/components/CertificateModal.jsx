@@ -133,20 +133,20 @@ export default function CertificateModal({ certificate, onClose }) {
                     }}
                   >
                     {/* 1. Student Name Overlay (Over Blank Line 1) */}
-                    <div className="absolute left-[285px] top-[331px] w-[230px] text-center pointer-events-none flex items-center justify-center">
+                    <div className="absolute left-[285px] top-[327px] w-[230px] text-center pointer-events-none flex items-center justify-center">
                       <span
-                        className="text-[17px] font-extrabold text-slate-900 leading-tight truncate px-1"
-                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.4px' }}
+                        className="text-[18.5px] font-black text-slate-950 leading-tight truncate px-1"
+                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.5px' }}
                       >
                         {studentName}
                       </span>
                     </div>
 
                     {/* 2. Event Title Overlay (Over Blank Line 2) */}
-                    <div className="absolute left-[94px] top-[358px] w-[230px] text-center pointer-events-none flex items-center justify-center">
+                    <div className="absolute left-[94px] top-[355px] w-[230px] text-center pointer-events-none flex items-center justify-center">
                       <span
-                        className="text-[13.5px] font-black text-amber-900 uppercase tracking-wide truncate px-1"
-                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.6px' }}
+                        className="text-[14px] font-black text-[#1e1b4b] uppercase tracking-wider truncate px-1"
+                        style={{ fontFamily: "'League Spartan', sans-serif", letterSpacing: '0.8px' }}
                       >
                         {eventTitle}
                       </span>

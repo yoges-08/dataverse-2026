@@ -6,6 +6,9 @@ const cleanName = (value) => {
   if (typeof value !== 'string') return '';
   const v = value.trim();
   if (!v || v === '.' || v.length < 2) return '';
+  if (v === v.toLowerCase()) {
+    return v.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
   return v;
 };
 
