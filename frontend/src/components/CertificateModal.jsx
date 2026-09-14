@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import { X, Download, Award, ShieldCheck, Sparkles, Medal, Crown, Star } from 'lucide-react';
 import { getStudentName } from '../utils/studentName';
@@ -151,21 +150,6 @@ export default function CertificateModal({ certificate, onClose }) {
                       >
                         {eventTitle}
                       </span>
-                    </div>
-
-                    {/* 3. Discreet Verification QR & Certificate Number (Bottom Left) */}
-                    <div className="absolute left-6 bottom-5 flex items-center gap-2 bg-white/95 backdrop-blur-xs p-1.5 rounded-lg border border-amber-500/30 shadow-sm pointer-events-none">
-                      <div className="bg-white p-0.5 rounded">
-                        <QRCodeSVG
-                          value={certificate.certificateNo}
-                          size={38}
-                          fgColor="#0f172a"
-                        />
-                      </div>
-                      <div className="text-left leading-tight">
-                        <span className="text-[7px] uppercase font-bold text-slate-500 tracking-wider block">Verify Online</span>
-                        <span className="text-[9px] font-mono font-bold text-amber-900 block">{certificate.certificateNo}</span>
-                      </div>
                     </div>
                   </div>
                 ) : (

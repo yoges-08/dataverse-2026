@@ -9,7 +9,7 @@ const getFromEmail = () => {
   return 'dataverse26ai@gmail.com';
 };
 
-const sendViaGmailSmtp = async ({ to, subject, html }) => {
+const sendViaGmailSmtp = async ({ to, subject, html, attachments }) => {
   const user = process.env.GMAIL_USER || process.env.SMTP_USER || getFromEmail();
   const pass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
   if (!pass) return null;
@@ -22,7 +22,8 @@ const sendViaGmailSmtp = async ({ to, subject, html }) => {
       from: `"DATAVERSE 2026 - AAMEC" <${user}>`,
       to,
       subject,
-      html
+      html,
+      attachments
     });
     console.log(`📧 Email DELIVERED to ${to} via Direct Gmail SMTP (Native DP): ${info.messageId}`);
     return { success: true, messageId: info.messageId };
@@ -32,10 +33,27 @@ const sendViaGmailSmtp = async ({ to, subject, html }) => {
   }
 };
 
-const sendViaBrevoApi = async ({ to, subject, html }) => {
+const sendViaBrevoApi = async ({ to, subject, html, attachments }) => {
   const key = process.env.BREVO_API_KEY;
   if (!key) return null;
   try {
+    const brevoAttachments = attachments && Array.isArray(attachments)
+      ? attachments.map(att => ({
+          name: att.filename,
+          content: Buffer.isBuffer(att.content)
+            ? att.content.toString('base64')
+            : (typeof att.content === 'string' ? Buffer.from(att.content).toString('base64') : att.content)
+        }))
+      : undefined;
+
+    const payload = {
+      sender: { name: 'DATAVERSE 2026 - AAMEC', email: getFromEmail() },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      ...(brevoAttachments && brevoAttachments.length > 0 && { attachment: brevoAttachments })
+    };
+
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -43,12 +61,7 @@ const sendViaBrevoApi = async ({ to, subject, html }) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        sender: { name: 'DATAVERSE 2026 - AAMEC', email: getFromEmail() },
-        to: [{ email: to }],
-        subject,
-        htmlContent: html
-      })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(`Brevo API ${res.status}`);
     const data = await res.json();
@@ -60,16 +73,16 @@ const sendViaBrevoApi = async ({ to, subject, html }) => {
   }
 };
 
-const sendMail = async ({ to, subject, html }) => {
+const sendMail = async ({ to, subject, html, attachments }) => {
   // 1. Direct Gmail SMTP (if GMAIL_APP_PASSWORD is set): Guaranteed native Google DP & official Google DKIM
   if (process.env.GMAIL_APP_PASSWORD || (process.env.SMTP_PASS && process.env.SMTP_USER)) {
-    const viaGmail = await sendViaGmailSmtp({ to, subject, html });
+    const viaGmail = await sendViaGmailSmtp({ to, subject, html, attachments });
     if (viaGmail) return viaGmail;
   }
 
   // 2. Brevo HTTPS API (port 443)
   if (process.env.BREVO_API_KEY) {
-    const viaApi = await sendViaBrevoApi({ to, subject, html });
+    const viaApi = await sendViaBrevoApi({ to, subject, html, attachments });
     if (viaApi) return viaApi;
   }
 
@@ -88,7 +101,8 @@ const sendMail = async ({ to, subject, html }) => {
       from: `"DATAVERSE 2026 - AAMEC" <${getFromEmail()}>`,
       to,
       subject,
-      html
+      html,
+      attachments
     });
     const previewUrl = nodemailer.getTestMessageUrl(info);
     console.log(`📧 [DEMO SENT] To: ${to} | Subject: ${subject}`);
@@ -330,11 +344,32 @@ const sendCertificateReadyMail = async ({ to, name, eventTitle, certificateType,
   const certPageUrl = `${frontendUrl}/certificates`;
   const typeLabel = certificateType || 'Participation';
 
+  let attachments = [];
+  try {
+    const { generateCertificatePdf } = require('./pdfCertificateGenerator');
+    const pdfBuffer = await generateCertificatePdf({
+      studentName: safeName,
+      eventTitle: eventTitle || 'DATAVERSE Event',
+      certificateType: typeLabel,
+      certificateNo
+    });
+    if (pdfBuffer && Buffer.isBuffer(pdfBuffer)) {
+      attachments.push({
+        filename: `DATAVERSE_2026_Certificate_${certificateNo}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      });
+    }
+  } catch (pdfErr) {
+    console.error('Failed to generate PDF attachment for certificate email:', pdfErr.message);
+  }
+
   const html = mailShell(`
     <div style="padding:20px 8px 4px;">
       <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Your Certificate is Ready! 🎓 ${safeName}</h2>
       <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
         Congratulations! Your official <strong style="color:#ffffff;">DATAVERSE 2026</strong> certificate has been issued.
+        ${attachments.length > 0 ? '<br/><strong style="color:#34d399;">📄 Your official high-resolution certificate PDF is attached to this email.</strong>' : ''}
       </p>
 
       <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.4);border-radius:12px;padding:16px;margin-bottom:18px;">
@@ -348,16 +383,21 @@ const sendCertificateReadyMail = async ({ to, name, eventTitle, certificateType,
 
       <div style="text-align:center;margin:24px 0 20px;">
         <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.4);">
-          View &amp; Download Certificate →
+          View &amp; Download on Portal →
         </a>
       </div>
 
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;text-align:center;">
-        You can also log in to your student dashboard anytime and visit the <strong>Certificates</strong> section to download your high-resolution certificate.
+        You can open, print, or download the attached PDF directly, or visit the student portal anytime to manage your certificates.
       </p>
     </div>
   `);
-  return sendMail({ to, subject: `DATAVERSE 2026 - Your ${typeLabel} Certificate is Ready!`, html });
+  return sendMail({
+    to,
+    subject: `DATAVERSE 2026 - Official ${typeLabel} Certificate [${certificateNo}]`,
+    html,
+    attachments
+  });
 };
 
 module.exports = {
