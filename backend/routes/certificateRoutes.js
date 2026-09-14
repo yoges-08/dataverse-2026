@@ -6,6 +6,7 @@ const {
   getMyCertificates,
   getAllCertificates,
   generateCertificate,
+  generateBulkCertificates,
   deleteCertificate,
   verifyCertificate
 } = require('../controllers/certificateController');
@@ -13,8 +14,8 @@ const {
 router.get('/my-certificates', protect, getMyCertificates);
 router.get('/all', protect, authorize('super_admin', 'coordinator'), getAllCertificates);
 router.post('/generate', protect, authorize('super_admin', 'coordinator'), certGenLimiter, generateCertificate);
+router.post('/generate-bulk', protect, authorize('super_admin', 'coordinator'), generateBulkCertificates);
 router.delete('/:id', protect, authorize('super_admin', 'coordinator'), deleteCertificate);
 router.get('/verify/:certNo', verifyCertificate);
-
 
 module.exports = router;

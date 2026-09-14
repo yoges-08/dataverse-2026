@@ -400,6 +400,85 @@ const sendCertificateReadyMail = async ({ to, name, eventTitle, certificateType,
   });
 };
 
+const sendBulkCertificatesMail = async ({ to, name, certificates = [] }) => {
+  const safeName = name && name !== '.' ? name : (to ? to.split('@')[0] : 'Participant');
+  const frontendUrl = process.env.FRONTEND_URL || 'https://dataverse-2026-qhyb.vercel.app';
+  const certPageUrl = `${frontendUrl}/certificates`;
+
+  let attachments = [];
+  try {
+    const { generateCertificatePdf } = require('./pdfCertificateGenerator');
+    for (const cert of certificates) {
+      try {
+        const pdfBuffer = await generateCertificatePdf({
+          studentName: safeName,
+          eventTitle: cert.eventTitle || 'DATAVERSE Event',
+          certificateType: cert.certificateType || 'Participation',
+          certificateNo: cert.certificateNo
+        });
+        if (pdfBuffer && Buffer.isBuffer(pdfBuffer)) {
+          const safeTitle = (cert.eventTitle || 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
+          attachments.push({
+            filename: `DATAVERSE_2026_Certificate_${safeTitle}_${cert.certificateNo}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf'
+          });
+        }
+      } catch (itemErr) {
+        console.error(`Error generating PDF for certificate ${cert.certificateNo}:`, itemErr.message);
+      }
+    }
+  } catch (pdfErr) {
+    console.error('Failed to initialize PDF generator for bulk certificate email:', pdfErr.message);
+  }
+
+  const certListHtml = certificates.map(c => `
+    <li style="margin-bottom: 8px; color: #ffffff;">
+      <strong style="color: #fbbf24;">${c.eventTitle || 'Event'}</strong> 
+      <span style="color: #94a3b8;">(${c.certificateType || 'Participation'})</span> — 
+      <span style="font-family: monospace; color: #fcd34d;">${c.certificateNo}</span>
+    </li>
+  `).join('');
+
+  const countLabel = certificates.length === 1 ? '1 Event' : `${certificates.length} Events`;
+
+  const html = mailShell(`
+    <div style="padding:20px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Your Certificates are Ready! 🎓 ${safeName}</h2>
+      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
+        Congratulations! Your official <strong style="color:#ffffff;">DATAVERSE 2026</strong> certificates have been generated.
+        ${attachments.length > 0 ? `<br/><strong style="color:#34d399;">📄 All ${attachments.length} official high-resolution certificate PDF(s) are attached to this email.</strong>` : ''}
+      </p>
+
+      <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.4);border-radius:12px;padding:16px;margin-bottom:18px;">
+        <div style="color:#fef3c7;font-size:12px;margin-bottom:10px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">
+          Certified Events (${countLabel}):
+        </div>
+        <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.6;">
+          ${certListHtml}
+        </ul>
+      </div>
+
+      <div style="text-align:center;margin:24px 0 20px;">
+        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.4);">
+          View &amp; Download on Portal →
+        </a>
+      </div>
+
+      <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;text-align:center;">
+        You can open, print, or download the attached PDFs directly, or visit the student portal anytime to manage your certificates.
+      </p>
+    </div>
+  `);
+
+  return sendMail({
+    to,
+    subject: `DATAVERSE 2026 - Official Participation Certificates [${countLabel}]`,
+    html,
+    attachments
+  });
+};
+
 module.exports = {
   sendMail,
   sendRegistrationMail,
@@ -407,5 +486,6 @@ module.exports = {
   sendEventRegistrationMail,
   sendAccountRemovalMail,
   sendEventReminderMail,
-  sendCertificateReadyMail
+  sendCertificateReadyMail,
+  sendBulkCertificatesMail
 };

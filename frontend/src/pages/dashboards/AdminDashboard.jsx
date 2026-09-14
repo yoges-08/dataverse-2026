@@ -44,6 +44,9 @@ export default function AdminDashboard() {
   const [certSearch, setCertSearch] = useState('');
   const [certificates, setCertificates] = useState([]);
   const [certDeleting, setCertDeleting] = useState(null);
+  const [bulkCertBusy, setBulkCertBusy] = useState(false);
+  const [bulkCertSummary, setBulkCertSummary] = useState(null);
+  const [bulkCertError, setBulkCertError] = useState(null);
 
   // Feedback tab state
   const [feedbackList, setFeedbackList] = useState([]);
@@ -635,6 +638,38 @@ export default function AdminDashboard() {
       setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to delete certificate.' });
     } finally {
       setCertDeleting(null);
+    }
+  };
+
+  const handleBulkGenerateCertificates = async () => {
+    if (!window.confirm(
+      'Are you sure you want to generate & email Participation Certificates for ALL approved & checked-in students?\n\n' +
+      '• Each student will receive ONE consolidated email with all of their event certificate PDFs attached.\n' +
+      '• Students with 0 event registrations will be skipped.\n' +
+      '• Events that already have certificates will not be duplicated.'
+    )) return;
+
+    try {
+      setBulkCertBusy(true);
+      setBulkCertSummary(null);
+      setBulkCertError(null);
+
+      const res = await API.post('/certificates/generate-bulk');
+      if (res.data.success) {
+        setBulkCertSummary(res.data);
+        const certRes = await API.get('/certificates/all');
+        if (certRes.data.success) {
+          setCertificates(certRes.data.certificates);
+        }
+        setStats(prev => ({
+          ...prev,
+          certificatesCount: (prev?.certificatesCount || 0) + (res.data.certificatesCreated || 0)
+        }));
+      }
+    } catch (err) {
+      setBulkCertError(err.response?.data?.message || 'Failed to process bulk certificate generation.');
+    } finally {
+      setBulkCertBusy(false);
     }
   };
 
@@ -1686,6 +1721,79 @@ export default function AdminDashboard() {
               approved &amp; checked-in students are eligible. Certificates instantly appear
               in the student's <strong>Certificates</strong> tab.
             </p>
+          </div>
+
+          {/* BULK CERTIFICATE ACTION CARD */}
+          <div className="glass-card p-6 rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-slate-950/80 shadow-xl space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-2">
+                  <Sparkles className="w-3 h-3 text-indigo-400" />
+                  <span>One-Click Automated Batch Dispatch</span>
+                </div>
+                <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                  Generate &amp; Send All Participation Certificates
+                </h4>
+                <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                  Automatically generates Participation Certificates for every verified &amp; checked-in student across all their registered events. Each student receives <strong>exactly ONE email</strong> containing all of their event certificate PDFs attached.
+                </p>
+              </div>
+
+              <div className="shrink-0">
+                <button
+                  type="button"
+                  onClick={handleBulkGenerateCertificates}
+                  disabled={bulkCertBusy}
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all transform active:scale-98"
+                >
+                  {bulkCertBusy ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      <span>Generating &amp; Sending Emails...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Award className="w-4 h-4 text-indigo-200" />
+                      <span>Generate &amp; Send All Certificates</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {bulkCertError && (
+              <div className="p-3.5 rounded-xl text-xs flex items-center space-x-2 bg-red-500/10 border border-red-500/30 text-red-400">
+                <XCircle className="w-4 h-4 shrink-0" />
+                <span>{bulkCertError}</span>
+              </div>
+            )}
+
+            {bulkCertSummary && (
+              <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 space-y-2">
+                <div className="flex items-center space-x-2 font-bold text-xs text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>Bulk Certificate Dispatch Completed Successfully!</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px]">
+                  <div className="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    <span className="block text-[10px] text-slate-400 font-medium">Students Processed</span>
+                    <span className="text-base font-black text-white">{bulkCertSummary.studentsProcessed || 0}</span>
+                  </div>
+                  <div className="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    <span className="block text-[10px] text-slate-400 font-medium">Certificates Created</span>
+                    <span className="text-base font-black text-emerald-400">{bulkCertSummary.certificatesCreated || 0}</span>
+                  </div>
+                  <div className="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    <span className="block text-[10px] text-slate-400 font-medium">Skipped (0 Events)</span>
+                    <span className="text-base font-black text-amber-400">{bulkCertSummary.studentsSkippedNoRegistration || 0}</span>
+                  </div>
+                  <div className="bg-slate-900/60 p-2.5 rounded-lg border border-emerald-500/20 text-center">
+                    <span className="block text-[10px] text-slate-400 font-medium">Skipped (Already Had All)</span>
+                    <span className="text-base font-black text-slate-400">{bulkCertSummary.studentsSkippedAlreadyHadAllCertificates || 0}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="glass-card p-6 rounded-2xl border border-amber-500/30 space-y-4">

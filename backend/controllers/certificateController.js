@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 const Certificate = require('../models/Certificate');
 const Student = require('../models/Student');
 const Event = require('../models/Event');
+const Registration = require('../models/Registration');
 const qrcode = require('qrcode');
 const mockStore = require('../utils/mockStore');
-const { sendCertificateReadyMail } = require('../utils/mailer');
+const { sendCertificateReadyMail, sendBulkCertificatesMail } = require('../utils/mailer');
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -203,5 +204,237 @@ exports.verifyCertificate = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error verifying certificate' });
+  }
+};
+
+exports.generateBulkCertificates = async (req, res) => {
+  try {
+    let studentsProcessed = 0;
+    let certificatesCreated = 0;
+    let studentsSkippedNoRegistration = 0;
+    let studentsSkippedAlreadyHadAllCertificates = 0;
+
+    if (isDbConnected()) {
+      // 1. Find all eligible students: isCheckedIn === true && verificationStatus === 'Approved'
+      const eligibleStudents = await Student.find({
+        isCheckedIn: true,
+        verificationStatus: 'Approved'
+      }).populate('user', 'name email');
+
+      if (!eligibleStudents || eligibleStudents.length === 0) {
+        return res.status(200).json({
+          success: true,
+          studentsProcessed: 0,
+          certificatesCreated: 0,
+          studentsSkippedNoRegistration: 0,
+          studentsSkippedAlreadyHadAllCertificates: 0,
+          message: 'No eligible checked-in students found.'
+        });
+      }
+
+      const studentIds = eligibleStudents.map(s => s._id);
+
+      // 2. Fetch all registrations for these students
+      const registrations = await Registration.find({
+        student: { $in: studentIds }
+      }).populate('event', 'title category');
+
+      // Group registrations by student ID
+      const regByStudent = new Map();
+      registrations.forEach(r => {
+        if (!r.student || !r.event) return;
+        const sId = String(r.student._id || r.student);
+        if (!regByStudent.has(sId)) regByStudent.set(sId, []);
+        regByStudent.get(sId).push(r);
+      });
+
+      // 3. Fetch all existing certificates for these students
+      const existingCerts = await Certificate.find({
+        student: { $in: studentIds }
+      });
+      const certKeySet = new Set(existingCerts.map(c => `${String(c.student)}_${String(c.event)}`));
+
+      // 4. Process each student
+      for (const student of eligibleStudents) {
+        const sId = String(student._id);
+        const studentRegs = regByStudent.get(sId) || [];
+
+        // Rule: Skip students who have 0 registrations
+        if (studentRegs.length === 0) {
+          studentsSkippedNoRegistration += 1;
+          continue;
+        }
+
+        const newCertsForStudent = [];
+
+        for (const reg of studentRegs) {
+          const ev = reg.event;
+          if (!ev) continue;
+          const key = `${sId}_${String(ev._id)}`;
+
+          if (certKeySet.has(key)) {
+            continue;
+          }
+
+          // Generate unique certificate number
+          let certNo;
+          let certNoExists = true;
+          let certAttempts = 0;
+          while (certNoExists && certAttempts < 20) {
+            certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+            certNoExists = await Certificate.findOne({ certificateNo: certNo });
+            certAttempts += 1;
+          }
+          if (certNoExists) continue;
+
+          const studentDisplayName = student.user ? student.user.name : student.email;
+          const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: studentDisplayName, event: ev.title }));
+
+          const newCert = await Certificate.create({
+            certificateNo: certNo,
+            student: student._id,
+            event: ev._id,
+            type: 'Participation',
+            verificationQrCode: qrData
+          });
+
+          certKeySet.add(key);
+          newCertsForStudent.push({
+            eventTitle: ev.title,
+            certificateType: 'Participation',
+            certificateNo: certNo,
+            certId: newCert._id
+          });
+        }
+
+        if (newCertsForStudent.length > 0) {
+          certificatesCreated += newCertsForStudent.length;
+          studentsProcessed += 1;
+
+          // Non-blocking single email dispatch per student with all PDF attachments
+          if (student.email) {
+            const studentDisplayName = student.user ? student.user.name : student.email;
+            sendBulkCertificatesMail({
+              to: student.email,
+              name: studentDisplayName,
+              certificates: newCertsForStudent
+            }).catch(mailErr => console.error(`Bulk certificate email error for ${student.email}:`, mailErr.message));
+          }
+        } else {
+          studentsSkippedAlreadyHadAllCertificates += 1;
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        studentsProcessed,
+        certificatesCreated,
+        studentsSkippedNoRegistration,
+        studentsSkippedAlreadyHadAllCertificates
+      });
+    } else {
+      // mockStore in-memory fallback
+      const eligibleStudents = mockStore.students.filter(
+        s => s.isCheckedIn && s.verificationStatus === 'Approved'
+      );
+
+      if (!eligibleStudents || eligibleStudents.length === 0) {
+        return res.status(200).json({
+          success: true,
+          studentsProcessed: 0,
+          certificatesCreated: 0,
+          studentsSkippedNoRegistration: 0,
+          studentsSkippedAlreadyHadAllCertificates: 0,
+          message: 'No eligible checked-in students found.'
+        });
+      }
+
+      for (const student of eligibleStudents) {
+        const sId = String(student._id);
+        const studentRegs = mockStore.registrations.filter(
+          r => String(r.student) === sId || r.student === student._id
+        );
+
+        if (studentRegs.length === 0) {
+          studentsSkippedNoRegistration += 1;
+          continue;
+        }
+
+        const newCertsForStudent = [];
+
+        for (const reg of studentRegs) {
+          const ev = mockStore.events.find(
+            e => String(e._id) === String(reg.event) || e._id === reg.event
+          );
+          if (!ev) continue;
+
+          const alreadyExists = mockStore.certificates.some(
+            c => (String(c.student) === sId || c.student === student._id) &&
+                 (String(c.event) === String(ev._id) || c.event === ev._id)
+          );
+
+          if (alreadyExists) continue;
+
+          let certNo;
+          let certNoExists = true;
+          let certAttempts = 0;
+          while (certNoExists && certAttempts < 20) {
+            certNo = `CERT-DV2026-${Math.floor(100000 + Math.random() * 900000)}`;
+            certNoExists = mockStore.certificates.some(c => c.certificateNo === certNo);
+            certAttempts += 1;
+          }
+          if (certNoExists) continue;
+
+          const studentUser = mockStore.users.find(u => u._id === student.user || String(u._id) === String(student.user));
+          const studentDisplayName = studentUser ? studentUser.name : student.email;
+          const qrData = await qrcode.toDataURL(JSON.stringify({ certNo, name: studentDisplayName, event: ev.title }));
+
+          const cert = {
+            _id: 'c' + (mockStore.certificates.length + 1),
+            certificateNo: certNo,
+            student: student._id,
+            event: ev._id,
+            type: 'Participation',
+            issuedAt: new Date().toISOString(),
+            verificationQrCode: qrData
+          };
+          mockStore.certificates.push(cert);
+
+          newCertsForStudent.push({
+            eventTitle: ev.title,
+            certificateType: 'Participation',
+            certificateNo: certNo
+          });
+        }
+
+        if (newCertsForStudent.length > 0) {
+          certificatesCreated += newCertsForStudent.length;
+          studentsProcessed += 1;
+
+          if (student.email) {
+            const studentUser = mockStore.users.find(u => u._id === student.user || String(u._id) === String(student.user));
+            const studentDisplayName = studentUser ? studentUser.name : student.email;
+            sendBulkCertificatesMail({
+              to: student.email,
+              name: studentDisplayName,
+              certificates: newCertsForStudent
+            }).catch(mailErr => console.error(`Bulk certificate email error (mockStore) for ${student.email}:`, mailErr.message));
+          }
+        } else {
+          studentsSkippedAlreadyHadAllCertificates += 1;
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        studentsProcessed,
+        certificatesCreated,
+        studentsSkippedNoRegistration,
+        studentsSkippedAlreadyHadAllCertificates
+      });
+    }
+  } catch (error) {
+    console.error('Error generating bulk certificates:', error);
+    res.status(500).json({ success: false, message: 'Error generating bulk certificates: ' + error.message });
   }
 };
