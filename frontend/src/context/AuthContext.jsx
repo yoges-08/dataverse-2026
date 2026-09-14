@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('dataverse_token');
   }, []);
 
-  const fetchMe = useCallback(async () => {
+  const fetchMe = useCallback(async (isInitial = false) => {
     // Ensure only one in-flight request runs at a time
     if (isFetchingRef.current) return;
 
@@ -40,9 +40,12 @@ export const AuthProvider = ({ children }) => {
 
     try {
       isFetchingRef.current = true;
-      setLoading(true);
+      // Only show loading screen on initial mount if user is not loaded yet
+      if (isInitial && !userRef.current) {
+        setLoading(true);
+      }
       const res = await API.get('/auth/me');
-      if (res.data.success) {
+      if (res.data && res.data.success) {
         setUser(res.data.user);
         setStudent(res.data.student);
       } else {
@@ -50,7 +53,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Fetch user error:', err);
-      logout();
+      // Only logout on explicit 401/403 authorization failures
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        logout();
+      }
     } finally {
       isFetchingRef.current = false;
       setLoading(false);
@@ -59,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      fetchMe();
+      fetchMe(true);
     } else {
       setLoading(false);
     }
@@ -73,8 +79,9 @@ export const AuthProvider = ({ children }) => {
 
       if (isVisible || isPageShow) {
         const storedToken = localStorage.getItem('dataverse_token');
-        if (storedToken && (!userRef.current || isFetchingRef.current === false)) {
-          fetchMe();
+        // Only run if token exists and user is missing in memory
+        if (storedToken && !userRef.current && isFetchingRef.current === false) {
+          fetchMe(false);
         }
       }
     };
