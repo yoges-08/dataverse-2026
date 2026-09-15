@@ -365,30 +365,73 @@ const sendCertificateReadyMail = async ({ to, name, eventTitle, certificateType,
   }
 
   const html = mailShell(`
-    <div style="padding:20px 8px 4px;">
-      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Your Certificate is Ready! 🎓 ${safeName}</h2>
-      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
-        Congratulations! Your official <strong style="color:#ffffff;">DATAVERSE 2026</strong> certificate has been issued.
-        ${attachments.length > 0 ? '<br/><strong style="color:#34d399;">📄 Your official high-resolution certificate PDF is attached to this email.</strong>' : ''}
-      </p>
+    <div style="padding:16px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 12px;text-align:center;">Your Official Certificate is Ready! 🎓 ${safeName}</h2>
 
-      <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.4);border-radius:12px;padding:16px;margin-bottom:18px;">
-        <div style="color:#fef3c7;font-size:13px;line-height:1.8;">
-          <div><span style="color:#fbbf24;font-weight:bold;">Participant:</span> <span style="color:#ffffff;">${safeName}</span></div>
-          <div><span style="color:#fbbf24;font-weight:bold;">Event:</span> <span style="color:#ffffff;">${eventTitle}</span></div>
-          <div><span style="color:#fbbf24;font-weight:bold;">Award / Type:</span> <span style="color:#ffffff;">${typeLabel} Certificate</span></div>
-          <div><span style="color:#fbbf24;font-weight:bold;">Certificate No:</span> <span style="color:#fcd34d;font-family:monospace;font-weight:bold;">${certificateNo}</span></div>
+      <!-- OFFICIAL UPDATE NOTIFICATION BANNER -->
+      <div style="background:linear-gradient(135deg,rgba(16,185,129,0.15) 0%,rgba(6,95,70,0.25) 100%);border:1.5px solid rgba(52,211,153,0.6);border-radius:14px;padding:16px 18px;margin:16px 0;box-shadow:0 4px 20px rgba(16,185,129,0.15);">
+        <div style="color:#34d399;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">
+          ✨ OFFICIAL UPDATE: AI&amp;DS HOD AND PRINCIPAL VERIFIED SIGNATURES ADDED
+        </div>
+        <div style="color:#e2e8f0;font-size:12.5px;line-height:1.6;">
+          Your official participation certificate is now fully certified with authenticated digital signatures:
+        </div>
+        <div style="margin:10px 0 4px;">
+          <span style="display:inline-block;background:rgba(15,23,42,0.7);border:1px solid rgba(52,211,153,0.4);padding:4px 10px;border-radius:20px;font-size:11.5px;color:#a7f3d0;font-weight:600;margin-right:6px;margin-bottom:6px;">
+            ✍️ Dr. G. Nanthakumar (HOD - AI&amp;DS)
+          </span>
+          <span style="display:inline-block;background:rgba(15,23,42,0.7);border:1px solid rgba(52,211,153,0.4);padding:4px 10px;border-radius:20px;font-size:11.5px;color:#a7f3d0;font-weight:600;margin-bottom:6px;">
+            ✍️ Dr. K. Velmurugan (Principal)
+          </span>
         </div>
       </div>
 
-      <div style="text-align:center;margin:24px 0 20px;">
-        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.4);">
+      <!-- SINCERE APOLOGY FOR DELAY -->
+      <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 10px 10px 0;padding:10px 14px;margin:12px 0 16px;color:#fef3c7;font-size:12px;line-height:1.55;">
+        <strong style="color:#fbbf24;">🙏 Sincere Apologies for the Delay:</strong><br/>
+        We deeply appreciate your patience while our institution completed official administrative verification and signature endorsement to provide you with authentic certificates.
+      </div>
+
+      <!-- ATTACHMENT NOTICE -->
+      ${attachments.length > 0 ? `
+      <div style="background:rgba(16,185,129,0.12);border:1px dashed rgba(52,211,153,0.5);border-radius:10px;padding:12px 16px;text-align:center;margin:14px 0;color:#6ee7b7;font-size:12.5px;font-weight:600;">
+        📄 <strong>Official Certificate PDF Attached:</strong> Your high-resolution certificate with both signatures is attached to this email for instant download and printing.
+      </div>` : ''}
+
+      <!-- DETAILS CARD -->
+      <div style="background:rgba(217,119,6,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:14px;padding:16px 20px;margin:16px 0;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width:100%;font-size:13px;line-height:1.8;">
+          <tr>
+            <td style="color:#fbbf24;font-weight:700;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">Participant:</td>
+            <td style="color:#ffffff;font-weight:600;text-align:right;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">${safeName}</td>
+          </tr>
+          <tr>
+            <td style="color:#fbbf24;font-weight:700;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">Event:</td>
+            <td style="color:#ffffff;font-weight:600;text-align:right;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">${eventTitle}</td>
+          </tr>
+          <tr>
+            <td style="color:#fbbf24;font-weight:700;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">Certificate Type:</td>
+            <td style="color:#ffffff;font-weight:600;text-align:right;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">${typeLabel} Certificate</td>
+          </tr>
+          <tr>
+            <td style="color:#fbbf24;font-weight:700;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">Certificate No:</td>
+            <td style="color:#fde047;font-family:monospace;font-weight:700;text-align:right;padding:4px 0;border-bottom:1px dashed rgba(245,158,11,0.2);">${certificateNo}</td>
+          </tr>
+          <tr>
+            <td style="color:#fbbf24;font-weight:700;padding:4px 0;">Verification:</td>
+            <td style="color:#34d399;font-weight:700;text-align:right;padding:4px 0;">✓ Certificate Verified</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="text-align:center;margin:24px 0 18px;">
+        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 30px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13.5px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.45);letter-spacing:0.5px;">
           View &amp; Download on Portal →
         </a>
       </div>
 
       <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;text-align:center;">
-        You can open, print, or download the attached PDF directly, or visit the student portal anytime to manage your certificates.
+        You can keep the attached PDF for your academic portfolio or view your verified badge on the symposium portal anytime.
       </p>
     </div>
   `);
@@ -443,12 +486,38 @@ const sendBulkCertificatesMail = async ({ to, name, certificates = [] }) => {
   const countLabel = certificates.length === 1 ? '1 Event' : `${certificates.length} Events`;
 
   const html = mailShell(`
-    <div style="padding:20px 8px 4px;">
-      <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">Your Certificates are Ready! 🎓 ${safeName}</h2>
-      <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin:0 0 16px;">
-        Congratulations! Your official <strong style="color:#ffffff;">DATAVERSE 2026</strong> certificates have been generated.
-        ${attachments.length > 0 ? `<br/><strong style="color:#34d399;">📄 All ${attachments.length} official high-resolution certificate PDF(s) are attached to this email.</strong>` : ''}
-      </p>
+    <div style="padding:16px 8px 4px;">
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 12px;text-align:center;">Your Official Certificates are Ready! 🎓 ${safeName}</h2>
+
+      <!-- OFFICIAL UPDATE NOTIFICATION BANNER -->
+      <div style="background:linear-gradient(135deg,rgba(16,185,129,0.15) 0%,rgba(6,95,70,0.25) 100%);border:1.5px solid rgba(52,211,153,0.6);border-radius:14px;padding:16px 18px;margin:16px 0;box-shadow:0 4px 20px rgba(16,185,129,0.15);">
+        <div style="color:#34d399;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">
+          ✨ OFFICIAL UPDATE: AI&amp;DS HOD AND PRINCIPAL VERIFIED SIGNATURES ADDED
+        </div>
+        <div style="color:#e2e8f0;font-size:12.5px;line-height:1.6;">
+          Your official participation certificates are now fully certified with authenticated digital signatures:
+        </div>
+        <div style="margin:10px 0 4px;">
+          <span style="display:inline-block;background:rgba(15,23,42,0.7);border:1px solid rgba(52,211,153,0.4);padding:4px 10px;border-radius:20px;font-size:11.5px;color:#a7f3d0;font-weight:600;margin-right:6px;margin-bottom:6px;">
+            ✍️ Dr. G. Nanthakumar (HOD - AI&amp;DS)
+          </span>
+          <span style="display:inline-block;background:rgba(15,23,42,0.7);border:1px solid rgba(52,211,153,0.4);padding:4px 10px;border-radius:20px;font-size:11.5px;color:#a7f3d0;font-weight:600;margin-bottom:6px;">
+            ✍️ Dr. K. Velmurugan (Principal)
+          </span>
+        </div>
+      </div>
+
+      <!-- SINCERE APOLOGY FOR DELAY -->
+      <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 10px 10px 0;padding:10px 14px;margin:12px 0 16px;color:#fef3c7;font-size:12px;line-height:1.55;">
+        <strong style="color:#fbbf24;">🙏 Sincere Apologies for the Delay:</strong><br/>
+        We deeply appreciate your patience while our institution completed official administrative verification and signature endorsement to provide you with authentic certificates.
+      </div>
+
+      <!-- ATTACHMENT NOTICE -->
+      ${attachments.length > 0 ? `
+      <div style="background:rgba(16,185,129,0.12);border:1px dashed rgba(52,211,153,0.5);border-radius:10px;padding:12px 16px;text-align:center;margin:14px 0;color:#6ee7b7;font-size:12.5px;font-weight:600;">
+        📄 <strong>Official Certificate PDF(s) Attached:</strong> All ${attachments.length} high-resolution certificate(s) with both signatures are attached to this email.
+      </div>` : ''}
 
       <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.4);border-radius:12px;padding:16px;margin-bottom:18px;">
         <div style="color:#fef3c7;font-size:12px;margin-bottom:10px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">
@@ -459,8 +528,8 @@ const sendBulkCertificatesMail = async ({ to, name, certificates = [] }) => {
         </ul>
       </div>
 
-      <div style="text-align:center;margin:24px 0 20px;">
-        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.4);">
+      <div style="text-align:center;margin:24px 0 18px;">
+        <a href="${certPageUrl}" target="_blank" style="display:inline-block;padding:12px 30px;background:linear-gradient(135deg,#d97706,#b45309);color:#ffffff;font-size:13.5px;font-weight:bold;text-decoration:none;border-radius:10px;box-shadow:0 4px 14px rgba(217,119,6,0.45);letter-spacing:0.5px;">
           View &amp; Download on Portal →
         </a>
       </div>
