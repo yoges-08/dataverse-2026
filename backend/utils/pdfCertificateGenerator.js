@@ -3,6 +3,8 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const templatePath = path.join(__dirname, '..', 'assets', 'cert-participation-template.jpg');
+const signaturePath = path.join(__dirname, '..', 'assets', 'nanthakumar-signature.png');
+const principalSignaturePath = path.join(__dirname, '..', 'assets', 'velmurugan-signature.png');
 const extraBoldFontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-ExtraBold.ttf');
 const boldFontPath = path.join(__dirname, '..', 'assets', 'fonts', 'LeagueSpartan-Bold.ttf');
 
@@ -81,6 +83,16 @@ function generateCertificatePdf({ studentName, eventTitle, certificateType, cert
            align: 'center',
            lineBreak: false
          });
+
+      // 5. Dr. G. Nanthakumar Signature (Calibrated above HOD-AI&DS)
+      if (fs.existsSync(signaturePath)) {
+        doc.image(signaturePath, 235, 565, { width: 150 });
+      }
+
+      // 6. Dr. K. Velmurugan Signature (Calibrated above PRINCIPAL)
+      if (fs.existsSync(principalSignaturePath)) {
+        doc.image(principalSignaturePath, 645, 570, { width: 150 });
+      }
 
       doc.end();
     } catch (err) {

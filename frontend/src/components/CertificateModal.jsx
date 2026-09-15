@@ -151,6 +151,20 @@ export default function CertificateModal({ certificate, onClose }) {
                         {eventTitle}
                       </span>
                     </div>
+
+                    {/* 3. Dr. G. Nanthakumar Signature Overlay */}
+                    <img
+                      src="/nanthakumar-signature.png"
+                      alt="Dr. G. Nanthakumar Signature"
+                      className="absolute left-[184px] top-[441px] w-[118px] pointer-events-none select-none"
+                    />
+
+                    {/* 4. Dr. K. Velmurugan Signature Overlay */}
+                    <img
+                      src="/velmurugan-signature.png"
+                      alt="Dr. K. Velmurugan Signature"
+                      className="absolute left-[504px] top-[446px] w-[118px] pointer-events-none select-none"
+                    />
                   </div>
                 ) : (
                   /* Existing Award Design for Winner, RunnerUp & Third Prize */
@@ -296,9 +310,14 @@ export default function CertificateModal({ certificate, onClose }) {
                         </div>
 
                         <div className="text-right">
-                          <div className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: theme.accent }}>
+                          <div className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: theme.accent }}>
                             <ShieldCheck className="w-3 h-3" /> Verified &amp; Authentic
                           </div>
+                          <img
+                            src="/nanthakumar-signature.png"
+                            alt="Dr. G. Nanthakumar Signature"
+                            className="h-8 w-auto object-contain ml-auto -mb-1 pointer-events-none select-none"
+                          />
                           <div className="w-28 h-0.5 mb-1 ml-auto" style={{ background: theme.accent }}></div>
                           <span className="text-xs font-bold text-slate-900 block">Dr. G. Nanthakumar</span>
                           <span className="text-[9px] text-slate-600 block">Convener — DATAVERSE</span>
