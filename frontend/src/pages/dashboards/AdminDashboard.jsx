@@ -641,6 +641,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteAllCertificates = async () => {
+    if (!window.confirm(
+      '⚠️ WARNING: Are you sure you want to DELETE ALL existing certificates?\n\n' +
+      '• This will permanently remove all generated certificates.\n' +
+      '• You can then click "Generate & Send All Certificates" to generate and email fresh dual-signed certificates to all checked-in students.'
+    )) return;
+
+    try {
+      setCertBusy(true);
+      const res = await API.delete('/certificates/delete-all');
+      if (res.data.success) {
+        setCertificates([]);
+        setCertMsg({ type: 'success', text: res.data.message || 'All certificates deleted successfully.' });
+        setStats(prev => ({ ...prev, certificatesCount: 0 }));
+      }
+    } catch (err) {
+      setCertMsg({ type: 'error', text: err.response?.data?.message || 'Failed to delete all certificates.' });
+    } finally {
+      setCertBusy(false);
+    }
+  };
+
   const handleBulkGenerateCertificates = async () => {
     if (!window.confirm(
       'Are you sure you want to generate & email Participation Certificates for ALL approved & checked-in students?\n\n' +
@@ -1739,11 +1761,23 @@ export default function AdminDashboard() {
                 </p>
               </div>
 
-              <div className="shrink-0">
+              <div className="shrink-0 flex flex-wrap items-center gap-2.5">
+                {certificates.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAllCertificates}
+                    disabled={certBusy || bulkCertBusy}
+                    className="px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 transition-all"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <span>Delete All Certificates ({certificates.length})</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleBulkGenerateCertificates}
-                  disabled={bulkCertBusy}
+                  disabled={bulkCertBusy || certBusy}
                   className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all transform active:scale-98"
                 >
                   {bulkCertBusy ? (

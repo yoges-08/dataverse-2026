@@ -69,10 +69,35 @@ exports.deleteCertificate = async (req, res) => {
       const idx = mockStore.certificates.findIndex((c) => c._id === req.params.id || String(c._id) === String(req.params.id));
       if (idx === -1) return res.status(404).json({ success: false, message: 'Certificate not found' });
       mockStore.certificates.splice(idx, 1);
+      mockStore.persist();
       return res.status(200).json({ success: true, message: 'Certificate deleted successfully' });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error deleting certificate' });
+  }
+};
+
+exports.deleteAllCertificates = async (req, res) => {
+  try {
+    if (isDbConnected()) {
+      const result = await Certificate.deleteMany({});
+      return res.status(200).json({
+        success: true,
+        deletedCount: result.deletedCount,
+        message: `Successfully deleted all ${result.deletedCount} certificates from database.`
+      });
+    } else {
+      const count = mockStore.certificates.length;
+      mockStore.certificates = [];
+      mockStore.persist();
+      return res.status(200).json({
+        success: true,
+        deletedCount: count,
+        message: `Successfully deleted all ${count} certificates.`
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting all certificates: ' + error.message });
   }
 };
 
